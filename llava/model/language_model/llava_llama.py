@@ -50,6 +50,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     def __init__(self, config: LlamaConfig):
         super(LlavaLlamaModel, self).__init__(config)
         self.images_idx = None
+        self.grouping = None
 
     def forward(
         self,
@@ -63,6 +64,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, BaseModelOutputWithPast]:
+        from ipdb import set_trace; set_trace()
         images_idx = self.images_idx
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -219,6 +221,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         self.images_idx = None
+        self.model.grouping = config.grouping
         # Initialize weights and apply final processing
         self.post_init()
 

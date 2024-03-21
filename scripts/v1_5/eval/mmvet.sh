@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python -m llava.eval.model_vqa \
-    --model-path liuhaotian/llava-v1.5-7b \
+    --model-path my-llava-1.5-7b \
     --question-file /home/lye21/LLaVA/playground/data/eval/mm-vet/llava-mm-vet.jsonl \
     --image-folder /data/jieneng/data/llava_datasets/eval/mmvet/mm-vet/images \
     --answers-file ./playground/data/eval/mm-vet/answers/llava-v1.5-7b.jsonl \
