@@ -17,6 +17,7 @@ dist
 .idea
 *.swp
 
+!/modelconfig
 # Other
 .DS_Store
 wandb
