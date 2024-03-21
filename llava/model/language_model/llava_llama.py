@@ -42,6 +42,12 @@ logger = logging.get_logger(__name__)
 
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
+    def __init__(self, 
+                 grouping=None, 
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.grouping = grouping
+    
 
 
 class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
@@ -64,7 +70,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, BaseModelOutputWithPast]:
-        from ipdb import set_trace; set_trace()
         images_idx = self.images_idx
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -138,7 +143,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         for decoder_layer in self.layers:
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
-            if layer_idx == int(0.5 * len(self.layers)):
+            if layer_idx == self.groupingLayer:
                 if images_idx is not None:
                     i = 0
                     # cat hidden states with position ids
@@ -152,7 +157,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                             else:
                                 states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
                             visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1).contiguous()
-                            visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=2, stride=2).permute(0,2,1).contiguous()
+                            visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=self.stride, stride=self.stride).permute(0,2,1).contiguous()
                             states_segment.append(visual_states)
                             if vi == image_idx[0].shape[0] - 1:
                                 states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])

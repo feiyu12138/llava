@@ -57,7 +57,8 @@ def eval_model(args):
 
         image = Image.open(os.path.join(args.image_folder, image_file)).convert('RGB')
         image_tensor = process_images([image], image_processor, model.config)[0]
-
+        model.model.stride = args.stride
+        model.model.groupingLayer = args.layer
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -96,6 +97,8 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
+    parser.add_argument("--stride", type=int, default=2)
+    parser.add_argument("--layer", type=int, default=16)
     args = parser.parse_args()
 
     eval_model(args)
