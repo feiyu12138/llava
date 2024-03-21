@@ -17,7 +17,9 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
-        --conv-mode vicuna_v1 &
+        --conv-mode vicuna_v1 \
+        --layer 16 \
+        --stride 2 &
 done
 
 wait
