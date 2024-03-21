@@ -57,6 +57,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         super(LlavaLlamaModel, self).__init__(config)
         self.images_idx = None
         self.grouping = None
+        self.groupingLayer = None
+        self.stride = None
 
     def forward(
         self,

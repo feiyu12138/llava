@@ -19,4 +19,5 @@ python scripts/convert_mmvet_for_eval.py \
     --dst ./playground/data/eval/mm-vet/results/llava-v1.5-7b-stride-$stride-layer-$layer.json
 done
 done
+sleep 5d
 
