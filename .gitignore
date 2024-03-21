@@ -18,6 +18,9 @@ dist
 *.swp
 
 !/modelconfig
+
+!config.json
+
 # Other
 .DS_Store
 wandb
