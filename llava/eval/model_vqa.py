@@ -59,6 +59,7 @@ def eval_model(args):
         image_tensor = process_images([image], image_processor, model.config)[0]
         model.model.stride = args.stride
         model.model.groupingLayer = args.layer
+        model.model.grouping = args.grouping
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -99,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_beams", type=int, default=1)
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--layer", type=int, default=16)
+    parser.add_argument("--grouping", type=str, default="none")
     args = parser.parse_args()
 
     eval_model(args)

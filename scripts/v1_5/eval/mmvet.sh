@@ -1,12 +1,15 @@
 #!/bin/bash
 
 python -m llava.eval.model_vqa \
-    --model-path liuhaotian/llava-v1.5-7b \
+    --model-path my-llava-1.5-7b \
     --question-file /home/lye21/LLaVA/playground/data/eval/mm-vet/llava-mm-vet.jsonl \
     --image-folder /data/jieneng/data/llava_datasets/eval/mmvet/mm-vet/images \
     --answers-file ./playground/data/eval/mm-vet/answers/llava-v1.5-7b.jsonl \
     --temperature 0 \
-    --conv-mode vicuna_v1
+    --conv-mode vicuna_v1 \
+    --layer 16 \
+    --stride 2 \
+    --grouping avgpool1d
 
 mkdir -p ./playground/data/eval/mm-vet/results
 
