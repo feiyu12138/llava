@@ -41,10 +41,10 @@ from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDe
 
 logger = logging.get_logger(__name__)
 
-def adjust_attention_mask(attention_mask, sequence_length):
+def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
 
     batch_size, _, seq_length, _ = attention_mask.shape
-    new_attention_mask = attention_mask[:, :, :sequence_length, :sequence_length]
+    new_attention_mask = attention_mask[:, :, :q_len, :kv_seq_len]
     return new_attention_mask
 
 class LlavaConfig(LlamaConfig):
@@ -97,7 +97,7 @@ class MyLlamaSdpaAttention(LlamaSdpaAttention):
         key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
         value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-        kv_seq_len = key_states.shape[-2] if key_states.shape[-2] != position_ids.max()+1 else position_ids.max()+1
+        kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
@@ -271,7 +271,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             if layer_idx == self.groupingLayer and self.grouping != 'none':
                 if self.grouping == 'avgpool1d':
                     hidden_states, position_ids = self.visual_avg_pool1d(hidden_states, position_ids)
-                    # attention_mask = adjust_attention_mask(attention_mask, hidden_states.shape[1])
+                    if attention_mask is not None:
+                        q_len = hidden_states.shape[1]
+                        kv_seq_len = q_len + past_key_values.get_usable_length(hidden_states.shape[1], layer_idx)
+                        attention_mask = adjust_attention_mask(attention_mask, q_len, kv_seq_len)
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 
