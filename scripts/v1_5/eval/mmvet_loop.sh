@@ -10,7 +10,8 @@ python -m llava.eval.model_vqa \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --stride $stride \
-    --layer $layer
+    --layer $layer \
+    --grouping avgpool1d
 
 mkdir -p ./playground/data/eval/mm-vet/results
 
