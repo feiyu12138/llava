@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_2dp4l16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/%j_0_log.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/%j_0_log.out
+#SBATCH --job-name=pt_2dpool4layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool4layer16_accum2_log.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool4layer16_accum2_log.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main

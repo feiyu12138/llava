@@ -1,4 +1,11 @@
 #!/bin/bash
+#
+#SBATCH --job-name=pt_2dpool8layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool8layer16_accum2_log.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool8layer16_accum2_log.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 
