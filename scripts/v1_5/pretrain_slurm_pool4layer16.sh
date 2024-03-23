@@ -1,5 +1,5 @@
 #!/bin/bash
-export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export NCCL_P2P_DISABLE=1
 
 layer=16
 stride=4

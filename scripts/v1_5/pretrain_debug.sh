@@ -2,12 +2,12 @@
 export NCCL_P2P_DISABLE=1
 layer=16
 stride=2
-grouping=avgpool1d
+grouping=avgpool2d
 NNODES=1
 GPUS=1
 PORT=29600
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
-    llava/train/train_mem.py \
+ llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
