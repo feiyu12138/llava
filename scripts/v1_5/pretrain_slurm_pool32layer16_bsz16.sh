@@ -1,16 +1,5 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_p32l16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/%j_0_log.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/%j_0_log.out
-#SBATCH --gpus=8
-#SBATCH --nodes=1
-#SBATCH --mail-type=BEGIN,END
-#SBATCH --mail-user=jchen293@jh.edu
-#SBATCH --partition=main
-#SBATCH --cpus-per-task=8
-#SBATCH --time=02-00:00:00
-#SBATCH --mem=256G
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 
