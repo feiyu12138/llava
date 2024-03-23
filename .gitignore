@@ -41,4 +41,5 @@ serve_images/
 playground
 
 !zero2.json
-!scripts/v1_5
+!zero3.json
+!zero3_offload.json
