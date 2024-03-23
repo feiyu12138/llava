@@ -99,7 +99,6 @@ class MyFlashAttention2(LlamaFlashAttention2):
 
             # overwrite attention_mask with padding_mask
             attention_mask = kwargs.pop("padding_mask")
-
         output_attentions = False
 
         bsz, q_len, _ = hidden_states.size()
@@ -367,9 +366,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # filling the position ids so that the model can use them
             if FLAG:
                 hidden_states = torch.cat(new_hidden_states, dim=0)
-                new_position_ids = torch.cat(new_position_ids, dim=0)
+                new_position_ids = torch.cat(new_position_ids, dim=0).to(position_ids.device).to(position_ids.dtype)
             else:
                 new_position_ids = position_ids
+        else:
+            new_position_ids = position_ids
             
         return hidden_states, new_position_ids
 
@@ -472,7 +473,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
-                
             if self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
