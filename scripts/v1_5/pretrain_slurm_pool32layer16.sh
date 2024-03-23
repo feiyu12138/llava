@@ -31,7 +31,6 @@ layer=16
 stride=32
 grouping=avgpool1d
 
-cd /home/jchen293/code/llava_git/llava
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
