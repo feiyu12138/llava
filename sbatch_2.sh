@@ -11,4 +11,5 @@ conda activate llava_git
  
 bash scripts/v1_5/pretrain_slurm_pool8layer16.sh
 
+# sbatch --gpus=6000_ada:8 -J ft_p8l16 scripts/v1_5/finetune_slurm_pool8layer16.sh
 # sbatch --gpus=6000_ada:8 scripts/v1_5/pretrain_slurm_pool8layer16.sh
