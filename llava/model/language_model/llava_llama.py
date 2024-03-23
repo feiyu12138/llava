@@ -41,6 +41,7 @@ from transformers.modeling_attn_mask_utils import (
 from transformers.cache_utils import Cache, DynamicCache
 from transformers.utils import logging
 from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv
+from llava.constants import MAPPINGX, MAPPINGY
 
 logger = logging.get_logger(__name__)
 def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
@@ -51,6 +52,26 @@ def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
         batch_size, _, seq_length, _ = attention_mask.shape
         new_attention_mask = attention_mask[:, :, :q_len, :kv_seq_len]
     return new_attention_mask
+
+def unflatten_image_features(image_features, position_ids):
+    B,C,Q = image_features.shape
+    image_features = image_features.view(B, C, 24, 24).contiguous()
+    position_ids = position_ids.view(B, 24, 24).unsqueeze(1)
+    start_ids = position_ids.min()
+    mappingx = MAPPINGX.to(position_ids.device)
+    mappingy = MAPPINGY.to(position_ids.device)
+    x_ids = mappingx[position_ids-start_ids] + start_ids
+    y_ids = mappingy[position_ids-start_ids] + start_ids
+    
+    return image_features, x_ids, y_ids
+
+def flatten_image_features(image_features,x_ids,y_ids):
+    B,C,H,W = image_features.shape
+    image_features = image_features.view(B,C,H*W).permute(0,2,1).contiguous()
+    position_ids_2d = torch.floor(x_ids) + 24 * torch.floor(y_ids)
+    position_ids = position_ids_2d.view(B,H*W)
+    
+    return image_features,position_ids
 
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
@@ -303,6 +324,54 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 new_position_ids = position_ids
             
         return hidden_states, new_position_ids
+    
+    def visual_avg_pool2d(self, hidden_states, position_ids):
+        if self.images_idx is not None:
+            i = 0
+            # copy position ids for batch size time
+            position_ids = position_ids.repeat(hidden_states.shape[0], 1)
+            # cat hidden states with position ids
+            new_hidden_states = []
+            new_position_ids = []
+            FLAG = False
+            for image_idx in self.images_idx:
+                if image_idx[0].shape[0] == 0:
+                    continue
+                FLAG = True
+                states_segment = []
+                position_segment = []
+                for vi in range(image_idx[0].shape[0]):
+                    if vi == 0:
+                        states_segment.append(hidden_states[i:i+1,0: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,0: image_idx[vi]])
+                    else:
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1).contiguous()
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1).contiguous()
+                    visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
+                    visual_states = torch.nn.functional.avg_pool2d(visual_states, kernel_size=self.stride, stride=self.stride)
+                    visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
+                    visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
+                    visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions)
+                    states_segment.append(visual_states)
+                    position_segment.append(visual_positions.to(position_ids.dtype))
+                    if vi == image_idx[0].shape[0] - 1:
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
+                states_segment = torch.cat(states_segment, dim=1)
+                position_segment = torch.cat(position_segment, dim=1)
+                new_hidden_states.append(states_segment) 
+                new_position_ids.append(position_segment)
+                i += 1
+            # filling the position ids so that the model can use them
+            if FLAG:
+                hidden_states = torch.cat(new_hidden_states, dim=0)
+                new_position_ids = torch.cat(new_position_ids, dim=0)
+            else:
+                new_position_ids = position_ids
+            
+        return hidden_states, new_position_ids
 
     def forward(
         self,
@@ -390,6 +459,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             if layer_idx == self.groupingLayer and self.grouping != 'none':
                 if self.grouping == 'avgpool1d':
                     hidden_states, position_ids = self.visual_avg_pool1d(hidden_states, position_ids)
+                    self.label_ids = position_ids
+                elif self.grouping == 'avgpool2d':
+                    hidden_states, position_ids = self.visual_avg_pool2d(hidden_states, position_ids)
                     self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")

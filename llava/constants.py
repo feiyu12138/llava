@@ -11,3 +11,10 @@ DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 IMAGE_PLACEHOLDER = "<image-placeholder>"
+
+import itertools
+import torch
+# create a look up mapping table for the image tokens 576 -> 24 x 24
+MAPPING = list(itertools.product(range(24), range(24)))
+MAPPINGX = torch.tensor([x for _, x in MAPPING])
+MAPPINGY = torch.tensor([y for y, _ in MAPPING])

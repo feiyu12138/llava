@@ -27,6 +27,8 @@ wandb
 output
 
 checkpoints
+checkpoint
+
 ckpts*
 
 .ipynb_checkpoints

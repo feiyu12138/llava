@@ -2,7 +2,7 @@
 export NCCL_P2P_DISABLE=1
 layer=16
 stride=2
-grouping=avgpool1d
+grouping=avgpool2d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -39,3 +39,4 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
+sleep 5d
