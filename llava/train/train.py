@@ -64,6 +64,9 @@ class ModelArguments:
     mm_use_im_patch_token: bool = field(default=True)
     mm_patch_merge_type: Optional[str] = field(default='flat')
     mm_vision_select_feature: Optional[str] = field(default="patch")
+    layer: Optional[int] =field(default=16)
+    stride : Optional[int]= field(default=2)
+    grouping: Optional[str] = field(default="none")
 
 
 @dataclass
@@ -840,6 +843,9 @@ def train(attn_implementation=None):
             **bnb_model_from_pretrained_args
         )
     model.config.use_cache = False
+    model.model.grouping = model_args.grouping
+    model.model.stride = model_args.stride
+    model.model.groupingLayer = model_args.layer
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)

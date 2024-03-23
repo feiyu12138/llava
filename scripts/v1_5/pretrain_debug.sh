@@ -3,7 +3,11 @@ export NCCL_P2P_DISABLE=1
 layer=16
 stride=2
 grouping=avgpool1d
-deepspeed llava/train/train_mem.py \
+NNODES=1
+GPUS=1
+PORT=29600
+torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
+    llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
@@ -18,7 +22,7 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir ./checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
