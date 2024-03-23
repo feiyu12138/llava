@@ -1,9 +1,9 @@
 #!/bin/bash
 #!/bin/bash
 #
-#SBATCH --job-name=ft_lora_pool8layer16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/ft_lora_pool8layer16.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/ft_lora_pool8layer16.out
+#SBATCH --job-name=ft_lora_reprod
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/ft_lora_reprod.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/ft_lora_reprod.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -14,7 +14,7 @@ conda activate llava_git
 
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-
+export WANDB_NAME='ft_lora_reprod' 
 
 
 deepspeed llava/train/train_mem.py \
