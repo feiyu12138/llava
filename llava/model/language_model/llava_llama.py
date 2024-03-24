@@ -42,6 +42,7 @@ from transformers.cache_utils import Cache, DynamicCache
 from transformers.utils import logging
 from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv
 from llava.constants import MAPPINGX, MAPPINGY
+from llava.model.multimodal_projector.visual_plugin import CAbstractor
 
 logger = logging.get_logger(__name__)
 def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
@@ -280,8 +281,18 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             [MyLlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
         self.label_ids = None
+        self.CAbstractor = None
+        self.hidden_size = config.hidden_size
+        
+    def create_CAbstractor(self, num_pre_layers, num_post_layers,stride):
+        self.CAbstractor = CAbstractor(hidden_dim=self.hidden_size, 
+                                       num_pre_layers=num_pre_layers, 
+                                       num_post_layers=num_post_layers, 
+                                       pool_stride=stride)
+    def get_CAbstractor(self):
+        return self.CAbstractor
     
-    def visual_avg_pool1d(self, hidden_states, position_ids):
+    def visual_operating(self, hidden_states, position_ids, operator):
         if self.images_idx is not None:
             i = 0
             # copy position ids for batch size time
@@ -305,56 +316,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1).contiguous()
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1).contiguous()
-                    visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=self.stride, stride=self.stride).permute(0,2,1).contiguous()
-                    visual_positions = torch.nn.functional.avg_pool1d(visual_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride).squeeze(1).contiguous()
-                    states_segment.append(visual_states)
-                    position_segment.append(visual_positions.to(position_ids.dtype))
-                    if vi == image_idx[0].shape[0] - 1:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
-                states_segment = torch.cat(states_segment, dim=1)
-                position_segment = torch.cat(position_segment, dim=1)
-                new_hidden_states.append(states_segment) 
-                new_position_ids.append(position_segment)
-                i += 1
-            # filling the position ids so that the model can use them
-            if FLAG:
-                hidden_states = torch.cat(new_hidden_states, dim=0)
-                new_position_ids = torch.cat(new_position_ids, dim=0)
-            else:
-                new_position_ids = position_ids
-            
-        return hidden_states, new_position_ids
-    
-    def visual_avg_pool2d(self, hidden_states, position_ids):
-        if self.images_idx is not None:
-            i = 0
-            # copy position ids for batch size time
-            position_ids = position_ids.repeat(hidden_states.shape[0], 1)
-            # cat hidden states with position ids
-            new_hidden_states = []
-            new_position_ids = []
-            FLAG = False
-            for image_idx in self.images_idx:
-                if image_idx[0].shape[0] == 0:
-                    continue
-                FLAG = True
-                states_segment = []
-                position_segment = []
-                for vi in range(image_idx[0].shape[0]):
-                    if vi == 0:
-                        states_segment.append(hidden_states[i:i+1,0: image_idx[vi]])
-                        position_segment.append(position_ids[i:i+1,0: image_idx[vi]])
-                    else:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1).contiguous()
-                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1).contiguous()
-                    visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
-                    visual_states = torch.nn.functional.avg_pool2d(visual_states, kernel_size=self.stride, stride=self.stride)
-                    visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-                    visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-                    visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
+                    visual_states,visual_positions = operator(visual_states,visual_positions)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
@@ -376,6 +338,27 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             
         return hidden_states, new_position_ids
 
+    def visual_avg_pool1d(self,visual_states, visual_positions):
+        visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=self.stride, stride=self.stride).permute(0,2,1).contiguous()
+        visual_positions = torch.nn.functional.avg_pool1d(visual_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride).squeeze(1).contiguous()
+        return visual_states, visual_positions
+    
+    def visual_avg_pool2d(self,visual_states, visual_positions):
+        visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
+        visual_states = torch.nn.functional.avg_pool2d(visual_states, kernel_size=self.stride, stride=self.stride)
+        visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
+        visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
+        visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
+        return visual_states, visual_positions
+    
+    def apply_CAbstractor(self, visual_states, visual_positions):
+        visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
+        visual_states = self.CAbstractor(visual_states)
+        visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
+        visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
+        visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
+        return visual_states, visual_positions
+    
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -461,10 +444,13 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 all_hidden_states += (hidden_states,)
             if layer_idx == self.groupingLayer and self.grouping != 'none':
                 if self.grouping == 'avgpool1d':
-                    hidden_states, position_ids = self.visual_avg_pool1d(hidden_states, position_ids)
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = position_ids
                 elif self.grouping == 'avgpool2d':
-                    hidden_states, position_ids = self.visual_avg_pool2d(hidden_states, position_ids)
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
+                    self.label_ids = position_ids
+                elif self.grouping == 'cabstractor':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_CAbstractor)
                     self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")

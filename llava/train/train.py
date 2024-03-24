@@ -67,6 +67,8 @@ class ModelArguments:
     layer: Optional[int] =field(default=16)
     stride : Optional[int]= field(default=2)
     grouping: Optional[str] = field(default="none")
+    num_pre_layers: Optional[int] = field(default=3)
+    num_post_layers: Optional[int] = field(default=3)
 
 
 @dataclass
@@ -85,6 +87,7 @@ class TrainingArguments(transformers.TrainingArguments):
     optim: str = field(default="adamw_torch")
     remove_unused_columns: bool = field(default=False)
     freeze_mm_mlp_adapter: bool = field(default=False)
+    tune_cabstractor: bool = field(default=False)
     mpt_attn_impl: Optional[str] = field(default="triton")
     model_max_length: int = field(
         default=512,
@@ -192,6 +195,8 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
     if getattr(trainer.args, "tune_mm_mlp_adapter", False):
         # Only save Adapter
         keys_to_match = ['mm_projector']
+        if getattr(trainer.args, "tune_cabstractor", False):
+            keys_to_match.extend(['CAbstractor'])
         if getattr(trainer.args, "use_im_start_end", False):
             keys_to_match.extend(['embed_tokens', 'embed_in'])
 
@@ -206,7 +211,9 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                 os.makedirs(mm_projector_folder, exist_ok=True)
                 torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
             else:
-                torch.save(weight_to_save, os.path.join(output_dir, f'mm_projector.bin'))
+                name = "mm_projector.bin" if "CAbstractor" not in keys_to_match else "mm_project_and_CAbstractor.bin"
+                torch.save(weight_to_save, os.path.join(output_dir, name))
+                
         return
 
     if trainer.deepspeed:
@@ -854,6 +861,10 @@ def train(attn_implementation=None):
     model.model.grouping = model_args.grouping
     model.model.stride = model_args.stride
     model.model.groupingLayer = model_args.layer
+    if model.model.grouping == 'cabstractor':
+        model.model.create_CAbstractor(num_pre_layers=model_args.num_pre_layers, 
+                                       num_post_layers=model_args.num_post_layers,
+                                       stride=model_args.stride,)
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
@@ -942,6 +953,9 @@ def train(attn_implementation=None):
             model.requires_grad_(False)
             for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = True
+            if training_args.tune_cabstractor and model_args.grouping == 'cabstractor':
+                for p in model.get_model().get_CAbstractor().parameters():
+                    p.requires_grad = True
 
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
         if training_args.freeze_mm_mlp_adapter:
@@ -950,6 +964,8 @@ def train(attn_implementation=None):
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
+            if training_args.tune_cabstractor and model_args.grouping == 'cabstractor':
+                model.get_model().get_CAbstractor().to(dtype=compute_dtype, device=training_args.device)
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         model.config.mm_projector_lr = training_args.mm_projector_lr
