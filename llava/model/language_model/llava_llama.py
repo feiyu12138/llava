@@ -60,16 +60,17 @@ def unflatten_image_features(image_features, position_ids):
     start_ids = position_ids.min()
     mappingx = MAPPINGX.to(position_ids.device)
     mappingy = MAPPINGY.to(position_ids.device)
-    x_ids = mappingx[position_ids-start_ids] + start_ids
-    y_ids = mappingy[position_ids-start_ids] + start_ids
+    x_ids = mappingx[position_ids-start_ids]
+    y_ids = mappingy[position_ids-start_ids]
     
     return image_features, x_ids, y_ids
 
-def flatten_image_features(image_features,x_ids,y_ids):
+def flatten_image_features(image_features,x_ids,y_ids,position_ids):
     B,C,H,W = image_features.shape
+    start_ids = position_ids.min()
     image_features = image_features.view(B,C,H*W).permute(0,2,1).contiguous()
     position_ids_2d = torch.floor(x_ids) + 24 * torch.floor(y_ids)
-    position_ids = position_ids_2d.view(B,H*W)
+    position_ids = position_ids_2d.view(B,H*W) + start_ids
     
     return image_features,position_ids
 
@@ -278,6 +279,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.layers = nn.ModuleList(
             [MyLlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
+        self.label_ids = None
     
     def visual_avg_pool1d(self, hidden_states, position_ids):
         if self.images_idx is not None:
@@ -352,7 +354,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     visual_states = torch.nn.functional.avg_pool2d(visual_states, kernel_size=self.stride, stride=self.stride)
                     visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
                     visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-                    visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions)
+                    visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
@@ -601,8 +603,10 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         loss = None
         if labels is not None:
-            labels = torch.gather(labels, 1, self.model.label_ids)
+            if self.model.label_ids is not None:
+                labels = torch.gather(labels, 1, self.model.label_ids)
             # Shift so that tokens < n predict n
+            
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
