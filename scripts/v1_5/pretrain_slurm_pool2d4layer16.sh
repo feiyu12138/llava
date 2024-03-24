@@ -1,36 +1,22 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_p16l16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/%j_0_log.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/%j_0_log.out
+#SBATCH --job-name=pt_2dpool4layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool4layer16.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool4layer16.out
 #SBATCH --gpus=8
-#SBATCH --nodes=2
-#SBATCH --mail-type=BEGIN,END
-#SBATCH --mail-user=jchen293@jh.edu
+#SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH --cpus-per-task=8
-#SBATCH --time=02-00:00:00
-#SBATCH --mem=256G
-
-
-# --exclude=ccvl[14,33-38]
+#SBATCH--exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-
+export WANDB_NAME='pt_2dpool4layer16'
 module purge
 module load conda
 conda activate llava_git
 
-which python
-
-export MASTER_PORT=12800
-master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-export MASTER_ADDR=$master_addr
-
 layer=16
-stride=32
-grouping=avgpool1d
-
+stride=4
+grouping=avgpool2d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -67,6 +53,3 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
-
-
-# sbatch --gpus=6000_ada:8 scripts/v1_5/pretrain_slurm_pool16layer16.sh

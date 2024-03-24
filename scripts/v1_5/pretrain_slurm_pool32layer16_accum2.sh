@@ -1,19 +1,5 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_p16l16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/%j_0_log.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/%j_0_log.out
-#SBATCH --gpus=8
-#SBATCH --nodes=2
-#SBATCH --mail-type=BEGIN,END
-#SBATCH --mail-user=jchen293@jh.edu
-#SBATCH --partition=main
-#SBATCH --cpus-per-task=8
-#SBATCH --time=02-00:00:00
-#SBATCH --mem=256G
-
-
-# --exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 
@@ -21,11 +7,11 @@ module purge
 module load conda
 conda activate llava_git
 
-which python
+# which python
 
-export MASTER_PORT=12800
-master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-export MASTER_ADDR=$master_addr
+# export MASTER_PORT=12800
+# master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+# export MASTER_ADDR=$master_addr
 
 layer=16
 stride=32
@@ -44,11 +30,11 @@ deepspeed llava/train/train_mem.py \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-bsz16-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 24000 \
