@@ -1,8 +1,9 @@
 #!/bin/bash
+# run on ccvl29 !!
 
-module purge
-module load conda
-conda activate llava_git
+# module purge
+# module load conda
+# conda activate llava_git
 
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
@@ -48,3 +49,6 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
+
+
+sleep 2d
