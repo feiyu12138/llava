@@ -1,8 +1,9 @@
 #!/bin/bash
+# run on ccvl29 !!
 
-module purge
-module load conda
-conda activate llava_git
+# module purge
+# module load conda
+# conda activate llava_git
 
 # note: RUN ON 29
 
@@ -52,3 +53,6 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
+
+
+sleep 2d
