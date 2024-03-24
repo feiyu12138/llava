@@ -72,15 +72,25 @@ def get_modality_length_grouped_indices(lengths, batch_size, world_size, generat
     mm_megabatches = [mm_shuffle[i : i + megabatch_size] for i in range(0, len(mm_shuffle), megabatch_size)]
     lang_megabatches = [lang_shuffle[i : i + megabatch_size] for i in range(0, len(lang_shuffle), megabatch_size)]
 
-    last_mm = mm_megabatches[-1]
-    last_lang = lang_megabatches[-1]
-    additional_batch = last_mm + last_lang
-    megabatches = mm_megabatches[:-1] + lang_megabatches[:-1]
-    megabatch_indices = torch.randperm(len(megabatches), generator=generator)
-    megabatches = [megabatches[i] for i in megabatch_indices]
+    if True:
+        last_mm = mm_megabatches[-1] + mm_megabatches[0][:megabatch_size-len(mm_megabatches[-1])]
+        last_lang = lang_megabatches[-1] + lang_megabatches[0][:megabatch_size-len(lang_megabatches[-1])]
 
-    if len(additional_batch) > 0:
-        megabatches.append(sorted(additional_batch))
+        megabatches = mm_megabatches[:-1] + last_mm + lang_megabatches[:-1] + last_lang
+        megabatch_indices = torch.randperm(len(megabatches), generator=generator)
+        megabatches = [megabatches[i] for i in megabatch_indices]
+
+    else:
+        last_mm = mm_megabatches[-1]
+        last_lang = lang_megabatches[-1]
+        additional_batch = last_mm + last_lang
+        megabatches = mm_megabatches[:-1] + lang_megabatches[:-1]
+        megabatch_indices = torch.randperm(len(megabatches), generator=generator)
+        megabatches = [megabatches[i] for i in megabatch_indices]
+
+
+        if len(additional_batch) > 0:
+            megabatches.append(sorted(additional_batch))
 
     return [i for megabatch in megabatches for i in megabatch]
 
