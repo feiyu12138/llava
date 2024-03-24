@@ -615,11 +615,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             shift_labels = shift_labels.view(-1)
             # Enable model parallelism
             shift_labels = shift_labels.to(shift_logits.device)
-            try:
-                loss = loss_fct(shift_logits, shift_labels)
-            except:
-                print("logits: ",shift_logits.shape)
-                print("label: ",shift_labels.shape)
+            loss = loss_fct(shift_logits, shift_labels)
 
         if not return_dict:
             output = (logits,) + outputs[1:]
