@@ -16,7 +16,7 @@ conda activate llava_git
 
 layer=16
 stride=4
-grouping=cabstractor
+grouping=DWConvabstractor_gate
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -26,7 +26,7 @@ deepspeed llava/train/train_mem.py \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
-    --tune_cabstractor True \
+    --tune_abstractor True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
