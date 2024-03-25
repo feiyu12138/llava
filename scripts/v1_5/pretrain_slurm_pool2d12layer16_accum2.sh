@@ -8,7 +8,7 @@
 #SBATCH --partition=main
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_NAME='pt_2dpool12layer16_accum2'
+export WANDB_PROJECT='llava'
 
 module purge
 module load conda
