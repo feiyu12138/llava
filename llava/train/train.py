@@ -87,7 +87,7 @@ class TrainingArguments(transformers.TrainingArguments):
     optim: str = field(default="adamw_torch")
     remove_unused_columns: bool = field(default=False)
     freeze_mm_mlp_adapter: bool = field(default=False)
-    tune_cabstractor: bool = field(default=False)
+    tune_abstractor: bool = field(default=False)
     mpt_attn_impl: Optional[str] = field(default="triton")
     model_max_length: int = field(
         default=512,
@@ -116,6 +116,7 @@ class TrainingArguments(transformers.TrainingArguments):
     lora_bias: str = "none"
     mm_projector_lr: Optional[float] = None
     group_by_modality_length: bool = field(default=False)
+    ignore_data_skip: bool = False
 
 
 def maybe_zero_3(param, ignore_status=False, name=None):
@@ -195,8 +196,8 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
     if getattr(trainer.args, "tune_mm_mlp_adapter", False):
         # Only save Adapter
         keys_to_match = ['mm_projector']
-        if getattr(trainer.args, "tune_cabstractor", False):
-            keys_to_match.extend(['CAbstractor'])
+        if getattr(trainer.args, "tune_abstractor", False):
+            keys_to_match.extend(['Abstractor'])
         if getattr(trainer.args, "use_im_start_end", False):
             keys_to_match.extend(['embed_tokens', 'embed_in'])
 
@@ -211,7 +212,7 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                 os.makedirs(mm_projector_folder, exist_ok=True)
                 torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
             else:
-                name = "mm_projector.bin" if "CAbstractor" not in keys_to_match else "mm_project_and_CAbstractor.bin"
+                name = "mm_projector.bin" if "Abstractor" not in keys_to_match else "mm_project_and_Abstractor.bin"
                 torch.save(weight_to_save, os.path.join(output_dir, name))
                 
         return
@@ -701,6 +702,7 @@ class LazySupervisedDataset(Dataset):
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         sources = self.list_data_dict[i]
+        # print(i)
         if isinstance(i, int):
             sources = [sources]
         assert len(sources) == 1, "Don't know why it is wrapped to a list"  # FIXME
@@ -754,6 +756,8 @@ class LazySupervisedDataset(Dataset):
             # image does not exist in the data, but the model is multimodal
             crop_size = self.data_args.image_processor.crop_size
             data_dict['image'] = torch.zeros(3, crop_size['height'], crop_size['width'])
+        # added by jieneng
+        data_dict['sample_id'] = self.list_data_dict[i]['id']
         return data_dict
 
 
@@ -787,6 +791,10 @@ class DataCollatorForSupervisedDataset(object):
                 batch['images'] = torch.stack(images)
             else:
                 batch['images'] = images
+
+        if 'sample_id' in instances[0]:
+            sample_ids = [instance['sample_id'] for instance in instances]
+            batch['sample_ids'] = sample_ids
 
         return batch
 
@@ -861,8 +869,8 @@ def train(attn_implementation=None):
     model.model.grouping = model_args.grouping
     model.model.stride = model_args.stride
     model.model.groupingLayer = model_args.layer
-    if model.model.grouping == 'cabstractor':
-        model.model.create_CAbstractor(num_pre_layers=model_args.num_pre_layers, 
+    if model.model.grouping.find('abstractor'):
+        model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
                                        stride=model_args.stride,)
 
@@ -953,8 +961,8 @@ def train(attn_implementation=None):
             model.requires_grad_(False)
             for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = True
-            if training_args.tune_cabstractor and model_args.grouping == 'cabstractor':
-                for p in model.get_model().get_CAbstractor().parameters():
+            if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
+                for p in model.get_model().get_Abstractor().parameters():
                     p.requires_grad = True
 
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
@@ -964,8 +972,8 @@ def train(attn_implementation=None):
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
-            if training_args.tune_cabstractor and model_args.grouping == 'cabstractor':
-                model.get_model().get_CAbstractor().to(dtype=compute_dtype, device=training_args.device)
+            if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
+                model.get_model().get_Abstractor().to(dtype=compute_dtype, device=training_args.device)
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         model.config.mm_projector_lr = training_args.mm_projector_lr
@@ -988,6 +996,8 @@ def train(attn_implementation=None):
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
+
+    
     trainer = LLaVATrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
