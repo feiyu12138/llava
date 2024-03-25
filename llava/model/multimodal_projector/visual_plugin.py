@@ -59,7 +59,7 @@ class Abstractor(nn.Module):
 
     def forward(self,x):
         if self.is_gate:
-            x1 = self.net(x) * self.gate.tanh() + self.pooler(x)
+            x = self.net(x) * self.gate.tanh() + self.pooler(x)
         else:
             x = self.net(x)
         return x
@@ -74,8 +74,8 @@ class DAbstractor(nn.Module):
         
     
 if __name__ == '__main__':
-    model = Abstractor(3, 3, 3, 3, 3, 3, 2)
-    x = torch.randn(1, 3, 224, 224)
+    model = Abstractor(32, 3, 3, 4, 'DWConvabstractor_gate')
+    x = torch.randn(1, 32, 24, 24)
     y = model(x)
     print(y.shape)
         
