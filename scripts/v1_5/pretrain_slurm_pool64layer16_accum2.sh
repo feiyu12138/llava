@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_pool64layer16_accum2
+#SBATCH --job-name=pt
 #SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_pool64layer16_accum2.err
 #SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_pool64layer16_accum2.out
 #SBATCH --gpus=8
