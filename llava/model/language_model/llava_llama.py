@@ -42,7 +42,7 @@ from transformers.cache_utils import Cache, DynamicCache
 from transformers.utils import logging
 from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv
 from llava.constants import MAPPINGX, MAPPINGY
-from llava.model.multimodal_projector.visual_plugin import CAbstractor
+from llava.model.multimodal_projector.visual_plugin import Abstractor
 
 logger = logging.get_logger(__name__)
 def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
@@ -281,16 +281,18 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             [MyLlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
         self.label_ids = None
-        self.CAbstractor = None
+        self.Abstractor = None
         self.hidden_size = config.hidden_size
-        
-    def create_CAbstractor(self, num_pre_layers, num_post_layers,stride):
-        self.CAbstractor = CAbstractor(hidden_dim=self.hidden_size, 
+
+    def create_Abstractor(self, num_pre_layers, num_post_layers,stride):
+        self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
                                        num_pre_layers=num_pre_layers, 
                                        num_post_layers=num_post_layers, 
-                                       pool_stride=stride)
-    def get_CAbstractor(self):
-        return self.CAbstractor
+                                       pool_stride=stride,
+                                       grouping=self.grouping)
+
+    def get_Abstractor(self):
+        return self.Abstractor
     
     def visual_operating(self, hidden_states, position_ids, operator):
         if self.images_idx is not None:
@@ -351,9 +353,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
         return visual_states, visual_positions
     
-    def apply_CAbstractor(self, visual_states, visual_positions):
+    def apply_Abstractor(self, visual_states, visual_positions):
         visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
-        visual_states = self.CAbstractor(visual_states)
+        visual_states = self.Abstractor(visual_states)
         visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
         visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
         visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
@@ -449,8 +451,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 elif self.grouping == 'avgpool2d':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
                     self.label_ids = position_ids
-                elif self.grouping == 'cabstractor':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_CAbstractor)
+                elif self.grouping.find('abstractor') != -1:
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
                     self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
@@ -506,6 +508,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             hidden_states=all_hidden_states,
             attentions=all_self_attns,
         )
+
+
 class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     config_class = LlavaConfig
 
@@ -537,6 +541,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         images: Optional[torch.FloatTensor] = None,
         image_sizes: Optional[List[List[int]]] = None,
         return_dict: Optional[bool] = None,
+        sample_ids = None, # added by jieneng
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         if inputs_embeds is None:
             (
@@ -591,6 +596,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if labels is not None:
             if self.model.label_ids is not None:
                 labels = torch.gather(labels, 1, self.model.label_ids)
+
             # Shift so that tokens < n predict n
             
             shift_logits = logits[..., :-1, :].contiguous()
@@ -658,6 +664,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
     def prepare_inputs_for_generation(self, input_ids, past_key_values=None,
                                       inputs_embeds=None, **kwargs):
+
         images = kwargs.pop("images", None)
         image_sizes = kwargs.pop("image_sizes", None)
         inputs = super().prepare_inputs_for_generation(
