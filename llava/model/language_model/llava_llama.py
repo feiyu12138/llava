@@ -314,8 +314,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1).contiguous()
-                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1).contiguous()
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))

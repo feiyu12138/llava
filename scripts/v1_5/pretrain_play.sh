@@ -2,33 +2,31 @@
 export NCCL_P2P_DISABLE=1
 layer=16
 stride=2
-grouping=avgpool2d
+grouping=cabstractor
 deepspeed llava/train/train_mem.py \
-    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
-    --deepspeed ./scripts/zero3.json \
+    --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
-    --version v1 \
-    --data_path ./playground/data/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder ./playground/data/LLaVA-Tuning \
+    --version plain \
+    --data_path ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder ./playground/data/LLaVA-Pretrain/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter ./checkpoint/llava-v1.5-7b-pretrain-stride-2-layer-16-grouping-avgpool2d/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
+    --tune_mm_mlp_adapter True \
+    --tune_cabstractor False \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
-    --image_aspect_ratio pad \
-    --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-7b-finetune-stride-2-layer-16-grouping-avgpool2d_lora \
+    --output_dir ./checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-play \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 50000 \
+    --save_steps 2 \
     --save_total_limit 1 \
-    --learning_rate 2e-4 \
+    --learning_rate 1e-3 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
@@ -42,3 +40,4 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
+sleep 5d

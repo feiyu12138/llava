@@ -32,8 +32,8 @@ def get_gt(data_path):
             if not file.endswith('.txt'):
                 continue
             for line in open(os.path.join(qa_path, file)):
-                question, answer = line.strip().split('\t')
-                GT[(category, file, question)] = answer
+                    question, answer = line.strip().split('\t')
+                    GT[(category, file, question)] = answer
     return GT
 
 if __name__ == "__main__":
