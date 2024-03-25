@@ -1,11 +1,19 @@
 #!/bin/bash
+#
+#SBATCH --job-name=pool4layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool4layer16.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool4layer16.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+
+export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export WANDB_PROJECT='llava'
 
 module purge
 module load conda
 conda activate llava_git
-
-
-export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 
 layer=16
 stride=4
@@ -45,6 +53,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name pool4layer16 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping

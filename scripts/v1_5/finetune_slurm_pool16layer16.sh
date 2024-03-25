@@ -1,19 +1,25 @@
 #!/bin/bash
-# run on ccvl29 !!
-
-# module purge
-# module load conda
-# conda activate llava_git
-
-# note: RUN ON 29
+#
+#SBATCH --job-name=pool16layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer16.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer16.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export WANDB_PROJECT='llava'
+
+module purge
+module load conda
+conda activate llava_git
 
 layer=16
 stride=16
 grouping=avgpool1d
-ROOT_DATA=/data/jieneng/data/llava_datasets
-ROOT_WIEIGHT=/data/jieneng/weights/llava/checkpoint
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -22,7 +28,7 @@ deepspeed llava/train/train_mem.py \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter $ROOT_WIEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
+    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -30,7 +36,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir $$ROOT_WIEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -50,6 +56,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name pool16layer16 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping

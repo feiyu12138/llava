@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_2dpool16layer16_accum2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool16layer16_accum2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool16layer16_accum2.out
+#SBATCH --job-name=pt_2dpool12layer16_accum2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool12layer16_accum2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool12layer16_accum2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_NAME='pt_2dpool16layer16_accum2'
+export WANDB_PROJECT='llava'
 
 module purge
 module load conda
@@ -50,6 +50,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name pt_2dpool16layer16_accum2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping

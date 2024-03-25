@@ -1,12 +1,11 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2dpool4layer16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool4layer16.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool4layer16.out
+#SBATCH --job-name=2dpool8layer16_accum2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool8layer16_accum2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool8layer16_accum2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH --exclude=ccvl[14,33-38]
 
 module purge
 module load conda
@@ -36,9 +35,9 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 50000 \
@@ -54,6 +53,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name 2dpool8layer16_accum2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
