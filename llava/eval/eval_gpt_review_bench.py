@@ -4,6 +4,7 @@ import os
 
 import openai
 import time
+from tqdm import tqdm
 
 NUM_SECONDS_TO_SLEEP = 0.5
 
@@ -12,7 +13,7 @@ def get_eval(content: str, max_tokens: int):
     while True:
         try:
             response = openai.ChatCompletion.create(
-                model='gpt-4-0314',
+                model='gpt-4-0613',
                 messages=[{
                     'role': 'system',
                     'content': 'You are a helpful and precise assistant for checking the quality of the answer.'
@@ -76,7 +77,7 @@ if __name__ == '__main__':
 
     handles = []
     idx = 0
-    for ques_js, ans1_js, ans2_js in zip(f_q, f_ans1, f_ans2):
+    for ques_js, ans1_js, ans2_js in tqdm(zip(f_q, f_ans1, f_ans2)):
         ques = json.loads(ques_js)
         ans1 = json.loads(ans1_js)
         ans2 = json.loads(ans2_js)

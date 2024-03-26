@@ -67,6 +67,7 @@ class ModelArguments:
     mm_vision_select_feature: Optional[str] = field(default="patch")
     layer: Optional[int] =field(default=16)
     stride : Optional[int]= field(default=2)
+    abstractor_kernel_size: Optional[int] = field(default=3)
     grouping: Optional[str] = field(default="none")
     num_pre_layers: Optional[int] = field(default=3)
     num_post_layers: Optional[int] = field(default=3)
@@ -878,7 +879,7 @@ def train(attn_implementation=None):
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
-                                       stride=model_args.stride,)
+                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size)
     if model_args.pretrain_abstractor:
         load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
 
