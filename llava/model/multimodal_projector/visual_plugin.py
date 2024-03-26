@@ -65,6 +65,7 @@ class Abstractor(nn.Module):
             x = self.net(x)
         return x
 
+
 class DAbstractor(nn.Module):
     def __init__(self,config, num_feature_levels,decoder_layers ):
         super(Abstractor, self).__init__()
