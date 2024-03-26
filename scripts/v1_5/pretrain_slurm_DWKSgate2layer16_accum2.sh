@@ -1,24 +1,24 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_DWConvgate4layer16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_DWConvgate4layer16.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_DWConvgate4layer16.out
+#SBATCH --job-name=pt_DWKWgate2layer16_accum2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_DWKWgate2layer16_accum2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_DWKWgate2layer16_accum2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH --exclude=ccvl[14,33-38]
+#SBATCH --exclude=ccvl[14]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export WANDB_PROJECT='llava'
 
 module purge
 module load conda
 conda activate llava_git
 
 layer=16
-stride=4
-grouping=DWConvabstractor_gate
-# BUG:     --tune_abstractor True \
-deepspeed --include localhost:4,5,6,7 llava/train/train_mem.py \
+stride=2
+grouping=DWKSabstractor_gate
+deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
@@ -27,6 +27,7 @@ deepspeed --include localhost:4,5,6,7 llava/train/train_mem.py \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
+    --tune_abstractor True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
@@ -51,7 +52,7 @@ deepspeed --include localhost:4,5,6,7 llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_DWConvgate4layer16 \
+    --run_name pt_DWKWgate2layer16_accum2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
