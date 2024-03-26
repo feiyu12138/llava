@@ -17,6 +17,7 @@ conda activate llava_git
 layer=16
 stride=4
 grouping=DWConvabstractor_gate
+#     --tune_abstractor True \
 deepspeed --include localhost:4,5,6,7 llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
