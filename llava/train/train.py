@@ -71,6 +71,7 @@ class ModelArguments:
     grouping: Optional[str] = field(default="none")
     num_pre_layers: Optional[int] = field(default=3)
     num_post_layers: Optional[int] = field(default=3)
+    abstractor_rel_pos_spatial: Optional[bool] = field(default=False)
 
 
 @dataclass
@@ -879,7 +880,8 @@ def train(attn_implementation=None):
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
-                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size)
+                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,
+                                       rel_pos_spatial= model_args.abstractor_rel_pos_spatial)
     if model_args.pretrain_abstractor:
         load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
 

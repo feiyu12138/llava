@@ -8,6 +8,7 @@ layer=16
 stride=2
 abstractor_kernel_size=3
 grouping=MSAabstractor_gate
+abstractor_rel_pos_spatial=True
 deepspeed  llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -46,4 +47,5 @@ deepspeed  llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    --abstractor_kernel_size $abstractor_kernel_size 
+    --abstractor_kernel_size $abstractor_kernel_size \
+    --abstractor_rel_pos_spatial $abstractor_rel_pos_spatial 

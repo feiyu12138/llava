@@ -100,7 +100,14 @@ def build_mlp(depth, hidden_size, output_hidden_size):
 
 
 class Abstractor(nn.Module):
-    def __init__(self, hidden_dim, num_pre_layers=3, num_post_layers=3, pool_stride=2, kernel_size=3,grouping=''):
+    def __init__(self, 
+                 hidden_dim, 
+                 num_pre_layers=3, 
+                 num_post_layers=3, 
+                 pool_stride=2, 
+                 kernel_size=3,
+                 rel_pos_spatial=False,
+                 grouping=''):
         super(Abstractor, self).__init__()
         self.type = grouping.split('_')[0] # option: cabstractor, dabstractor
         self.is_gate = grouping.find('gate')!=-1
@@ -147,6 +154,7 @@ class Abstractor(nn.Module):
                                       input_size=(24,24),
                                       kernel_q=(kernel_size,kernel_size),
                                       stride_q=(pool_stride,pool_stride),
+                                      rel_pos_spatial=rel_pos_spatial,
             )
             norm = LayerNorm2d(hidden_dim)
             self.net = nn.Sequential(msa, norm)
@@ -686,7 +694,7 @@ class DAbstractor(nn.Module):
     
 
 if __name__ == '__main__':
-    model = Abstractor(hidden_dim=1024, kernel_size=3, pool_stride=2,grouping='MSAabstractor_gate')
+    model = Abstractor(hidden_dim=1024, kernel_size=3, pool_stride=2,rel_pos_spatial=True,grouping='MSAabstractor_gate')
     input = torch.randn(10,1024, 24,24 )
 
     output = model(input)

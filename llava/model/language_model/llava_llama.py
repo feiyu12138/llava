@@ -284,11 +284,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.Abstractor = None
         self.hidden_size = config.hidden_size
 
-    def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size):
+    def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
                                        num_pre_layers=num_pre_layers, 
                                        num_post_layers=num_post_layers, 
                                        pool_stride=stride,
+                                       rel_pos_spatial=rel_pos_spatial,
                                        grouping=self.grouping,
                                        kernel_size=kernel_size)
 
