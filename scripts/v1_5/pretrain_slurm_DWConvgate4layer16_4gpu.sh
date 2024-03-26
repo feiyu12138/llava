@@ -10,7 +10,6 @@
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
-
 module purge
 module load conda
 conda activate llava_git
@@ -18,7 +17,7 @@ conda activate llava_git
 layer=16
 stride=4
 grouping=DWConvabstractor_gate
-deepspeed llava/train/train_mem.py \
+deepspeed --include localhost:4,5,6,7 llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
