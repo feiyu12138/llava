@@ -74,7 +74,7 @@ class DAbstractor(nn.Module):
         
     
 if __name__ == '__main__':
-    model = Abstractor(3, 3, 3, 3, 3, 3, 2)
+    model = Abstractor(3, 3, 3, 3, "DWConvabstractor_gate")
     x = torch.randn(1, 3, 224, 224)
     y = model(x)
     print(y.shape)
