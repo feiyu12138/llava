@@ -107,5 +107,4 @@ if __name__ == "__main__":
     parser.add_argument("--answer-prompter", action="store_true")
     parser.add_argument("--single-pred-prompt", action="store_true")
     args = parser.parse_args()
-
     eval_model(args)

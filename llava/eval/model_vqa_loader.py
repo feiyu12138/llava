@@ -84,6 +84,7 @@ def eval_model(args):
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
     model.model.stride = args.stride
     model.model.groupingLayer = args.layer
+    model.model.grouping = args.grouping
 
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
@@ -143,6 +144,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_new_tokens", type=int, default=128)
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--stride", type=int, default=2)
+    parser.add_argument("--grouping", type=str, default='none')
     args = parser.parse_args()
 
     eval_model(args)
