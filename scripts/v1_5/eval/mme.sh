@@ -1,10 +1,10 @@
 #!/bin/bash
-
+name=llava-v1.5-b7
 python -m llava.eval.model_vqa_loader \
-    --model-path my-llava-1.5-7b \
+    --model-path liuhaotian/llava-v1.5-7b \
     --question-file ./playground/data/eval/MME/llava_mme.jsonl \
-    --image-folder /data/jieneng/data/llava_datasets/eval/MME_Benchmark_release_version \
-    --answers-file ./playground/data/eval/MME/answers/llava-v1.5-7b.jsonl \
+    --image-folder ./playground/data/eval/MME/MME_Benchmark_release_version \
+    --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1
 
