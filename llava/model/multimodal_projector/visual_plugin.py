@@ -49,7 +49,7 @@ class Abstractor(nn.Module):
         elif self.type == 'DWConvabstractor':
             depthwise = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=pool_stride+1, stride=pool_stride, padding=pool_stride//2, groups=hidden_dim, bias=False)
             norm = LayerNorm2d(hidden_dim)
-            act = nn.SiLU()
+            act = nn.GELU()
             self.net = nn.Sequential(depthwise, norm, act)
         else:
             self.net = nn.Identity()
