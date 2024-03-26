@@ -105,6 +105,10 @@ class Abstractor(nn.Module):
         self.type = grouping.split('_')[0] # option: cabstractor, dabstractor
         self.is_gate = grouping.find('gate')!=-1
         
+        if self.is_gate:
+            self.pooler = nn.AvgPool2d(kernel_size=pool_stride, stride=pool_stride)
+            self.gate = nn.Parameter(torch.tensor([0.0]))
+
         if self.type == 'cabstractor':
             RegBlock = partial(
                 RegStage,
@@ -146,12 +150,11 @@ class Abstractor(nn.Module):
             )
             norm = LayerNorm2d(hidden_dim)
             self.net = nn.Sequential(msa, norm)
+            self.pooler = nn.AvgPool2d(kernel_size=kernel_size, stride=pool_stride, padding= kernel_size // 2)
         else:
             self.net = nn.Identity()
 
-        if self.is_gate:
-            self.pooler = nn.AvgPool2d(kernel_size=pool_stride, stride=pool_stride)
-            self.gate = nn.Parameter(torch.tensor([0.0]))
+
 
     def forward(self,x):
         if self.is_gate:
