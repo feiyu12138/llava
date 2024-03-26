@@ -249,9 +249,9 @@ class LLaVATrainer(Trainer):
             # Only save Adapter
             name = 'mm_projector.bin'
             keys_to_match = ['mm_projector', 'vision_resampler']
-            if getattr(self.args, "tune_cabstractor", False):
-                keys_to_match.extend(['CAbstractor'])
-                name = 'mm_projector_cabstractor.bin'
+            if getattr(self.args, "tune_abstractor", False):
+                keys_to_match.extend(['Abstractor'])
+                name = 'mm_projector_abstractor.bin'
             if getattr(self.args, "use_im_start_end", False):
                 keys_to_match.extend(['embed_tokens', 'embed_in'])
             weight_to_save = get_mm_adapter_state_maybe_zero_3(self.model.named_parameters(), keys_to_match)
