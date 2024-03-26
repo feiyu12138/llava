@@ -51,6 +51,11 @@ class Abstractor(nn.Module):
             norm = LayerNorm2d(hidden_dim)
             act = nn.GELU()
             self.net = nn.Sequential(depthwise, norm, act)
+        elif self.type == 'DWKSabstractor':
+            depthwise = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=pool_stride, stride=pool_stride, padding=0, groups=hidden_dim, bias=False)
+            norm = LayerNorm2d(hidden_dim)
+            act = nn.GELU()
+            self.net = nn.Sequential(depthwise, norm, act)
         else:
             self.net = nn.Identity()
 
