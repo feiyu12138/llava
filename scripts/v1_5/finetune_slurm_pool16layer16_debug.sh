@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool16layer16_fix
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer16_fix.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer16_fix.out
+#SBATCH --job-name=pool16layer16_debug
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer16_debug.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer16_debug.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -56,10 +56,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool16layer16_fix \
+    --run_name pool16layer16 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
-
-
-sleep 2d

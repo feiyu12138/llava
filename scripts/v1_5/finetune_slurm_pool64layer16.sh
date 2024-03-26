@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool16layer16_fix
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer16_fix.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer16_fix.out
+#SBATCH --job-name=pool64layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool64layer16.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool64layer16.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -16,7 +16,7 @@ module load conda
 conda activate llava_git
 
 layer=16
-stride=16
+stride=64
 grouping=avgpool1d
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
@@ -56,10 +56,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool16layer16_fix \
+    --run_name pool64layer16 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
-
-
-sleep 2d
