@@ -179,7 +179,7 @@ class MultiScaleAttention(nn.Module):
         has_cls_embed=False,
         mode="avg",
         pool_first=True,
-        rel_pos_spatial=False,
+        rel_pos_spatial=True,
         rel_pos_zero_init=False,
         residual_pooling=True,
     ):
@@ -686,7 +686,7 @@ class DAbstractor(nn.Module):
     
 
 if __name__ == '__main__':
-    model = Abstractor(hidden_dim=1024, kernel_size=3, pool_stride=2,grouping='MSAabstractor_gate')
+    model = Abstractor(hidden_dim=1024, kernel_size=7, pool_stride=8,grouping='MSAabstractor_gate')
     input = torch.randn(10,1024, 24,24 )
 
     output = model(input)
