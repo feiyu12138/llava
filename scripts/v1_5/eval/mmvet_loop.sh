@@ -1,6 +1,7 @@
 #!/bin/bash
-for stride in 2 4 8 16 32 64;
-do for layer in 8 16 31;
+grouping=avgpool2d
+for stride in 2 4 8;
+do for layer in 1 8 16 30;
 do
 python -m llava.eval.model_vqa \
     --model-path my-llava-1.5-7b \
@@ -11,7 +12,7 @@ python -m llava.eval.model_vqa \
     --conv-mode vicuna_v1 \
     --stride $stride \
     --layer $layer \
-    --grouping avgpool1d
+    --grouping $grouping
 
 mkdir -p ./playground/data/eval/mm-vet/results
 

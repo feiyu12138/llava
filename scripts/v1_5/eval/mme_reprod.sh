@@ -1,6 +1,6 @@
 #!/bin/bash
 CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
-name=llava-v1.5-13b
+name=llava-v1.5-7b-reprod
 # python -m llava.eval.model_vqa_loader \
 #     --model-path $CKPT \
 #     --question-file ./playground/data/eval/MME/llava_mme.jsonl \
