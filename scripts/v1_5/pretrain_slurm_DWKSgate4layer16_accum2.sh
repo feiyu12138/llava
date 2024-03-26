@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_DWKWgate4layer16_accum2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_DWKWgate4layer16_accum2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_DWKWgate4layer16_accum2.out
+#SBATCH --job-name=pt_DWKSgate4layer16_accum2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_DWKSgate4layer16_accum2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_DWKSgate4layer16_accum2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -52,7 +52,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_DWKWgate4layer16_accum2 \
+    --run_name pt_DWKSgate4layer16_accum2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
