@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_MSAgate4layer8_k7_rps
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_MSAgate4layer8_k7_rps.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_MSAgate4layer8_k7_rps.out
+#SBATCH --job-name=pt_MSAgate4layer8_k7_rps_accum2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_MSAgate4layer8_k7_rps_accum2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_MSAgate4layer8_k7_rps_accum2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -36,9 +36,9 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 24000 \
@@ -54,7 +54,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_MSAgate4layer8_k7_rps \
+    --run_name pt_MSAgate4layer8_k7_rps_accum2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
