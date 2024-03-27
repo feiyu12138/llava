@@ -15,7 +15,7 @@ deepspeed llava/train/train_mem.py \
     --data_path /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
     --image_folder /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter /data/datasets/jchen293/weights/llava/checkpoints/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_project_and_Abstractor.bin \
+    --pretrain_mm_mlp_adapter /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_project_and_Abstractor.bin \
     --pretrain_abstractor True \
     --tune_abstractor True \
     --mm_projector_type mlp2x_gelu \
@@ -25,7 +25,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir /data/datasets/jchen293/weights/llava/checkpoints/llava-v1.5-7b-finetune-stride-$stride-layer-$stride-grouping-$grouping \
+    --output_dir /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-finetune-stride-$stride-layer-$stride-grouping-$grouping \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
