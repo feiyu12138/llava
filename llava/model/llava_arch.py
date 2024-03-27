@@ -52,6 +52,7 @@ class LlavaMetaModel:
         mm_vision_select_feature = model_args.mm_vision_select_feature
         pretrain_mm_mlp_adapter = model_args.pretrain_mm_mlp_adapter
         mm_patch_merge_type = model_args.mm_patch_merge_type
+        pretrain_abstractor = model_args.pretrain_abstractor
 
         self.config.mm_vision_tower = vision_tower
 
@@ -93,7 +94,6 @@ class LlavaMetaModel:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
             def get_w(weights, keyword):
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
-
             self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
 
 

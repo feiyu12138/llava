@@ -104,7 +104,9 @@ if __name__ == "__main__":
     video_img_dir = 'SEED-Bench-video-image'
     ques_type_id_to_name = {id:n for n,id in data['question_type'].items()}
 
+    output = 'SEED-Bench-video-image.json'
     video_data = [x for x in data['questions'] if x['data_type'] == 'video']
+    
 
     with open(output, 'w') as f, concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_images = {executor.submit(fetch_images_parallel, qa_item): qa_item for qa_item in video_data}

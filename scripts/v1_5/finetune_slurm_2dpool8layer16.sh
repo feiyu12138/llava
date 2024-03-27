@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2dpool8layer16_accum2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool8layer16_accum2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool8layer16_accum2.out
+#SBATCH --job-name=2dpool8layer16
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool8layer16.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool8layer16.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -16,7 +16,7 @@ export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
 
 layer=16
-stride=4
+stride=8
 grouping=avgpool2d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -35,7 +35,7 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 8 \
+    --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
@@ -53,7 +53,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name 2dpool8layer16_accum2 \
+    --run_name 2dpool8layer16 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping

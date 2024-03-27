@@ -59,6 +59,7 @@ class ModelArguments:
     vision_tower: Optional[str] = field(default=None)
     mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
+    pretrain_abstractor: bool = field(default=False)
     mm_projector_type: Optional[str] = field(default='linear')
     mm_use_im_start_end: bool = field(default=False)
     mm_use_im_patch_token: bool = field(default=True)
@@ -66,9 +67,11 @@ class ModelArguments:
     mm_vision_select_feature: Optional[str] = field(default="patch")
     layer: Optional[int] =field(default=16)
     stride : Optional[int]= field(default=2)
+    abstractor_kernel_size: Optional[int] = field(default=3)
     grouping: Optional[str] = field(default="none")
     num_pre_layers: Optional[int] = field(default=3)
     num_post_layers: Optional[int] = field(default=3)
+    abstractor_rel_pos_spatial: Optional[bool] = field(default=False)
 
 
 @dataclass
@@ -810,6 +813,11 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                 eval_dataset=None,
                 data_collator=data_collator)
 
+def load_abstractor(model, pretrain_mm_mlp_adapter):
+    weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
+    def get_w(weights, keyword):
+            return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+    model.get_model().get_Abstractor().load_state_dict(get_w(weights, 'Abstractor'))
 
 def train(attn_implementation=None):
     global local_rank
@@ -872,7 +880,10 @@ def train(attn_implementation=None):
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
-                                       stride=model_args.stride,)
+                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,
+                                       rel_pos_spatial= model_args.abstractor_rel_pos_spatial)
+    if model_args.pretrain_abstractor:
+        load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
@@ -955,6 +966,7 @@ def train(attn_implementation=None):
         model.config.image_aspect_ratio = data_args.image_aspect_ratio
         model.config.tokenizer_padding_side = tokenizer.padding_side
         model.config.tokenizer_model_max_length = tokenizer.model_max_length
+            
 
         model.config.tune_mm_mlp_adapter = training_args.tune_mm_mlp_adapter = model_args.tune_mm_mlp_adapter
         if model_args.tune_mm_mlp_adapter:

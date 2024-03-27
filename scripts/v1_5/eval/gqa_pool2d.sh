@@ -5,10 +5,13 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
-name=llava-v1.5-7b-reprod
+CKPT="/home/lye21/LLaVA/checkpoints/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool2d"
+name=llava-v1.5-7b-pool2d
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="./playground/data/eval/gqa/data"
+grouping=avgpool2d
+stride=4
+layer=16
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
@@ -19,7 +22,10 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
-        --conv-mode vicuna_v1 &
+        --conv-mode vicuna_v1 \
+        --grouping $grouping \
+        --stride $stride \
+        --layer $layer &
 done
 
 wait
