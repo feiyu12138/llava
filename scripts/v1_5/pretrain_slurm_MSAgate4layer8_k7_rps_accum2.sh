@@ -6,7 +6,7 @@
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH --exclude=ccvl[14,33-38]
+#SBATCH --exclude=ccvl[14]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
