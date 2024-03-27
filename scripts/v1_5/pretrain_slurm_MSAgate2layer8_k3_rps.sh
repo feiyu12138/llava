@@ -17,7 +17,7 @@ conda activate llava_git
 
 layer=16
 stride=2
-grouping=DWConvabstractor_gate
+grouping=MSAabstractor_gate
 abstractor_kernel_size=3
 abstractor_rel_pos_spatial=True
 deepspeed llava/train/train_mem.py \
