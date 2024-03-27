@@ -1011,6 +1011,7 @@ def train(attn_implementation=None):
 
     if training_args.local_rank == 0:
         print(model)
+
     trainer = LLaVATrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,

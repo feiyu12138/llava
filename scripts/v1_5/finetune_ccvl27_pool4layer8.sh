@@ -1,11 +1,13 @@
 #!/bin/bash
-
+#
+export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
 
-layer=16
-stride=8
-grouping=avgpool2d
+
+layer=8
+stride=4
+grouping=avgpool1d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -41,9 +43,10 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name 2dpool8layer16 \
+    --run_name pool4layer8 \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    > /data/datasets/jchen293/logs/exp/llava/pool4layer8.log
 
 sleep 2d
