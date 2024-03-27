@@ -1,14 +1,16 @@
 #!/bin/bash
-grouping=avgpool2d
-export OPENAI_API_KEY=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
 
-for stride in 2 4 8; do
-    for layer in 1 8 16 30; do
+layer=16
+stride=4
+grouping=avgpool2d
+name=stride-$stride-layer-$layer-grouping-$grouping
+CKPT="/home/lye21/LLaVA/checkpoints/llava-v1.5-7b-$name"
+export OPENAI_API_KEY=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
 python -m llava.eval.model_vqa \
-    --model-path liuhaotian/llava-v1.5-7b \
+    --model-path $CKPT \
     --question-file ./playground/data/eval/llava-bench-in-the-wild/questions.jsonl \
     --image-folder ./playground/data/eval/llava-bench-in-the-wild/images \
-    --answers-file ./playground/data/eval/llava-bench-in-the-wild/answers/llava-v1.5-7b-$stride-layer-$layer.jsonl \
+    --answers-file ./playground/data/eval/llava-bench-in-the-wild/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --stride $stride \
@@ -23,10 +25,8 @@ python llava/eval/eval_gpt_review_bench.py \
     --rule llava/eval/table/rule.json \
     --answer-list \
         /data/luoxin/data/llava/llava-bench-in-the-wild/answers_gpt4.jsonl \
-        playground/data/eval/llava-bench-in-the-wild/answers/llava-v1.5-7b-$stride-layer-$layer.jsonl \
+        playground/data/eval/llava-bench-in-the-wild/answers/$name.jsonl \
     --output \
-        playground/data/eval/llava-bench-in-the-wild/reviews/llava-v1.5-7b-$stride-layer-$layer.jsonl
+        playground/data/eval/llava-bench-in-the-wild/reviews/$name.jsonl
 
-python llava/eval/summarize_gpt_review.py -f playground/data/eval/llava-bench-in-the-wild/reviews/llava-v1.5-7b-$stride-layer-$layer.jsonl > playground/data/eval/llava-bench-in-the-wild/review_result/llava-v1.5-7b-stride-$stride-layer-$layer.txt
-done
-done
+python llava/eval/summarize_gpt_review.py -f playground/data/eval/llava-bench-in-the-wild/reviews/$name.jsonl > playground/data/eval/llava-bench-in-the-wild/review_result/llava-v1.5-7b-$name.txt
