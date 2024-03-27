@@ -16,7 +16,7 @@ module load conda
 conda activate llava_git
 
 layer=8
-stride=16
+stride=64
 grouping=avgpool1d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
