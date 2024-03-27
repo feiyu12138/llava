@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_DWConvgate4layer16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_DWConvgate4layer16.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_DWConvgate4layer16.out
+#SBATCH --job-name=pt_MSAgate4layer8_k7_rps
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_MSAgate4layer8_k7_rps.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_MSAgate4layer8_k7_rps.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -18,6 +18,8 @@ conda activate llava_git
 layer=16
 stride=4
 grouping=DWConvabstractor_gate
+abstractor_kernel_size=7
+abstractor_rel_pos_spatial=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -52,7 +54,9 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_DWConvgate4layer16 \
+    --run_name pt_MSAgate4layer8_k7_rps \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    --abstractor_kernel_size $abstractor_kernel_size \
+    --abstractor_rel_pos_spatial $abstractor_rel_pos_spatial
