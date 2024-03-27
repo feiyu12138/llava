@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export OPENAI_API_KEY=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
 python -m llava.eval.model_vqa \
     --model-path liuhaotian/llava-v1.5-7b \
     --question-file /data/luoxin/data/llava/llava-bench-in-the-wild/questions.jsonl \

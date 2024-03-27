@@ -1,18 +1,31 @@
 #!/bin/bash
-export NCCL_P2P_DISABLE=1
-layer=16
-stride=8
-grouping=DWKSabstractor_gate
+#
+#SBATCH --job-name=2dpool2layer8
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool2layer8.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool2layer8.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+
+export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export WANDB_PROJECT='llava'
+
+module purge
+module load conda
+conda activate llava_git
+
+layer=8
+stride=2
+grouping=avgpool2d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
-    --data_path ./playground/data/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder ./playground/data/LLaVA-Tuning \
+    --data_path /datasets/jchen293/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --image_folder /datasets/jchen293/data/llava_datasets/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter ./checkpoints/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_project_and_Abstractor.bin \
-    --pretrain_abstractor True \
-    --tune_abstractor True \
+    --pretrain_mm_mlp_adapter /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -20,7 +33,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-7b-finetune-stride-$stride-layer-$stride-grouping-$grouping \
+    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -40,6 +53,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name 2dpool2layer8 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
