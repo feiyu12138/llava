@@ -168,7 +168,7 @@ class Abstractor(nn.Module):
         if self.is_gate:
             x = self.net(x) * self.gate.tanh() + self.pooler(x)
         else:
-            x = self.net(x)
+            x = self.net(x) + self.pooler(x)
         return x
 
 class MultiScaleAttention(nn.Module):
