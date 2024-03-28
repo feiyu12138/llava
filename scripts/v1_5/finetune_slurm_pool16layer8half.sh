@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2dpool4layer8half
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool4layer8half.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool4layer8half.out
+#SBATCH --job-name=pool16layer8half
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer8half.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer8half.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -17,10 +17,9 @@ export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
 
 layer=8
-stride=4
-grouping=avgpool2d
+stride=16
+grouping=avgpool1d
 halfpool=True
-
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -55,7 +54,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_2dpool4layer8half \
+    --run_name pt_pool16layer8half \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
@@ -97,7 +96,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name 2dpool4layer8half \
+    --run_name pool16layer8half \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
