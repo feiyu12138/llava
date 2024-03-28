@@ -9,7 +9,7 @@ export WANDB_PROJECT='llava'
 
 layer=16
 stride=4
-halfpool=True
+halfpool=False
 grouping=avgpool2d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
