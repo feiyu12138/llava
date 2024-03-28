@@ -1,13 +1,11 @@
 #!/bin/bash
-export NCCL_P2P_DISABLE=1
-
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
 
 layer=8
-stride=4
+stride=2
 grouping=MSAabstractor
-abstractor_kernel_size=7
+abstractor_kernel_size=3
 abstractor_rel_pos_spatial=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -43,11 +41,9 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_MSA4layer4_k7_rps \
+    --run_name pt_MSA2layer4_k3_rps \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --abstractor_kernel_size $abstractor_kernel_size \
     --abstractor_rel_pos_spatial $abstractor_rel_pos_spatial
-
-sleep 2d
