@@ -100,3 +100,5 @@ deepspeed llava/train/train_mem.py \
     --grouping $grouping \
     --halfpool $halfpool \
     > /data/datasets/jchen293/logs/exp/llava/pool4layer8half.log
+
+sleep 2d
