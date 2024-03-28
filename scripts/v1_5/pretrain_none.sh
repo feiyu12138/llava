@@ -6,6 +6,6 @@
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH--exclude=ccvl14
+#SBATCH --exclude=ccvl[12, 30-38]
 
 sleep 5d
