@@ -56,7 +56,7 @@ deepspeed llava/train/train_mem.py \
     --layer $layer \
     --grouping $grouping \
     --halfpool $halfpool \
-    > /datasets/jchen293/logs/exp/llava/pt_pool4layer8half.log
+    > /data/datasets/jchen293/logs/exp/llava/pt_pool4layer8half.log
 
 
 deepspeed llava/train/train_mem.py \
@@ -99,4 +99,4 @@ deepspeed llava/train/train_mem.py \
     --layer $layer \
     --grouping $grouping \
     --halfpool $halfpool \
-    > /datasets/jchen293/logs/exp/llava/pool4layer8half.log
+    > /data/datasets/jchen293/logs/exp/llava/pool4layer8half.log
