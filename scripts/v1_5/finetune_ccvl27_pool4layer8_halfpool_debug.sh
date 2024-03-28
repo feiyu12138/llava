@@ -12,8 +12,7 @@ grouping=avgpool2d
 NNODES=1
 GPUS=1
 PORT=29600
-torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT}\
- llava/train/train_mem.py \
+deepspeed --include localhost:0,1,2,3,4,5,7 llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
@@ -30,7 +29,7 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT}\
     --bf16 True \
     --output_dir /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \

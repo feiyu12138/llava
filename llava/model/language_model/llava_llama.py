@@ -473,8 +473,8 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         return attn_output, None, past_key_value
 
 MY_LLAMA_ATTENTION_CLASSES = {
-    "flash_attention_2": MyFlashAttention2,
-    "ada_flash_attention_2": AdaptiveFlashAttention2,
+    "ada_flash_attention_2": MyFlashAttention2,
+    "flash_attention_2": AdaptiveFlashAttention2,
     "sdpa": AdaptiveLlamaSdpaAttention,
     "adaptive_sdpa": MyLlamaSdpaAttention,
 }  
@@ -541,10 +541,10 @@ class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
         # Self Attention
         target_states, self_attn_weights, present_key_value = self.self_attn(
             hidden_states=target_states,
-            # source_states=source_states,
+            source_states=source_states,
             attention_mask=attention_mask,
             position_ids=target_position_ids,
-            # source_position_ids=source_position_ids,
+            source_position_ids=source_position_ids,
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
