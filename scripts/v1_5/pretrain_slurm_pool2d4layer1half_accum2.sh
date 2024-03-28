@@ -1,21 +1,21 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_2dpool2layer8half_accum2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool2layer8half_accum2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool2layer8half_accum2.out
+#SBATCH --job-name=pt_2dpool4layer1half_accum2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool4layer1half_accum2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool4layer1half_accum2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH--exclude=ccvl[14]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
+
 module purge
 module load conda
 conda activate llava_git
 
-layer=8
-stride=2
+layer=1
+stride=4
 grouping=avgpool2d
 halfpool=True
 deepspeed llava/train/train_mem.py \
@@ -51,7 +51,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_2dpool2layer8half_accum2 \
+    --run_name pt_2dpool4layer1half_accum2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
