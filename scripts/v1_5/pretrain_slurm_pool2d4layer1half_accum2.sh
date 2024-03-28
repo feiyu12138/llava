@@ -54,4 +54,5 @@ deepspeed llava/train/train_mem.py \
     --run_name pt_2dpool4layer1half_accum2 \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    --halfpool $halfpool
