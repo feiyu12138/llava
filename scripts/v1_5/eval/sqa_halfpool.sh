@@ -1,10 +1,10 @@
 #!/bin/bash
 layer=16
 stride=4
-grouping=avgpool2d
+grouping=avgpool1d
 halfpool=True
 name=stride-$stride-layer-$layer-grouping-$grouping
-CKPT="/home/lye21/LLaVA/checkpoints/llava-v1.5-7b-$name"
+CKPT="./checkpoints/llava-v1.5-7b-$name"
 python -m llava.eval.model_vqa_science \
     --model-path $CKPT \
     --question-file ./playground/data/eval/scienceqa/llava_test_CQM-A.json \
@@ -16,7 +16,8 @@ python -m llava.eval.model_vqa_science \
     --layer $layer \
     --stride $stride \
     --grouping $grouping \
-    --halfpool $halfpool
+    --halfpool $halfpool \
+    
 
 python llava/eval/eval_science_qa.py \
     --base-dir ./playground/data/eval/scienceqa \

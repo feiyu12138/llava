@@ -67,15 +67,16 @@ def apply_rotary_pos_emb_for_msa(q, k, cos, sin, position_ids, source_position_i
     Returns:
         `tuple(torch.Tensor)` comprising of the query and key tensors rotated using the Rotary Position Embedding.
     """
-    cos = cos[position_ids].unsqueeze(unsqueeze_dim)
-    sin = sin[position_ids].unsqueeze(unsqueeze_dim)
+    
+    cos_target = cos[position_ids].unsqueeze(unsqueeze_dim)
+    sin_target = sin[position_ids].unsqueeze(unsqueeze_dim)
     if source_position_ids is not None:
         cos_source = cos[source_position_ids].unsqueeze(unsqueeze_dim)
         sin_source = sin[source_position_ids].unsqueeze(unsqueeze_dim)
     else:
-        cos_source = cos
-        sin_source = sin
-    q_embed = (q * cos) + (rotate_half(q) * sin)
+        cos_source = cos_target
+        sin_source = sin_target
+    q_embed = (q * cos_target) + (rotate_half(q) * cos_target)
     k_embed = (k * cos_source) + (rotate_half(k) * sin_source)
     return q_embed, k_embed
 
@@ -325,7 +326,6 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 output_attentions=output_attentions,
                 use_cache=use_cache,
             )
-
         bsz, q_len, _ = hidden_states.size()
         if source_states is not None:
             kv_len = source_states.size(1)
@@ -344,7 +344,6 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         if past_key_value is not None:
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-
         query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids, source_position_ids)
 
         if past_key_value is not None:
@@ -385,9 +384,9 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
 
 MY_LLAMA_ATTENTION_CLASSES = {
     "flash_attention_2": MyFlashAttention2,
-    "sdpa": MyLlamaSdpaAttention,
-    "adaptive_sdpa": AdaptiveLlamaSdpaAttention,
-}   
+    "sdpa": AdaptiveLlamaSdpaAttention,
+    "adaptive_sdpa": MyLlamaSdpaAttention,
+}  
 class MyLlamaDecoderLayer(LlamaDecoderLayer):
     def __init__(self, config: LlamaConfig, layer_idx: int):
         super().__init__(config, layer_idx)
@@ -443,12 +442,13 @@ class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
             target_position_ids = position_ids
             source_states = None
             source_position_ids = None
-            
         target_states = compressed_hidden_states if compressed_hidden_states is not None else hidden_states
         source_states = hidden_states if compressed_hidden_states is not None else None
         residual = target_states
 
         target_states = self.input_layernorm(target_states)
+        if source_states is not None:
+            source_states = self.input_layernorm(source_states)
 
         # Self Attention
         target_states, self_attn_weights, present_key_value = self.self_attn(
@@ -497,7 +497,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.label_ids = None
         self.Abstractor = None
         self.hidden_size = config.hidden_size
-        self.half_pool = False
+        self.halfpool = False
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -631,7 +631,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
 
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
-
         if self._use_flash_attention_2:
             # 2d mask is passed through the layers
             attention_mask = attention_mask if (attention_mask is not None and 0 in attention_mask) else None
@@ -684,7 +683,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 compressed_hidden_states = None
                 compressed_position_ids = None
             
-            if not self.half_pool and compressed_hidden_states is not None:
+            if not self.halfpool and compressed_hidden_states is not None:
                 hidden_states = compressed_hidden_states
                 position_ids = compressed_position_ids
                 compressed_hidden_states = None
@@ -697,6 +696,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     compressed_hidden_states,
                     attention_mask,
                     position_ids,
+                    compressed_position_ids,
                     past_key_values,
                     output_attentions,
                     use_cache,
@@ -704,9 +704,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             else:
                 layer_outputs = decoder_layer(
                     hidden_states,
-                    compressed_hidden_states
+                    compressed_hidden_states,
                     attention_mask=attention_mask,
                     position_ids=position_ids,
+                    compressed_position_ids=compressed_position_ids,
                     past_key_value=past_key_values,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
@@ -909,5 +910,5 @@ AutoConfig.register("llava_llama", LlavaConfig)
 AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM)
 
 if __name__ == '__main__':
-    attn = 
+    attn = 1
     
