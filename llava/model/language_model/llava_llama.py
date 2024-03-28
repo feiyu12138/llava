@@ -331,19 +331,23 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             kv_len = source_states.size(1)
         else:
             kv_len = q_len
+            source_states = hidden_states
 
         query_states = self.q_proj(hidden_states)
-        key_states = self.k_proj(hidden_states)
-        value_states = self.v_proj(hidden_states)
+        key_states = self.k_proj(source_states)
+        value_states = self.v_proj(source_states)
 
         query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-        key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+        try:
+            key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+        except:
+            from ipdb import set_trace; set_trace()
         value_states = value_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+        cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
         query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids, source_position_ids)
 
         if past_key_value is not None:
@@ -720,6 +724,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
 
             if output_attentions:
                 all_self_attns += (layer_outputs[1],)
+            if compressed_position_ids is not None:
+                position_ids = compressed_position_ids
+                compressed_position_ids = None
             layer_idx += 1
 
         hidden_states = self.norm(hidden_states)
