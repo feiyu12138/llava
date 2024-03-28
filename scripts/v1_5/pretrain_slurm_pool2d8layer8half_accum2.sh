@@ -15,7 +15,7 @@ module load conda
 conda activate llava_git
 
 layer=8
-stride=2
+stride=8
 grouping=avgpool2d
 halfpool=True
 deepspeed llava/train/train_mem.py \
