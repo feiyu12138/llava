@@ -8,7 +8,7 @@ export WANDB_PROJECT='llava_team'
 # conda activate llava_git
 layer=16
 stride=4
-halfpool=False
+halfpool=True
 grouping=avgpool2d
 NNODES=1
 GPUS=1
