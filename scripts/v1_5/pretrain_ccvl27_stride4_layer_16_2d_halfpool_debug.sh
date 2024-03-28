@@ -1,17 +1,20 @@
 #!/bin/bash
 #
 export NCCL_P2P_DISABLE=1
-export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_PROJECT='llava'
+export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
+export WANDB_PROJECT='llava_team'
 # module purge
 # module load conda
 # conda activate llava_git
-
 layer=16
 stride=4
 halfpool=True
 grouping=avgpool2d
-deepspeed llava/train/train_mem.py \
+NNODES=1
+GPUS=1
+PORT=29600
+torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT}\
+     llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
@@ -20,14 +23,13 @@ deepspeed llava/train/train_mem.py \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
-    --tune_abstractor True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-halfpool-$halfpool \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
