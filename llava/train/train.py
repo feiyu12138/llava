@@ -72,6 +72,7 @@ class ModelArguments:
     num_pre_layers: Optional[int] = field(default=3)
     num_post_layers: Optional[int] = field(default=3)
     abstractor_rel_pos_spatial: Optional[bool] = field(default=False)
+    halfpool: Optional[bool] = field(default=False)
 
 
 @dataclass
@@ -222,7 +223,7 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
 
     if trainer.deepspeed:
         torch.cuda.synchronize()
-        trainer.save_model(output_dir)
+        trainer.save_model(output_dir)F
         return
 
     state_dict = trainer.model.state_dict()
@@ -876,6 +877,7 @@ def train(attn_implementation=None):
     model.config.use_cache = False
     model.model.grouping = model_args.grouping
     model.model.stride = model_args.stride
+    model.model.halfpool = model_args.halfpool
     model.model.groupingLayer = model_args.layer
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 

@@ -45,7 +45,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name MSAgate2layer16_k3_rps \
+    --run_name MSAgate2layer16_k3_rps_debug \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
