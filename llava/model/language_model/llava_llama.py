@@ -67,7 +67,6 @@ def apply_rotary_pos_emb_for_msa(q, k, cos, sin, position_ids, source_position_i
     Returns:
         `tuple(torch.Tensor)` comprising of the query and key tensors rotated using the Rotary Position Embedding.
     """
-    
     cos_target = cos[position_ids].unsqueeze(unsqueeze_dim)
     sin_target = sin[position_ids].unsqueeze(unsqueeze_dim)
     if source_position_ids is not None:
@@ -76,7 +75,7 @@ def apply_rotary_pos_emb_for_msa(q, k, cos, sin, position_ids, source_position_i
     else:
         cos_source = cos_target
         sin_source = sin_target
-    q_embed = (q * cos_target) + (rotate_half(q) * cos_target)
+    q_embed = (q * cos_target) + (rotate_half(q) * sin_target)
     k_embed = (k * cos_source) + (rotate_half(k) * sin_source)
     return q_embed, k_embed
 
@@ -254,9 +253,7 @@ class MyLlamaSdpaAttention(LlamaSdpaAttention):
         if past_key_value is not None:
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
-
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
-
         if past_key_value is not None:
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
@@ -336,12 +333,8 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         query_states = self.q_proj(hidden_states)
         key_states = self.k_proj(source_states)
         value_states = self.v_proj(source_states)
-
         query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-        try:
-            key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-        except:
-            from ipdb import set_trace; set_trace()
+        key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
         value_states = value_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
         kv_seq_len = key_states.shape[-2]
@@ -349,7 +342,6 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
         query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids, source_position_ids)
-
         if past_key_value is not None:
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
@@ -368,7 +360,6 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             query_states = query_states.contiguous()
             key_states = key_states.contiguous()
             value_states = value_states.contiguous()
-
         attn_output = torch.nn.functional.scaled_dot_product_attention(
             query_states,
             key_states,
@@ -446,14 +437,11 @@ class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
             target_position_ids = position_ids
             source_states = None
             source_position_ids = None
-        target_states = compressed_hidden_states if compressed_hidden_states is not None else hidden_states
-        source_states = hidden_states if compressed_hidden_states is not None else None
         residual = target_states
 
         target_states = self.input_layernorm(target_states)
         if source_states is not None:
             source_states = self.input_layernorm(source_states)
-
         # Self Attention
         target_states, self_attn_weights, present_key_value = self.self_attn(
             hidden_states=target_states,
@@ -708,7 +696,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             else:
                 layer_outputs = decoder_layer(
                     hidden_states,
-                    compressed_hidden_states,
+                    compressed_hidden_states=compressed_hidden_states,
                     attention_mask=attention_mask,
                     position_ids=position_ids,
                     compressed_position_ids=compressed_position_ids,

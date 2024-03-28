@@ -1,7 +1,7 @@
 #!/bin/bash
 layer=16
 stride=4
-grouping=avgpool1d
+grouping=avgpool2d
 halfpool=True
 name=stride-$stride-layer-$layer-grouping-$grouping-halfpool-$halfpool
 CKPT="./checkpoints/llava-v1.5-7b-$name"
