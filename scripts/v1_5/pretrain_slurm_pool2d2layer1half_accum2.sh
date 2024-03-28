@@ -1,22 +1,22 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_pool4layer8half_accum2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_pool4layer8half_accum2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_pool4layer8half_accum2.out
+#SBATCH --job-name=pt_2dpool2layer1_accum2half
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_2dpool2layer1_accum2half.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_2dpool2layer1_accum2half.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH--exclude=ccvl[14]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
+
 module purge
 module load conda
 conda activate llava_git
 
-layer=8
-stride=4
-grouping=avgpool1d
+layer=1
+stride=2
+grouping=avgpool2d
 halfpool=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -31,7 +31,7 @@ deepspeed llava/train/train_mem.py \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-half \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -51,7 +51,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_pool4layer8half_accum2 \
+    --run_name pt_2dpool2layer1_accum2half \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
