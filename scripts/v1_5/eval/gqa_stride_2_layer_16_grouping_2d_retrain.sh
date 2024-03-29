@@ -1,15 +1,15 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export CUDA_VISIBLE_DEVICES=0,5
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-layer=8
+layer=16
 stride=2
 grouping=avgpool2d
 name=stride-$stride-layer-$layer-grouping-$grouping
-CKPT="/home/lye21/LLaVA/checkpoints/llava-v1.5-7b-$name"
+CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-$name"
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="./playground/data/eval/gqa/data"
 
