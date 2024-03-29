@@ -27,7 +27,9 @@ grouping=avgpool1d
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-deepspeed llava/train/train_mem.py \
+# deepspeed llava/train/train_mem.py \
+torchrun --nnodes=3 --nproc_per_node=8 --master_port=${MASTER_PORT} \
+    llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
