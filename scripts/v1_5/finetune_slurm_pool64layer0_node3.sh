@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool64layer0_node2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool64layer0_node2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool64layer0_node2.out
+#SBATCH --job-name=pool64layer0_node3
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool64layer0_node3.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool64layer0_node3.out
 #SBATCH --gpus-per-node=8
-#SBATCH --nodes=2
+#SBATCH --nodes=3
 #SBATCH --ntasks-per-node=8
 #SBATCH --open-mode=append
 #SBATCH --partition=main
@@ -44,7 +44,7 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 8 \
+    --per_device_train_batch_size 5 \
     --per_device_eval_batch_size 2 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
@@ -62,7 +62,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool64layer0_node2 \
+    --run_name pool64layer0_node3 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
