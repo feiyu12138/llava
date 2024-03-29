@@ -1,10 +1,10 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=7
-layer=16
-stride=2
-grouping=avgpool2d
+layer=0
+stride=4
+grouping=avgpool1d
 name=stride-$stride-layer-$layer-grouping-$grouping
-CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-$name"
+CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-reprod"
 export OPENAI_API_KEY=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
 
 python -m llava.eval.model_vqa_science \

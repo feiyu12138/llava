@@ -1,7 +1,7 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=7
 layer=16
-stride=2
+stride=8
 grouping=avgpool2d
 name=stride-$stride-layer-$layer-grouping-$grouping
 CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-$name"
