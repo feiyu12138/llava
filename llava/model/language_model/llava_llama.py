@@ -44,7 +44,7 @@ from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDe
 from llava.constants import MAPPINGX, MAPPINGY
 from llava.model.multimodal_projector.visual_plugin import Abstractor
 logger = logging.get_logger(__name__)
-
+DEBUG=True
 def apply_rotary_pos_emb_for_msa(q, k, cos, sin, position_ids, source_position_ids, unsqueeze_dim=1):
     """Applies Rotary Position Embedding to the query and key tensors.
 
@@ -725,6 +725,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         elif self._use_sdpa and not output_attentions:
             # output_attentions=True can not be supported when using SDPA, and we fall back on
             # the manual implementation that requires a 4D causal mask in all cases.
+            if attention_mask is not None and self.groupingLayer == 0:
+                attention_mask = adjust_attention_mask(attention_mask,seq_length + past_key_values_length,seq_length + past_key_values_length)
             attention_mask = _prepare_4d_causal_attention_mask_for_sdpa(
                 attention_mask,
                 (batch_size, seq_length),
