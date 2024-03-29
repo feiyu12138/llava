@@ -17,7 +17,7 @@ export MASTER_PORT=12802
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=$master_addr
 echo $SLURM_JOB_NODELIST
-echo $master_addr
+echo "master_addr"$master_addr
 export SLURM_STEP_GPUS=8
 
 # cat /dev/null >| hostfile
