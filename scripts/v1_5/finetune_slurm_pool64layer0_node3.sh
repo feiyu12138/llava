@@ -31,7 +31,7 @@ $slots=8 if $slots==0; # workaround 8 gpu machines
 @nodes = split /\n/, qx[scontrol show hostnames $ENV{"SLURM_JOB_NODELIST"}];
 print map { "$b$_ slots=$slots\n" } @nodes'
 }
-makehostfile > /home/jchen293/hostfile_$master_addr
+makehostfile > ~/hostfile_$master_addr
 
 module purge
 module load conda
@@ -43,7 +43,7 @@ grouping=avgpool1d
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-deepspeed  --hostfile /home/jchen293/hostfile_$master_addr --num_gpus 8 --num_nodes 3 --master_addr $master_addr llava/train/train_mem.py \
+deepspeed  --hostfile ~/hostfile_$master_addr --num_gpus 8 --num_nodes 3 --master_addr $master_addr llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
