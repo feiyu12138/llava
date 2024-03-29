@@ -81,4 +81,5 @@ deepspeed  --hostfile ~/hostfile_$master_addr --num_gpus 8 --num_nodes 3 --maste
     --run_name pool64layer0_node3 \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    > /datasets/jchen293/logs/exp/llava/pool64layer0_node3_$master_addr.log
