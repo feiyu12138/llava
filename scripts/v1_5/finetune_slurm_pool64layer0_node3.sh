@@ -16,6 +16,7 @@ export WANDB_PROJECT='llava'
 export MASTER_PORT=12802
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=$master_addr
+echo $SLURM_JOB_NODELIST
 
 function makehostfile() {
 perl -e '$slots=split /,/, $ENV{"SLURM_STEP_GPUS"};
