@@ -669,6 +669,17 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
         return visual_states, visual_positions
     
+    def apply_random_drop(self,tokens, position_ids):
+        K = tokens.size(2) // self.stride
+        position_ids = position_ids.squeeze(1)
+        # Randomly keep K tokens
+        keep_ids = torch.randperm(tokens.size(2))[:K]    
+        tokens = tokens[:,:,keep_ids]
+        position_ids = position_ids[:,keep_ids]
+        
+        return tokens.permute(0,2,1).contiguous(), position_ids.contiguous()
+
+    
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -761,6 +772,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     self.label_ids = compressed_position_ids
                 elif self.grouping.find('abstractor') != -1:
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
+                    self.label_ids = position_ids
+                elif self.grouping == 'random_drop':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
                     self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")

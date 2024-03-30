@@ -12,13 +12,14 @@ grouping=avgpool1d
 
 for stride in 4 16 64; do
     for layer in 1 8 16 30; do
+        name=stride-$stride-layer-$layer-1d-reprod-wotrain
 
         for IDX in $(seq 0 $((CHUNKS-1))); do
             CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
                 --model-path liuhaotian/llava-v1.5-7b \
                 --question-file ./playground/data/eval/gqa/$SPLIT.jsonl \
                 --image-folder ./playground/data/eval/gqa/images \
-                --answers-file ./playground/data/eval/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl \
+                --answers-file ./playground/data/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
                 --num-chunks $CHUNKS \
                 --chunk-idx $IDX \
                 --temperature 0 \
@@ -30,20 +31,20 @@ for stride in 4 16 64; do
         done
         wait
 
-        output_file=./playground/data/eval/gqa/answers/$SPLIT/stride-$stride-layer-$layer-1d-reprod-wotrain/merge.jsonl
+        output_file=./playground/data/eval/gqa/answers/$SPLIT/$name/merge.jsonl
 
         # Clear out the output file if it exists.
         > "$output_file"
 
         # Loop through the indices and concatenate each file.
         for IDX in $(seq 0 $((CHUNKS-1))); do
-            cat ./playground/data/eval/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
+            cat ./playground/data/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl >> "$output_file"
         done
 
         python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
 
         cd $GQADIR
-        python eval/eval.py --tier testdev_balanced > result/stride-$stride-layer-$layer-1d-reprod-wotrain.txt
+        python eval/eval.py --tier testdev_balanced > result/$name.txt
         cd ../../../../..
     done
 done
