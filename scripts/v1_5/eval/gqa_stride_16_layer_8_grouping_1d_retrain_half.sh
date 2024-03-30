@@ -6,9 +6,9 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 layer=8
-stride=64
+stride=16
 grouping=avgpool1d
-name=stride-$stride-layer-$layer-grouping-$grouping
+name=stride-$stride-layer-$layer-grouping-$grouping-half
 CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-$name"
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="./playground/data/eval/gqa/data"

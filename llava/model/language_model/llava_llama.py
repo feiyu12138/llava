@@ -803,7 +803,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                 )
-
             hidden_states = layer_outputs[0]
 
             if use_cache:
@@ -1067,6 +1066,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         # it is a headache to deal with None all the time.
         # But it is not ideal, and if you have a better idea,
         # please open an issue / submit a PR, thanks.
+        
         if self.model.groupingLayer == -1:
             if self.model.grouping == 'avgpool1d':
                 image_features = torch.nn.functional.avg_pool1d(image_features.permute(0,2,1), kernel_size=self.model.stride, stride=self.model.stride).permute(0,2,1).contiguous()
@@ -1078,7 +1078,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 image_features = torch.nn.functional.avg_pool2d(image_features, kernel_size=self.model.stride, stride=self.model.stride)
                 
                 image_features,_ = flatten_image_features(image_features,  p_ids1, p_ids2,torch.zeros(B,Q))
-        
         _labels = labels
         _position_ids = position_ids
         _attention_mask = attention_mask

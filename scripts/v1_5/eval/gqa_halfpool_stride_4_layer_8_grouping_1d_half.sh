@@ -1,15 +1,16 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,5,6,7
+export CUDA_VISIBLE_DEVICES=0,5,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
 layer=8
-stride=64
+stride=4
+halfpool=True
 grouping=avgpool1d
-name=stride-$stride-layer-$layer-grouping-$grouping
-CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-$name"
+name=stride-$stride-layer-$layer-grouping-$grouping-half
+CKPT="./checkpoints/llava-v1.5-7b-$name"
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="./playground/data/eval/gqa/data"
 
@@ -25,7 +26,8 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --conv-mode vicuna_v1 \
         --stride $stride \
         --layer $layer \
-        --grouping $grouping &
+        --halfpool $halfpool \
+        --grouping $grouping&
 done
 
 wait
@@ -43,4 +45,4 @@ done
 python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
 
 cd $GQADIR
-python eval/eval.py --tier testdev_balanced > result/$name.txt
+python eval/eval.py --tier testdev_balanced
