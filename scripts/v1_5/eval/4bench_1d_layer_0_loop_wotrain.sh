@@ -1,8 +1,8 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=7
-layer=0
+layer=16
 grouping=avgpool1d
-CKPT=liuhaotian/llava-v1.5-7b
+CKPT=liuhaotian/llava-v1.5-13b
 export OPENAI_API_KEY=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
 for stride in 4 16 64; do
 name=stride-$stride-layer-$layer-grouping-$grouping
