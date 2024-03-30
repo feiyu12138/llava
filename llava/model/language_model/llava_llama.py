@@ -679,15 +679,15 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         return tokens.permute(0,2,1).contiguous(), position_ids.contiguous()
     
-    def apply_soft_k_means(self, tokens, stride,positions,iterations=10):
+    def apply_soft_k_means(self, tokens,positions,iterations=1):
         batched_centroids = []
         for B in range(tokens.size(0)):
             cur_tokens = tokens[B]
-            centroids = cur_tokens[:,::stride]
+            centroids = cur_tokens[:,::self.stride]
             for _ in range(iterations):
                 
                 # Compute squared distances between each point and each centroid
-                distances = torch.sum((cur_tokens.unsqueeze(2) - centroids.unsqueeze(1)) ** 2, dim=0)
+                distances = torch.sum(torch.abs((cur_tokens.unsqueeze(2) - centroids.unsqueeze(1))), dim=0)
                 
                 # Soft assignment of points to centroids
                 weights = torch.softmax(-distances, dim=1)
@@ -695,16 +695,16 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 centroids = cur_tokens @ weights
             
             batched_centroids.append(centroids)
-        batched_centroids = torch.stack(batched_centroids, dim=0)
-        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).expand(batched_centroids.size(0), -1)
-        return batched_centroids.permute(0,2,1),positions
+        batched_centroids = torch.stack(batched_centroids, dim=0).permute(0,2,1)
+        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).repeat(batched_centroids.size(0),1)
+        return batched_centroids,positions
     
     def apply_block_random_drop(self, tokens, position_ids):
         K = tokens.size(2) // self.stride
         # Randomly keep K continuous tokens
         start_ids = torch.randint(0,tokens.size(2)-K+1,(1,))
         tokens = tokens[:,:,start_ids:start_ids+K]
-        position_ids = position_ids[:,start_ids:start_ids+K]
+        position_ids = position_ids[:,:,start_ids:start_ids+K].squeeze(1)
         
         return tokens.permute(0,2,1).contiguous(), position_ids
     
@@ -810,6 +810,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 elif self.grouping == 'soft_k_means':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
                     self.label_ids = position_ids
+                    # assert 1==2,  position_ids.shape
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:
