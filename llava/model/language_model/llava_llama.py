@@ -681,6 +681,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     
     def apply_soft_k_means(self, tokens,positions,iterations=1):
         batched_centroids = []
+        start_ids = positions.min()
         for B in range(tokens.size(0)):
             cur_tokens = tokens[B]
             centroids = cur_tokens[:,::self.stride]
@@ -693,11 +694,48 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 weights = torch.softmax(-distances, dim=1)
                 # Update centroids as the weighted mean of data points
                 centroids = cur_tokens @ weights
-            
+            from ipdb import set_trace; set_trace()
             batched_centroids.append(centroids)
         batched_centroids = torch.stack(batched_centroids, dim=0).permute(0,2,1)
-        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).repeat(batched_centroids.size(0),1)
+        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).repeat(batched_centroids.size(0),1) + start_ids
         return batched_centroids,positions
+    
+    def apply_detach_soft_k_means(self, tokens,positions,iterations=1):
+        batched_centroids = []
+        start_ids = positions.min()
+        for B in range(tokens.size(0)):
+            cur_tokens = tokens[B]
+            detach_tokens = cur_tokens.detach()
+            centroids = detach_tokens[:,::self.stride]
+            multi_step_weights = []
+            for _ in range(iterations):
+                
+                # Compute squared distances between each point and each centroid
+                distances = torch.sum(torch.abs((detach_tokens.unsqueeze(2) - centroids.unsqueeze(1))), dim=0)
+                
+                # Soft assignment of points to centroids
+                weights = torch.softmax(-distances, dim=1)
+                # Update centroids as the weighted mean of data points
+                centroids = cur_tokens @ weights
+                multi_step_weights.append(weights)
+            centroids = cur_tokens[:,::self.stride]
+            for weights in multi_step_weights:
+                centroids = cur_tokens @ weights
+            batched_centroids.append(centroids)
+        
+        batched_centroids = torch.stack(batched_centroids, dim=0).permute(0,2,1)
+        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).repeat(batched_centroids.size(0),1) + start_ids
+        del detach_tokens
+        del multi_step_weights
+        del weights
+        del distances
+        del centroids
+        return batched_centroids,positions
+
+    def apply_PCA(self,tokens,positions):
+        # apply PCA on the third dimension of the tokens
+        
+        return tokens,positions
     
     def apply_block_random_drop(self, tokens, position_ids):
         K = tokens.size(2) // self.stride
@@ -809,6 +847,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     self.label_ids = position_ids
                 elif self.grouping == 'soft_k_means':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
+                    self.label_ids = position_ids
+                elif self.grouping == 'detach_soft_k_means':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
                     self.label_ids = position_ids
                     # assert 1==2,  position_ids.shape
                 else:
