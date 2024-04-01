@@ -7,7 +7,7 @@ export WANDB_PROJECT='llava_team'
 
 layer=8
 stride=4
-grouping=detach_soft_k_means
+grouping=detach_hard_k_means
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -47,6 +47,6 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    > /data/luoxin/data/llava/log/detach_kmeans_stride_4_layer_8.log
+    > /data/luoxin/data/llava/log/$grouping-stride-$stride-layer-$layer.log
 
 sleep 2d

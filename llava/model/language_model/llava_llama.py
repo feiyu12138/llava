@@ -727,13 +727,14 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             for i in range(iterations):
                 distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
                 weights = torch.argmax(-distances, dim=2)
-                one_hot_weights = F.one_hot(weights, num_classes=weights.size(1)).to(weights.dtype)
+                one_hot_weights = F.one_hot(weights, num_classes=distances.size(2)).to(detach_tokens.dtype)
                 detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, one_hot_weights)
                 del distances
                 if i<iterations-1:
                     del weights
+                    del one_hot_weights
                 
-        centroids = torch.einsum('bcl,blq->bcq', tokens, weights).permute(0,2,1)
+        centroids = torch.einsum('bcl,blq->bcq', tokens, one_hot_weights).permute(0,2,1)
         positions = torch.arange(0, centroids.size(1), device=positions.device).unsqueeze(0).repeat(centroids.size(0),1) + start_ids
         del detach_tokens
         del detach_centroids
@@ -859,7 +860,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 elif self.grouping == 'detach_soft_k_means':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
                     self.label_ids = position_ids
-                    # assert 1==2,  position_ids.shape
+                elif self.grouping == 'detach_hard_k_means':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
+                    self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:
@@ -1295,6 +1298,5 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 AutoConfig.register("llava_llama", LlavaConfig)
 AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM)
 
-if __name__ == '__main__':
-    attn = 1
+
     
