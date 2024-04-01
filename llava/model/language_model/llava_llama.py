@@ -718,6 +718,27 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         del detach_centroids
         del weights
         return centroids,positions
+    
+    def apply_detach_hard_k_means(self, tokens,positions,iterations=1):
+        start_ids = positions.min()
+        detach_tokens = tokens.detach()
+        detach_centroids = detach_tokens[:,:,::self.stride]
+        with torch.no_grad():
+            for i in range(iterations):
+                distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
+                weights = torch.argmax(-distances, dim=2)
+                one_hot_weights = F.one_hot(weights, num_classes=weights.size(1)).to(weights.dtype)
+                detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, one_hot_weights)
+                del distances
+                if i<iterations-1:
+                    del weights
+                
+        centroids = torch.einsum('bcl,blq->bcq', tokens, weights).permute(0,2,1)
+        positions = torch.arange(0, centroids.size(1), device=positions.device).unsqueeze(0).repeat(centroids.size(0),1) + start_ids
+        del detach_tokens
+        del detach_centroids
+        del weights
+        return centroids,positions
 
     def apply_PCA(self,tokens,positions):
         # apply PCA on the third dimension of the tokens
