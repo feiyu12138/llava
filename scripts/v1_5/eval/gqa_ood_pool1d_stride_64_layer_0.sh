@@ -1,16 +1,16 @@
 #!/bin/bash
-CUDA_VISIBLE_DEVICES=4
+CUDA_VISIBLE_DEVICES=4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-CKPT="llava-v1.5-7b"
+CKPT="llava-v1.5-7b-stride-$stride-layer-$layer"
 SPLIT="llava_ood_testdev_all"
 GQADIR="./playground/data/eval/gqa/data"
-grouping=none
-stride=1
-layer=1
+grouping=avgpool1d
+stride=64
+layer=0
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
         --model-path liuhaotian/llava-v1.5-7b \
@@ -23,7 +23,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --conv-mode vicuna_v1 \
         --stride $stride \
         --layer $layer \
-        --grouping $grouping 
+        --grouping $grouping &
         
 done
 wait
@@ -41,6 +41,6 @@ done
 python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/ood_testdev_all_predictions.json
 
 cd $GQADIR
-python eval/eval.py --tier ood_testdev_all > result/ood_testdev_all_llava-v1.5-7b.txt
+python eval/eval.py --tier ood_testdev_all > result/ood_testdev_all_llava-v1.5-7b-stride-$stride.txt
 cd ../../../../..
 

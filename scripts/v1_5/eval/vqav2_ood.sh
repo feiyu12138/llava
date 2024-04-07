@@ -1,17 +1,18 @@
 #!/bin/bash
-
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
-SPLIT="llava_vqav2_mscoco_test-dev2015"
-name=llava-v1.5-7b-reprod
+# CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
+SPLIT="llava_ood_vqav2_mscoco_test-dev2015"
+name=llava-v1.5-7b
+VQAV2DIR="./playground/data/eval/vqav2/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path $CKPT \
+        --model-path liuhaotian/llava-v1.5-7b \
         --question-file ./playground/data/eval/vqav2/$SPLIT.jsonl \
         --image-folder /data/jieneng/data/llava_datasets/eval/vqav2/test2015 \
         --answers-file ./playground/data/eval/vqav2/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
@@ -37,4 +38,9 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
 done
 
 python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $name
+
+python scripts/convert_gqa_for_eval.py --src $output_file --dst $VQAV2DIR/ood_testdev_all_predictions.json
+
+cd $VQAV2DIR
+python eval/eval_easy.py --answer_file ../answer_llava_ood_vqav2_mscoco_test-dev2015.jsonl --prediction_file ood_testdev_all_predictions.json > result/ood.txt
 

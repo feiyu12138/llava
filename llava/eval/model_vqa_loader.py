@@ -5,7 +5,7 @@ import json
 from tqdm import tqdm
 import shortuuid
 
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, COLOR_CHOICES, YES_NO_CHOICES, NUMBER_CHOICES, SIZE_CHOICES
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
@@ -14,6 +14,19 @@ from torch.utils.data import Dataset, DataLoader
 
 from PIL import Image
 import math
+
+CHOICE_MAPPING = {
+    'number': NUMBER_CHOICES,
+    'color': COLOR_CHOICES,
+    'yesno': YES_NO_CHOICES,
+    'size': SIZE_CHOICES
+}
+
+def find_index_by_key(list_of_dicts, key, query):
+    for index, dictionary in enumerate(list_of_dicts):
+        if dictionary[key] == query:
+            return index
+    return -1  # Return -1 if the key is not found in any dictionary
 
 
 def split_list(lst, n):
@@ -60,6 +73,71 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len(self.questions)
 
+class ICLCustomDataset(CustomDataset):
+    def __init__(self, questions, image_folder, tokenizer, image_processor, model_config, icl_file):
+        super().__init__(questions, image_folder, tokenizer, image_processor, model_config)
+        self.ICL = [json.loads(q) for q in open(os.path.expanduser(icl_file), "r")] if icl_file != "none" else None
+        
+    def cvt_icl(self, icl,category):
+        op = DEFAULT_IMAGE_TOKEN + '\n'
+        op += "Question: " + icl['text'] + '\n'
+        op += " ASSISTANT: " + icl['answer'] 
+        if category == 'number':
+            choice = ', '.join(NUMBER_CHOICES)
+        elif category == 'color':
+            choice = ', '.join(COLOR_CHOICES)
+        elif category == 'yesno':
+            choice = ', '.join(YES_NO_CHOICES)
+        elif category == 'size':
+            choice = ', '.join(SIZE_CHOICES)
+        # op += "Choices: " + "[" + choice + "]" + '\n'
+        
+        return op
+             
+    def __getitem__(self, index):
+        line = self.questions[index]
+        image_file = line["image"]
+        qs = line["text"]
+        if self.model_config.mm_use_im_start_end:
+            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
+        else:
+            qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+        if "how many" in qs.lower():
+            category = 'number'
+        elif "color" in qs.lower():
+            category = 'color'
+        elif "size" in qs.lower():
+            category = 'size'
+        else:
+            category = 'yesno'
+        choices = ",".join(CHOICE_MAPPING[category])
+        # based on category find the icl_idx
+        if self.ICL is not None:
+            icl_idx = find_index_by_key(self.ICL, 'category', category)
+            icl = self.cvt_icl(self.ICL[icl_idx],category)
+            qs = icl + '\n' + qs
+        # qs = qs + '\n' + "Choices: " + "[" + choices + "]" + '\n' 
+        # qs += "Answer Choice:"
+        
+        # print(qs)
+        
+        conv = conv_templates[args.conv_mode].copy()
+        conv.append_message(conv.roles[0], qs)
+        conv.append_message(conv.roles[1], None)
+        prompt = conv.get_prompt()
+        
+        # print(prompt)
+
+        image = Image.open(os.path.join(self.image_folder, image_file)).convert('RGB')
+        image_ip = [image]
+        if self.ICL is not None:
+            image_ip.append(Image.open(os.path.join(self.image_folder, self.ICL[icl_idx]['image'])).convert('RGB'))
+        image_ip = image_ip[::-1]
+        image_tensor = process_images(image_ip, self.image_processor, self.model_config)
+        input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')
+
+        return input_ids, image_tensor, image.size
+
 
 def collate_fn(batch):
     input_ids, image_tensors, image_sizes = zip(*batch)
@@ -69,9 +147,12 @@ def collate_fn(batch):
 
 
 # DataLoader
-def create_data_loader(questions, image_folder, tokenizer, image_processor, model_config, batch_size=1, num_workers=4):
+def create_data_loader(questions, image_folder, tokenizer, image_processor, model_config, icl_file='none',icl=False,batch_size=1, num_workers=4):
     assert batch_size == 1, "batch_size must be 1"
-    dataset = CustomDataset(questions, image_folder, tokenizer, image_processor, model_config)
+    if icl:
+        dataset = ICLCustomDataset(questions, image_folder, tokenizer, image_processor, model_config,icl_file)
+    else:
+        dataset = CustomDataset(questions, image_folder, tokenizer, image_processor, model_config)
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
@@ -86,7 +167,6 @@ def eval_model(args):
     model.model.groupingLayer = args.layer
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
-
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -97,14 +177,13 @@ def eval_model(args):
         args.conv_mode = args.conv_mode + '_mmtag'
         print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
 
-    data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config)
+    data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config, args.icl_file,args.icl)
 
     for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
         idx = line["question_id"]
         cur_prompt = line["text"]
 
         input_ids = input_ids.to(device='cuda', non_blocking=True)
-        from ipdb import set_trace; set_trace()
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -147,6 +226,8 @@ if __name__ == "__main__":
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default='none')
     parser.add_argument("--halfpool", type=str2bool, default='false')
+    parser.add_argument("--icl", action="store_true")
+    parser.add_argument("--icl-file", type=str, default="none")
     args = parser.parse_args()
 
     eval_model(args)
