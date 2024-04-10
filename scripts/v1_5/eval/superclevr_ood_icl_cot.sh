@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=4,5,6,7
+export CUDA_VISIBLE_DEVICES=0
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -25,7 +25,9 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --stride 2 \
         --grouping none \
         --icl  \
-        --icl-file $icl_file &
+        --icl-file $icl_file \
+        --cot-decoding \
+        --num-branch 4
 done
 
 wait
