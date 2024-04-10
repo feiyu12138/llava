@@ -197,6 +197,7 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
                 use_cache=True)
+        from ipdb import set_trace; set_trace()
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 

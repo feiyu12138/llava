@@ -26,8 +26,8 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --grouping none \
         --icl  \
         --icl-file $icl_file \
-        --cot-decoding \
-        --num-branch 4
+        # --cot-decoding \
+        # --num-branch 4
 done
 
 wait

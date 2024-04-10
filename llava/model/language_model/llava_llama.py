@@ -1370,11 +1370,26 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         # keep track of which sequences are already finished
         unfinished_sequences = torch.ones(input_ids.shape[0], dtype=torch.long, device=input_ids.device)
-
         this_peer_finished = False  # used by synced_gpus only
+        
         step = -1
+        input_ids_list = [input_ids]
+        unfinished_sequences_list = [unfinished_sequences]
+        this_peer_finished_list = [this_peer_finished]
+        next_input_ids_list = None
+        next_unfinished_sequences_list = None
+        next_this_peer_finished_list = None
+        finished_input_ids = []
+        next_finished_input_ids = []
         while True:
             step += 1
+            if next_input_ids_list is not None:
+                input_ids_list = list(next_input_ids_list)
+                unfinished_sequences_list = next_unfinished_sequences_list
+                this_peer_finished_list = next_this_peer_finished_list
+                next_input_ids_list = []
+                next_unfinished_sequences_list = []
+                next_this_peer_finished_list = []
             if synced_gpus:
                 # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
                 # The following logic allows an early break if all peers finished generating their sequence
@@ -1384,87 +1399,130 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 # did all peers finish? the reduced sum will be 0.0 then
                 if this_peer_finished_flag.item() == 0.0:
                     break
-
+            for idx, (input_ids, unfinished_sequences,this_peer_finished) in enumerate(zip(input_ids_list, unfinished_sequences_list,this_peer_finished_list)):
             # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+                model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
 
-            # forward pass to get next token
-            outputs = self(
-                **model_inputs,
-                return_dict=True,
-                output_attentions=output_attentions,
-                output_hidden_states=output_hidden_states,
-            )
-
-            if synced_gpus and this_peer_finished:
-                continue  # don't waste resources running the code we don't need
-
-            next_token_logits = outputs.logits[:, -1, :]
-
-            # pre-process distribution
-            next_tokens_scores = logits_processor(input_ids, next_token_logits)
-
-            # Store scores, attentions and hidden_states when required
-            if return_dict_in_generate:
-                if output_scores:
-                    scores += (next_tokens_scores,)
-                if output_attentions:
-                    decoder_attentions += (
-                        (outputs.decoder_attentions,) if self.config.is_encoder_decoder else (outputs.attentions,)
-                    )
-                    if self.config.is_encoder_decoder:
-                        cross_attentions += (outputs.cross_attentions,)
-
-                if output_hidden_states:
-                    decoder_hidden_states += (
-                        (outputs.decoder_hidden_states,)
-                        if self.config.is_encoder_decoder
-                        else (outputs.hidden_states,)
-                    )
-
-            # argmax
-            if self.cot_decoding and step == 0:
-                next_tokens = torch.topk(next_tokens_scores, self.num_branch, dim=-1)[1]
-            else:
-                next_tokens = torch.argmax(next_tokens_scores, dim=-1)
-
-            # finished sentences should have their next token be a padding token
-            if eos_token_id is not None:
-                if pad_token_id is None:
-                    raise ValueError("If `eos_token_id` is defined, make sure that `pad_token_id` is defined.")
-                next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
-
-            # update generated ids, model inputs, and length for next step
-            if step == 0 and self.cot_decoding:
-                input_ids = torch.cat([input_ids.repeat(1,next_tokens.shape[1]), next_tokens], dim=-2).permute(1,0)
-            else:
-                input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
-            if streamer is not None:
-                streamer.put(next_tokens.cpu())
-            model_kwargs = self._update_model_kwargs_for_generation(
-                outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
-            )
-
-            # if eos_token was found in one sentence, set sentence to finished
-            if eos_token_id_tensor is not None:
-                unfinished_sequences = unfinished_sequences.mul(
-                    next_tokens.tile(eos_token_id_tensor.shape[0], 1).ne(eos_token_id_tensor.unsqueeze(1)).prod(dim=0)
+                # forward pass to get next token
+                outputs = self(
+                    **model_inputs,
+                    return_dict=True,
+                    output_attentions=output_attentions,
+                    output_hidden_states=output_hidden_states,
                 )
 
-                # stop when each sentence is finished
-                if unfinished_sequences.max() == 0:
-                    this_peer_finished = True
+                if synced_gpus and this_peer_finished:
+                    continue  # don't waste resources running the code we don't need
 
-            # stop if we exceed the maximum length
-            if stopping_criteria(input_ids, scores):
-                this_peer_finished = True
+                next_token_logits = outputs.logits[:, -1, :]
 
-            if this_peer_finished and not synced_gpus:
+                # pre-process distribution
+                next_tokens_scores = logits_processor(input_ids, next_token_logits)
+
+                # Store scores, attentions and hidden_states when required
+                if return_dict_in_generate:
+                    if output_scores:
+                        scores += (next_tokens_scores,)
+                    if output_attentions:
+                        decoder_attentions += (
+                            (outputs.decoder_attentions,) if self.config.is_encoder_decoder else (outputs.attentions,)
+                        )
+                        if self.config.is_encoder_decoder:
+                            cross_attentions += (outputs.cross_attentions,)
+
+                    if output_hidden_states:
+                        decoder_hidden_states += (
+                            (outputs.decoder_hidden_states,)
+                            if self.config.is_encoder_decoder
+                            else (outputs.hidden_states,)
+                        )
+
+                # argmax
+                if self.cot_decoding and step == 0:
+                    next_tokens = torch.topk(next_tokens_scores, self.num_branch, dim=-1)[1]
+                    # split next_tokens into list
+                    next_next_tokens_list = next_tokens.split(1, dim=-1)
+                else:
+                    next_tokens = torch.argmax(next_tokens_scores, dim=-1)
+                    next_next_tokens_list = [next_tokens]
+
+                # finished sentences should have their next token be a padding token
+                if eos_token_id is not None:
+                    if pad_token_id is None:
+                        raise ValueError("If `eos_token_id` is defined, make sure that `pad_token_id` is defined.")
+                    next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
+
+                # update generated ids, model inputs, and length for next step
+                if step == 0 and self.cot_decoding:
+                    input_ids = torch.cat([input_ids.repeat(1,next_tokens.shape[1]), next_tokens], dim=-2).permute(1,0)
+                    next_input_ids_list = input_ids.split(1, dim=0)
+                    next_unfinished_sequences_list = unfinished_sequences_list * self.num_branch
+                    next_this_peer_finished_list = [False] * self.num_branch
+                else:
+                    input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
+                    next_input_ids_list = []
+                    next_unfinished_sequences_list = []
+                    next_this_peer_finished_list = []
+                    
+                if streamer is not None:
+                    streamer.put(next_tokens.cpu())
+                model_kwargs = self._update_model_kwargs_for_generation(
+                    outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
+                )
+                if step == 0 and self.cot_decoding:
+                    tempt_input_ids_list = next_input_ids_list
+                    tempt_unfinished_sequences_list = next_unfinished_sequences_list
+                    tempt_this_peer_finished_list = next_this_peer_finished_list
+                    for next_idx , (next_input_ids, next_unfinished_sequences, next_this_peer_finished,next_next_tokens) in \
+                        enumerate(zip(next_input_ids_list, next_unfinished_sequences_list, next_this_peer_finished_list,next_next_tokens_list)):
+                        if eos_token_id_tensor is not None:
+                            next_unfinished_sequences = next_unfinished_sequences.mul(
+                                next_next_tokens.tile(eos_token_id_tensor.shape[0], 1).ne(eos_token_id_tensor.unsqueeze(1)).prod(dim=0)
+                            )
+                            # stop when each sentence is finished
+                            if next_unfinished_sequences.max() == 0:
+                                next_this_peer_finished = True
+                            
+                        # stop if we exceed the maximum length
+                        if stopping_criteria(next_input_ids, scores):
+                            next_this_peer_finished = True
+
+                        if next_this_peer_finished and not synced_gpus:
+                            # remove this path from input_ids_list and unfinished_sequences_list
+                            next_finished_input_ids.append(next_input_ids)
+                            del tempt_input_ids_list[next_idx - self.num_branch]
+                            del tempt_unfinished_sequences_list[next_idx - self.num_branch]
+                            if len(tempt_input_ids_list) == 0:
+                                break
+
+                else:
+                # if eos_token was found in one sentence, set sentence to finished
+                    if eos_token_id_tensor is not None:
+                        unfinished_sequences = unfinished_sequences.mul(
+                            next_tokens.tile(eos_token_id_tensor.shape[0], 1).ne(eos_token_id_tensor.unsqueeze(1)).prod(dim=0)
+                        )
+                        # stop when each sentence is finished
+                        if unfinished_sequences.max() == 0:
+                            this_peer_finished = True
+                        
+                    # stop if we exceed the maximum length
+                    if stopping_criteria(input_ids, scores):
+                        this_peer_finished = True
+
+                    if this_peer_finished and not synced_gpus:
+                        # remove this path from input_ids_list and unfinished_sequences_list
+                        finished_input_ids.append(input_ids)
+                    else:
+                        next_input_ids_list.append(input_ids)
+                        next_unfinished_sequences_list.append(unfinished_sequences)
+                        next_this_peer_finished_list.append(this_peer_finished)
+                        
+            if len(next_input_ids_list) == 0:
                 break
+                        
 
-        if streamer is not None:
-            streamer.end()
-
+            if streamer is not None:
+                streamer.end()
         if return_dict_in_generate:
             if self.config.is_encoder_decoder:
                 return GenerateEncoderDecoderOutput(
@@ -1486,7 +1544,10 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                     past_key_values=model_kwargs.get("past_key_values"),
                 )
         else:
-            return input_ids
+            if self.cot_decoding:
+                return torch.cat(finished_input_ids.unsqueeze(0),dim=0)
+            else:
+                return input_ids
     
     
 
