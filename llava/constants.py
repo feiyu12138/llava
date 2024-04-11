@@ -11,3 +11,24 @@ DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 IMAGE_PLACEHOLDER = "<image-placeholder>"
+
+import itertools
+import torch
+# create a look up mapping table for the image tokens 576 -> 24 x 24
+MAPPING = list(itertools.product(range(24), range(24)))
+MAPPINGX = torch.tensor([x for _, x in MAPPING])
+MAPPINGY = torch.tensor([y for y, _ in MAPPING])
+
+COLOR_CHOICES = ['red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'magenta', 'white', 'black', 'gray']
+YES_NO_CHOICES = ['yes', 'no']
+NUMBER_CHOICES_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+SIZE_CHOICES = ['small', 'large']
+NUMBER_CHOICES = [str(x) for x in NUMBER_CHOICES_]
+
+ANSWER_SET = [
+    "yes", "no", "not", 
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", 
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "large", "small","medium",
+    "red", "green", "blue", "yellow", "purple", "cyan", "magenta", "white", "black", "gray", "orange", "brown", "pink","silver"
+]
