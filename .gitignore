@@ -21,8 +21,9 @@ dist
 .DS_Store
 wandb
 output
-
+checkpoint
 checkpoints
+playground
 ckpts*
 
 .ipynb_checkpoints
