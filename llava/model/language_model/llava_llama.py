@@ -59,6 +59,8 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self.pretraining_tp = config.pretraining_tp
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        self.num_branch = config.num_branch
+        self.cot_decoding = config.cot_decoding
 
         # Initialize weights and apply final processing
         self.post_init()
