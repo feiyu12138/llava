@@ -41,6 +41,15 @@ GenerateNonBeamOutput = Union[GenerateDecoderOnlyOutput, GenerateEncoderDecoderO
 
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
+    def __init__(self, 
+                 grouping=None, 
+                 cot_decoding=None,
+                 num_branch=1,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.grouping = grouping
+        self.cot_decoding = cot_decoding
+        self.num_branch = num_branch
 
 
 class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
