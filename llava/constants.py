@@ -25,5 +25,13 @@ NUMBER_CHOICES_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 SIZE_CHOICES = ['small', 'large']
 NUMBER_CHOICES = [str(x) for x in NUMBER_CHOICES_]
 
+ANSWER_SET = [
+    "yes", "no", "not", 
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", 
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "large", "small","medium",
+    "red", "green", "blue", "yellow", "purple", "cyan", "magenta", "white", "black", "gray", "orange", "brown", "pink","silver"
+]
+
 if __name__ == "__main__":
     print(",".join(NUMBER_CHOICES)) 

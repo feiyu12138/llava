@@ -5,13 +5,13 @@ import json
 from tqdm import tqdm
 import shortuuid
 
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, COLOR_CHOICES, YES_NO_CHOICES, NUMBER_CHOICES, SIZE_CHOICES
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, COLOR_CHOICES, YES_NO_CHOICES, NUMBER_CHOICES, SIZE_CHOICES, ANSWER_SET
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
-
+import re
 from PIL import Image
 import math
 
@@ -156,6 +156,17 @@ def create_data_loader(questions, image_folder, tokenizer, image_processor, mode
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
+def find_answer_token(text,ANSWER_SET):
+    last_span = None
+    for ans in ANSWER_SET:
+        it = re.finditer(ans,text.replace(" ",""))
+        for match in it:
+            span = match.span()
+        if last_span is None or span[0] > last_span[1]:
+            last_span = span
+    return last_span
+
+
 
 def eval_model(args):
     # Model
@@ -171,65 +182,87 @@ def eval_model(args):
     model.num_branch = args.num_branch
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
-    answers_file = os.path.expanduser(args.answers_file)
-    os.makedirs(os.path.dirname(answers_file), exist_ok=True)
-    ans_file = open(answers_file, "w")
-
-    if 'plain' in model_name and 'finetune' not in model_name.lower() and 'mmtag' not in args.conv_mode:
-        args.conv_mode = args.conv_mode + '_mmtag'
-        print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
-
-    data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config, args.icl_file,args.icl)
-
-    for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
-        idx = line["question_id"]
-        cur_prompt = line["text"]
-        input_ids = input_ids.to(device='cuda', non_blocking=True)
-        results = model.generate(
-                input_ids,
-                images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
-                image_sizes=image_sizes,
-                do_sample=True if args.temperature > 0 else False,
-                temperature=args.temperature,
-                top_p=args.top_p,
-                num_beams=args.num_beams,
-                max_new_tokens=args.max_new_tokens,
-                use_cache=True)
-        if model.cot_decoding:
-            output_ids = results[0]
-            deltas = results[1]
-        else:
-            output_ids = results
-        if model.cot_decoding:
-            outputs = []
-            for output_id in output_ids:
-                output = tokenizer.batch_decode(output_id, skip_special_tokens=True)[0].strip()
-                outputs.append(output)
-        else:
-            outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-        ans_id = shortuuid.uuid()
+    
+    # read the answers file line by line
+    answers = [json.loads(q) for q in open(os.path.expanduser(args.answers_file), "r")]
+    branch_count = 0
+    for idx, answer in enumerate(answers):
+        from ipdb import set_trace; set_trace()
+        branch_count = idx % args.num_branch
+        problem_count = idx // args.num_branch
+        if branch_count == 0:
+            print(f"Problem {problem_count}")
+        text = answer['text']
+        tokens = torch.tensor(answer['output_id']).unsqueeze(0)
+        delta = torch.tensor(answer['delta'])
+        splited_tokens = tokens.permute(1,0)
+        splited_text = tokenizer.batch_decode(splited_tokens, skip_special_tokens=True)[0].strip()
+        idx_list = []
+        for i in range(len(splited_text)):
+            for elem in splited_text[i]:
+                idx_list.append(i)
+        span = find_answer_token(text,ANSWER_SET)
+        token_id = set(idx_list[span[0]:span[1]])
+        token_id = list(token_id)
+        delta_avg = delta[token_id].mean()
         
-        if isinstance(outputs, list):
-            for output,delta,output_id in zip(outputs,deltas,output_ids):
-                delta = delta.cpu().numpy().tolist()[0]
-                output_id = output_id.cpu().numpy().tolist()[0][1:-1]
-                ans_file.write(json.dumps({"question_id": idx,
-                                           "prompt": cur_prompt,
-                                           "text": output,
-                                           "output_id":output_id,
-                                           "delta":delta,
-                                           "answer_id": ans_id,
-                                           "model_id": model_name,
-                                           "metadata": {}}) + "\n")
-        else:
-            ans_file.write(json.dumps({"question_id": idx,
-                                    "prompt": cur_prompt,
-                                    "text": outputs,
-                                    "answer_id": ans_id,
-                                    "model_id": model_name,
-                                    "metadata": {}}) + "\n")
-        # ans_file.flush()
-    ans_file.close()
+        
+
+    # if 'plain' in model_name and 'finetune' not in model_name.lower() and 'mmtag' not in args.conv_mode:
+    #     args.conv_mode = args.conv_mode + '_mmtag'
+    #     print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
+
+    # data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config, args.icl_file,args.icl)
+    
+    # for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
+    #     idx = line["question_id"]
+    #     cur_prompt = line["text"]
+    #     input_ids = input_ids.to(device='cuda', non_blocking=True)
+    #     results = model.generate(
+    #             input_ids,
+    #             images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
+    #             image_sizes=image_sizes,
+    #             do_sample=True if args.temperature > 0 else False,
+    #             temperature=args.temperature,
+    #             top_p=args.top_p,
+    #             num_beams=args.num_beams,
+    #             max_new_tokens=args.max_new_tokens,
+    #             use_cache=True)
+    #     if model.cot_decoding:
+    #         output_ids = results[0]
+    #         deltas = results[1]
+    #     else:
+    #         output_ids = results
+    #     if model.cot_decoding:
+    #         outputs = []
+    #         for output_id in output_ids:
+    #             output = tokenizer.batch_decode(output_id, skip_special_tokens=True)[0].strip()
+    #             outputs.append(output)
+    #     else:
+    #         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+    #     ans_id = shortuuid.uuid()
+        
+    #     if isinstance(outputs, list):
+    #         for output,delta,output_id in zip(outputs,deltas,output_ids):
+    #             delta = delta.cpu().numpy().tolist()[0]
+    #             output_id = output_id.cpu().numpy().tolist()[0][1:-1]
+    #             ans_file.write(json.dumps({"question_id": idx,
+    #                                        "prompt": cur_prompt,
+    #                                        "text": output,
+    #                                        "output_id":output_id,
+    #                                        "delta":delta,
+    #                                        "answer_id": ans_id,
+    #                                        "model_id": model_name,
+    #                                        "metadata": {}}) + "\n")
+    #     else:
+    #         ans_file.write(json.dumps({"question_id": idx,
+    #                                 "prompt": cur_prompt,
+    #                                 "text": outputs,
+    #                                 "answer_id": ans_id,
+    #                                 "model_id": model_name,
+    #                                 "metadata": {}}) + "\n")
+    #     # ans_file.flush()
+    # ans_file.close()
 str2bool = lambda x: (str(x).lower() == 'true')
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

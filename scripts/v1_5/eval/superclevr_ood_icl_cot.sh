@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=6
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -10,13 +10,13 @@ SPLIT="superclevr_questions_occlusion_ood_cot"
 name=llava-v1.5-7b
 CLEVRDIR="./playground/data/eval/superclevr/data"
 icl_file="./playground/data/eval/superclevr/ref_question.jsonl"
-
+answer_file="./playground/data/eval/superclevr/answers/superclevr_questions_occlusion_ood_cot/llava-v1.5-7b/cot_decoding.jsonl"
 for IDX in $(seq 0 $((CHUNKS-1))); do
-    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
+    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_eval \
         --model-path liuhaotian/llava-v1.5-7b \
         --question-file ./playground/data/eval/superclevr/$SPLIT.jsonl \
         --image-folder /data/jieneng/data/llava_datasets/eval/superclevr/images \
-        --answers-file ./playground/data/eval/superclevr/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
+        --answers-file $answer_file \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
@@ -26,8 +26,8 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --grouping none \
         --icl  \
         --icl-file $icl_file \
-        # --cot-decoding \
-        # --num-branch 4
+        --cot-decoding \
+        --num-branch 20
 done
 
 wait
