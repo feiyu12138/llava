@@ -6,14 +6,13 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 # CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
-SPLIT="superclevr_questions_occlusion_ood_cot"
+SPLIT="superclevr_questions_occlusion_ood"
 name=llava-v1.5-7b
 CLEVRDIR="./playground/data/eval/superclevr/data"
 icl_file="./playground/data/eval/superclevr/ref_question.jsonl"
-answer_file="./playground/data/eval/superclevr/answers/$SPLIT/$name/cot_decoding.jsonl"
-output_file=./playground/data/eval/superclevr/answers/$SPLIT/$name/processed.jsonl
+answer_file="./playground/data/eval/superclevr/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl"
 for IDX in $(seq 0 $((CHUNKS-1))); do
-    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_eval \
+    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
         --model-path liuhaotian/llava-v1.5-7b \
         --question-file ./playground/data/eval/superclevr/$SPLIT.jsonl \
         --image-folder /data/jieneng/data/llava_datasets/eval/superclevr/images \
@@ -23,8 +22,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --temperature 0 \
         --conv-mode vicuna_v1 \
         --cot-decoding \
-        --num-branch 20 \
-        --output-file $output_file
+        --num-branch 20
 done
 
 wait

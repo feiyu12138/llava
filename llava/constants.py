@@ -19,14 +19,15 @@ MAPPING = list(itertools.product(range(24), range(24)))
 MAPPINGX = torch.tensor([x for _, x in MAPPING])
 MAPPINGY = torch.tensor([y for y, _ in MAPPING])
 
-COLOR_CHOICES = ['red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'magenta', 'white', 'black', 'gray']
+COLOR_CHOICES = ['red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'magenta', 'white', 'black', 'gray', 'silver']
 YES_NO_CHOICES = ['yes', 'no']
 NUMBER_CHOICES_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-SIZE_CHOICES = ['small', 'large']
-NUMBER_CHOICES = [str(x) for x in NUMBER_CHOICES_]
+SIZE_CHOICES = ['small', 'large', 'medium']
+NUMBER_CHOICES = [str(x) for x in NUMBER_CHOICES_] + \
+    ["zero","one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 
 ANSWER_SET = [
-    "yes", "no", "not", 
+    "yes", "no", 
     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", 
     "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
     "large", "small","medium",

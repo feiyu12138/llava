@@ -6,7 +6,7 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 # CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
-SPLIT="superclevr_questions_occlusion_ood_cot"
+SPLIT="superclevr_questions_occlusion_ood"
 name=llava-v1.5-7b
 CLEVRDIR="./playground/data/eval/superclevr/data"
 icl_file="./playground/data/eval/superclevr/ref_question.jsonl"

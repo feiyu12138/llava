@@ -11,6 +11,7 @@ from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
+import re
 
 from PIL import Image
 import math
@@ -75,6 +76,16 @@ def create_data_loader(questions, image_folder, tokenizer, image_processor, mode
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
+def locate_answer_token(text,ANSWER_SET):
+    last_span = None
+    for ans in ANSWER_SET:
+        spans = re.finditer(ans, text.replace(' ',''))
+        for span in spans:
+            span_ = span.span()
+        if last_span is None or span_[0] >= last_span[1]:
+            last_span = span_
+    return last_span
+            
 
 def eval_model(args):
     # Model
@@ -105,7 +116,7 @@ def eval_model(args):
         input_ids = input_ids.to(device='cuda', non_blocking=True)
 
         with torch.inference_mode():
-            output_ids = model.generate(
+            result = model.generate(
                 input_ids,
                 images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
                 image_sizes=image_sizes,
@@ -115,16 +126,41 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
                 use_cache=True)
-
-        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        if model.cot_decoding:
+            output_ids = result[0]
+            deltas = result[1]
+        else:
+            output_ids = result
+        outputs = []
+        if not model.cot_decoding:
+            outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+            
+        else:
+            for output_id, delta in zip(output_ids, deltas):
+                output = tokenizer.batch_decode(output_id, skip_special_tokens=True)[0].strip()
+                outputs.append(output)
+            
 
         ans_id = shortuuid.uuid()
-        ans_file.write(json.dumps({"question_id": idx,
-                                   "prompt": cur_prompt,
-                                   "text": outputs,
-                                   "answer_id": ans_id,
-                                   "model_id": model_name,
-                                   "metadata": {}}) + "\n")
+        if not model.cot_decoding:
+            ans_file.write(json.dumps({"question_id": idx,
+                                       "prompt": cur_prompt,
+                                       "text": outputs,
+                                       "answer_id": ans_id,
+                                       "model_id": model_name,
+                                       "metadata": {}}) + "\n")
+        else:
+            for i, output in enumerate(outputs):
+                delta = deltas[i].cpu().detach().numpy().tolist()
+                output_id = output_ids[i].cpu().detach().numpy().tolist()
+                ans_file.write(json.dumps({"question_id": idx,
+                                           "prompt": cur_prompt,
+                                           "text": output,
+                                           "token_id": output_id,
+                                           "answer_id": ans_id,
+                                           "model_id": model_name,
+                                           "delta": delta,
+                                           "metadata": {}}) + "\n")
         # ans_file.flush()
     ans_file.close()
 

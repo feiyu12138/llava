@@ -5,12 +5,14 @@ import json
 from tqdm import tqdm
 import shortuuid
 
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN,ANSWER_SET \
+    ,YES_NO_CHOICES,COLOR_CHOICES,NUMBER_CHOICES,SIZE_CHOICES
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
+import re
 
 from PIL import Image
 import math
@@ -75,6 +77,43 @@ def create_data_loader(questions, image_folder, tokenizer, image_processor, mode
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
+def locate_answer_token(text,ANSWER_SET):
+    last_span = None
+    span_ = None
+    words = text.lower().replace(",","").split()
+    text = text.lower().replace(' ','')
+    for ans in ANSWER_SET:
+        spans = re.finditer(ans, text)
+        for span in spans:
+            if span.group() not in words:
+                continue
+            span_ = span.span()
+        if span_ is not None:
+            if last_span is None or span_[0] >= last_span[1]:
+                last_span = span_
+    if last_span is None:
+        return None,None
+    span_text = text[last_span[0]:last_span[1]]
+    return last_span,span_text
+
+def get_id_mapping(str_list):
+    mapping = []
+    for idx, str in enumerate(str_list):
+        for char in str:
+            mapping.append(idx)
+    mapping = torch.tensor(mapping)
+    return mapping
+
+def choose_question_type(question):
+    if "Is" in question or "Are" in question:
+        return YES_NO_CHOICES
+    elif "How many" in question:
+        return NUMBER_CHOICES
+    elif "color" in question:
+        return COLOR_CHOICES
+    else:
+        return ANSWER_SET
+    
 
 def eval_model(args):
     # Model
@@ -87,46 +126,53 @@ def eval_model(args):
     model.num_branch = args.num_branch
 
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
-    questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
-    answers_file = os.path.expanduser(args.answers_file)
-    os.makedirs(os.path.dirname(answers_file), exist_ok=True)
-    ans_file = open(answers_file, "w")
-
-    if 'plain' in model_name and 'finetune' not in model_name.lower() and 'mmtag' not in args.conv_mode:
-        args.conv_mode = args.conv_mode + '_mmtag'
-        print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
-
-    data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config)
-
-    for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
-        idx = line["question_id"]
-        cur_prompt = line["text"]
-
-        input_ids = input_ids.to(device='cuda', non_blocking=True)
-
-        with torch.inference_mode():
-            output_ids = model.generate(
-                input_ids,
-                images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
-                image_sizes=image_sizes,
-                do_sample=True if args.temperature > 0 else False,
-                temperature=args.temperature,
-                top_p=args.top_p,
-                num_beams=args.num_beams,
-                max_new_tokens=args.max_new_tokens,
-                use_cache=True)
-
-        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-
-        ans_id = shortuuid.uuid()
-        ans_file.write(json.dumps({"question_id": idx,
-                                   "prompt": cur_prompt,
-                                   "text": outputs,
-                                   "answer_id": ans_id,
-                                   "model_id": model_name,
-                                   "metadata": {}}) + "\n")
-        # ans_file.flush()
-    ans_file.close()
+    answers = [json.loads(q) for q in open(os.path.expanduser(args.answers_file), "r")]
+    best_answer_id = []
+    best_answer_text = []
+    best_answer_answer_text = []
+    question_id_list = []
+    for idx, ans in enumerate(answers):
+        branch_count = idx % model.num_branch
+        question_count = idx // model.num_branch
+        if branch_count == 0:
+            delta_list = []
+            answer_text_list = []
+            text_list = []
+            qur_question = questions[question_count]
+            FINITE_SET = choose_question_type(qur_question["text"])
+            question_id_list.append(qur_question["question_id"])
+            
+        cur_text = ans['text']
+        cur_delta = torch.tensor(ans['delta'])
+        token_id = torch.tensor(ans['token_id'])[:,1:-1]
+        str_list = tokenizer.batch_decode(token_id.permute(1,0), skip_special_tokens=True)
+        mapping = get_id_mapping(str_list)
+        answer_id, answer_text = locate_answer_token(cur_text, FINITE_SET)
+        if answer_id is None:
+            delta_avg = torch.tensor(0)
+            answer_text = "not found"
+        else:
+            answer_token = list(set(mapping[answer_id[0]:answer_id[1]].tolist()))
+            delta_avg = torch.mean(cur_delta[:,answer_token])
+        delta_list.append(delta_avg)
+        answer_text_list.append(answer_text)
+        text_list.append(cur_text)
+        if branch_count == model.num_branch - 1:
+            delta_sorted = torch.stack(delta_list, dim=0).sort(dim=0)
+            order = delta_sorted.indices
+            best_answer_id.append(order[-1])
+            best_answer_text.append(text_list[order[-1]])
+            best_answer_answer_text.append(answer_text_list[order[-1]])
+        # output to output_file
+    output_file = os.path.expanduser(args.output_file)  
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    out_file = open(output_file, "w")
+    for idx, (answer_id, anser_text, answer_answer_text) in \
+        enumerate(zip(best_answer_id, best_answer_text, best_answer_answer_text)):
+        out_file.write(json.dumps({"answer": answer_answer_text,"question_id": question_id_list[idx], "answer_id": answer_id.item(), "text": anser_text}) + "\n")
+        
+            
+            
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -146,6 +192,7 @@ if __name__ == "__main__":
     parser.add_argument("--icl-file", type=str, default="none")
     parser.add_argument("--cot-decoding", action="store_true")
     parser.add_argument("--num-branch", type=int, default=4)
+    parser.add_argument("--output-file", type=str, default="output.jsonl")
     args = parser.parse_args()
 
     eval_model(args)
