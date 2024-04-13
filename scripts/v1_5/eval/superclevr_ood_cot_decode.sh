@@ -16,7 +16,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --model-path liuhaotian/llava-v1.5-7b \
         --question-file ./playground/data/eval/superclevr/$SPLIT.jsonl \
         --image-folder /data/jieneng/data/llava_datasets/eval/superclevr/images \
-        --answers-file $answer_file \
+        --answers-file ./playground/data/eval/superclevr/answers/$SPLIT/$name/${CHUNKS}_${IDX}_cot_decoding.jsonl \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
