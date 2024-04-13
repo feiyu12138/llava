@@ -298,6 +298,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             finished_delta = []
             past_key_values_snapshot = model_kwargs.get("past_key_values")
             attention_mask_snapshot = model_kwargs.get("attention_mask")
+            unfinished_sequences = 1 - unfinished_sequences
             for input_ids,delta in zip(input_ids_list,delta_list):
                 model_kwargs["past_key_values"] = past_key_values_snapshot
                 model_kwargs["attention_mask"] = attention_mask_snapshot
