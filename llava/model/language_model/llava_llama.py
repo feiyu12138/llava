@@ -220,6 +220,10 @@ class MyFlashAttention2(LlamaFlashAttention2):
         return attn_output, attn_weights, past_key_value
     
 class AdaptiveFlashAttention2(LlamaFlashAttention2):
+    def __init__(self, viz, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.viz = viz
+        
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -404,7 +408,9 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
     `LlamaAttention` as the weights of the module stays untouched. The only changes are on the forward pass to adapt to
     SDPA API.
     """
-
+    def __init__(self, config: LlamaConfig, layer_idx: Optional[int] = None, viz: bool = False):
+        super().__init__(config, layer_idx)
+        self.viz = viz
     # Adapted from LlamaAttention.forward
     def forward(
         self,
@@ -492,16 +498,17 @@ MY_LLAMA_ATTENTION_CLASSES = {
     "adaptive_sdpa": MyLlamaSdpaAttention,
 }  
 class MyLlamaDecoderLayer(LlamaDecoderLayer):
-    def __init__(self, config: LlamaConfig, layer_idx: int):
+    def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
         # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
-        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
+        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
+        
         
 class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
-    def __init__(self, config: LlamaConfig, layer_idx: int):
+    def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
         # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
-        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
+        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -599,6 +606,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.Abstractor = None
         self.hidden_size = config.hidden_size
         self.halfpool = False
+        self.attention_viz = False
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 

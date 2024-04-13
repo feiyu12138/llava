@@ -1,4 +1,5 @@
 #!/bin/bash
+export CUDA_VISIBLE_DEVICES=0
 name=llava-v1.5-b7
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
