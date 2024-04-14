@@ -167,7 +167,7 @@ def eval_model(args):
     model.model.groupingLayer = args.layer
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
-    model.cot_decoding = args.cot_decoding
+    model.model.viz = args.viz
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -230,6 +230,7 @@ if __name__ == "__main__":
     parser.add_argument("--icl", action="store_true")
     parser.add_argument("--icl-file", type=str, default="none")
     parser.add_argument("--cot-decoding", action="store_true")
+    parser.add_argument("--viz", action="store_true")
     args = parser.parse_args()
 
     eval_model(args)

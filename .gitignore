@@ -25,6 +25,7 @@ dist
 .DS_Store
 wandb
 output
+tempt
 
 checkpoints
 checkpoint

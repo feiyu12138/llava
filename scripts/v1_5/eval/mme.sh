@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=5
 name=llava-v1.5-b7
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
@@ -8,7 +8,7 @@ python -m llava.eval.model_vqa_loader \
     --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
-    --grouping avgpool2d \
+    --grouping none \
     --stride 2 \
     --layer 1
 

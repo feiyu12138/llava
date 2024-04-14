@@ -37,6 +37,11 @@ from transformers.generation.beam_search import BeamScorer
 from transformers.generation.logits_process import LogitsProcessorList
 from transformers.generation.stopping_criteria import StoppingCriteriaList,validate_stopping_criteria
 from transformers.generation.utils import GenerateBeamDecoderOnlyOutput,GenerateBeamEncoderDecoderOutput
+from llava.model.language_model.attention_viz import generate_attention_map
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -223,6 +228,7 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
     def __init__(self, viz, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.viz = viz
+        self.attn_map = []
         
     def forward(
         self,
@@ -411,6 +417,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
     def __init__(self, config: LlamaConfig, layer_idx: Optional[int] = None, viz: bool = False):
         super().__init__(config, layer_idx)
         self.viz = viz
+        self.attn_map = None
     # Adapted from LlamaAttention.forward
     def forward(
         self,
@@ -467,7 +474,8 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 raise ValueError(
                     f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
                 )
-
+        if self.viz:
+            self.attn_map = generate_attention_map(query_states, key_states)
         # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
         # Reference: https://github.com/pytorch/pytorch/issues/112577.
         if query_states.device.type == "cuda" and attention_mask is not None:
@@ -606,7 +614,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.Abstractor = None
         self.hidden_size = config.hidden_size
         self.halfpool = False
-        self.attention_viz = False
+        self.viz = False
+        self.attention_maps = []
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -854,6 +863,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         next_decoder_cache = None
         layer_idx = 0
         for decoder_layer in self.layers:
+            if self.viz:
+                decoder_layer.self_attn.viz = True
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
             if layer_idx == self.groupingLayer and self.grouping != 'none':
@@ -934,6 +945,40 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 compressed_position_ids = None
 
             layer_idx += 1
+            if self.viz:
+                assert decoder_layer.self_attn.attn_map is not None, "Attention map is not generated. Please set viz=True in the attn layer"
+                self.attention_maps.append(decoder_layer.self_attn.attn_map)
+        
+        if self.viz:
+            top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
+            width_height = [576,576]
+            for idx, map in enumerate(self.attention_maps):
+                map = map.squeeze(0).cpu().detach().numpy()
+                
+                plt.figure()
+                plt.imshow(map,cmap='coolwarm',interpolation='none')
+                plt.colorbar()
+                rect = patches.Rectangle((top_left[0], 0), width_height[0], map.shape[0],
+                         linewidth=1, edgecolor='r', facecolor='none')
+                plt.gca().add_patch(rect)
+                plt.ylabel('Query ID')
+                plt.xlabel('Key ID')
+                plt.tight_layout()
+                plt.savefig(f'tempt/attention_map_{idx}.png',dpi=300)
+                # x label is query id
+                # y label is key id
+                plt.close()
+                plt.figure()
+                visual_map = map[:,top_left[0]:top_left[0]+width_height[0]]
+                visual_map = (visual_map - visual_map.min()) / (visual_map.max() - visual_map.min())
+                plt.ylabel('Query ID')
+                plt.xlabel('Visual Key ID')
+                # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
+                plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
+                plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
+                plt.tight_layout()
+                plt.savefig(f'tempt/attention_map_{idx}_visual_key.png',dpi=300)
+        from ipdb import set_trace; set_trace()
 
         hidden_states = self.norm(hidden_states)
 
