@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=5
+export CUDA_VISIBLE_DEVICES=1
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -21,7 +21,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --temperature 0 \
         --conv-mode vicuna_v1 \
         --layer 16 \
-        --stride 2 \
+        --stride 1 \
         --grouping none \
         --viz
 done
