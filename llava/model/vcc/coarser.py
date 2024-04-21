@@ -25,9 +25,9 @@ def cache_update(cache, update, update_indices):
 class Coarser(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.block_size = config.block_size
-        self.coarser_type = config.coarser_type
-        self.cache_version = config.cache_version if hasattr(config, "cache_version") else 0
+        self.block_size = config.stride
+        self.coarser_type = "mean"
+        self.cache_version = 0
 
     def extra_repr(self):
         return f"block_size={self.block_size}, coarser_type={self.coarser_type}, cache_version={self.cache_version}"
@@ -62,7 +62,6 @@ class Coarser(nn.Module):
         # {mask} old
         # + {coarse_token_states, coarse_token_mask, difference_cache, cache_indice_table} new
         
-
         if "fine_token_states" in mixed_states and "fine_token_mask" in mixed_states:
 
             fine_token_states = mixed_states["fine_token_states"]
@@ -112,7 +111,6 @@ class Coarser(nn.Module):
 
             coarse_token_states = torch.cat([to_coarse_token_states, partial_coarse_token_states], dim = 1)
             coarse_token_mask = torch.cat([to_coarse_token_mask, partial_coarse_token_mask], dim = 1)
-
             coarse_token_states = coarse_token_states[batch_indices, reorder_block_indices, :]
             coarse_token_mask = coarse_token_mask[batch_indices, reorder_block_indices]
 

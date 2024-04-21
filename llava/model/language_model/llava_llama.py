@@ -46,6 +46,7 @@ from llava.model.vcc.coarser import Coarser
 from llava.model.vcc.finer import Finer
 from llava.model.vcc.selector import Selector
 from llava.model.vcc.formatter import Formatter
+from llava.model.vcc.interface import from_vcc
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -100,10 +101,8 @@ def apply_rotary_pos_emb_for_msa(q, k, cos, sin, position_ids, source_position_i
 
 def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
     if len(attention_mask.shape) == 2:
-        batch_size, seq_length = attention_mask.shape
         new_attention_mask = attention_mask[:,:q_len]
     else:
-        batch_size, _, seq_length, _ = attention_mask.shape
         new_attention_mask = attention_mask[:, :, :q_len, :kv_seq_len]
     return new_attention_mask
 
@@ -458,7 +457,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         else:
             kv_len = q_len
             source_states = hidden_states
-
+            
         query_states = self.q_proj(hidden_states)
         key_states = self.k_proj(source_states)
         value_states = self.v_proj(source_states)
@@ -645,6 +644,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.std_layers = []
         self.text_std_layers = []
         self.user_std_layers = []
+        self.coarser = None
+        self.finer = None
+        self.formatter = None
+        self.selector = None
+        
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -657,6 +661,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
 
     def get_Abstractor(self):
         return self.Abstractor
+    
+    def create_vcc_from_config(self,config):
+        self.coarser = Coarser(config)
+        self.finer = Finer(config)
+        self.formatter = Formatter(config)
+        self.selector = Selector(config)
     
     def visual_operating(self, hidden_states, position_ids, operator):
         if self.images_idx is not None:
@@ -703,6 +713,38 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             new_position_ids = position_ids
             
         return hidden_states, new_position_ids
+    
+    def attn_guided_compress(self, hidden_states, position_ids,attn_layer,attention_mask = None,importance_mask=None):
+        
+        if attention_mask is None:
+            attention_mask = torch.ones(hidden_states.size(0), hidden_states.size(1), device=hidden_states.device)
+        if importance_mask is None:
+            assert self.images_idx is not None
+            # label the language tokens as important i.e. the token before image_idx and after image_idx + 576(include)
+            importance_mask = torch.zeros(hidden_states.size(0), hidden_states.size(1), device=hidden_states.device)
+            importance_mask[:,0:self.images_idx[0][0]] = 1
+            importance_mask[:,self.images_idx[0][0] + 576:] = 1
+            
+        uncompressed_states = {
+            "hidden_states":hidden_states, # [B, L, D]
+            "mask":attention_mask, # [B, L]
+            "importance_mask":importance_mask, # [B, L]
+            "positions":position_ids, # [B, L]
+        }
+        uncompressed_states = self.formatter.to_vcc_input(uncompressed_states)
+        self.selector.set_attn(attn_layer)
+        compressed_states = self.finer(self.selector(self.coarser(uncompressed_states)))
+        compressed_hidden_states, _, compressed_position_ids = from_vcc(compressed_states)
+        # reorder the hidden states and compressed_position_ids to match the original order
+        batch_indices = torch.arange(compressed_hidden_states.size(0)).unsqueeze(1)
+        reorder_ids = torch.argsort(compressed_position_ids,dim=1)
+        batch_indices = batch_indices.expand_as(reorder_ids)
+        compressed_hidden_states = compressed_hidden_states[batch_indices,reorder_ids]
+        compressed_position_ids = compressed_position_ids[batch_indices,reorder_ids]
+        
+        return compressed_hidden_states, compressed_position_ids
+        
+    
 
     def visual_avg_pool1d(self,visual_states, visual_positions):
         visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=self.stride, stride=self.stride).permute(0,2,1).contiguous()
@@ -922,6 +964,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 elif self.grouping == 'detach_hard_k_means':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
+                elif self.grouping == 'attn':
+                    hidden_states,position_ids = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:

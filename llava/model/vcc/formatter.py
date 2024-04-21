@@ -12,9 +12,9 @@ from .finer import Finer
 class Formatter(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.num_important_tokens = config.num_important_tokens
-        self.block_size = config.block_size
-        self.include_positions_in_mixed_states = config.include_positions_in_mixed_states
+        self.num_important_tokens = None
+        self.block_size = config.stride
+        self.include_positions_in_mixed_states = True
         self.coarser = Coarser(config)
         self.finer = Finer(config)
 
@@ -40,6 +40,7 @@ class Formatter(nn.Module):
         hidden_states = hidden_states[batch_indices, sorted_order, :]
         importance_mask = importance_mask[batch_indices, sorted_order]
         mask = mask[batch_indices, sorted_order]
+        self.num_important_tokens = importance_mask.sum(dim = 1).max().long().item()
 
         important_token_states = hidden_states[:, :self.num_important_tokens, :]
         important_token_mask = mask[:, :self.num_important_tokens]

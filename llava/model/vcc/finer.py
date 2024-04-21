@@ -20,7 +20,7 @@ def cache_select(cache, select_indices):
 class Finer(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.block_size = config.block_size
+        self.block_size = config.stride
 
     def extra_repr(self):
         return f"block_size={self.block_size}"
@@ -61,7 +61,6 @@ class Finer(nn.Module):
 
             partial_fine_token_scores = fine_block_scores[:, :, None].repeat(1, 1, self.block_size)
             partial_fine_token_scores = partial_fine_token_scores.reshape(batch_size, num_fine_blocks * self.block_size)
-            from ipdb import set_trace; set_trace()
             difference = cache_select(mixed_states["difference_cache"], fine_block_indices)
             to_fine_token_states = coarse_token_states[batch_indices, fine_block_indices, :]
             partial_fine_token_states = to_fine_token_states[:, :, None, :] - difference
