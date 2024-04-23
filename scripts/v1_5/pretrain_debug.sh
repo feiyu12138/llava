@@ -1,8 +1,8 @@
 #!/bin/bash
 export NCCL_P2P_DISABLE=1
-layer=16
+layer=0
 stride=2
-grouping=avgpool2d
+grouping=pos_avg
 NNODES=1
 GPUS=1
 PORT=29600
