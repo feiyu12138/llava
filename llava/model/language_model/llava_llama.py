@@ -811,6 +811,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         return tokens.permute(0,2,1).contiguous(), position_ids
     
+    def apply_position_average(self, visual_states, visual_positions):
+        visual_positions = torch.mean(visual_positions.float(), dim=2).long().repeat(1, 1, visual_states.size(2)).squeeze(1)
+        return visual_states.permute(0,2,1), visual_positions
+        
+    
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -922,6 +927,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 elif self.grouping == 'detach_hard_k_means':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
+                elif self.grouping == 'pos_avg':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:
@@ -1063,7 +1070,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             plt.tight_layout()
             plt.savefig('tempt/user_std_layers.png',dpi=300)
             plt.close()
-            from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
 

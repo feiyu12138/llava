@@ -8,10 +8,10 @@ python -m llava.eval.model_vqa_loader \
     --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
-    --grouping none \
+    --grouping pos_avg \
     --stride 2 \
-    --layer 1 \
-    --viz
+    --layer 1 
+    # --viz
 
 
 cd ./playground/data/eval/MME
