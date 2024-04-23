@@ -483,6 +483,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 )
         if self.viz:
             self.attn_map = generate_attention_map(query_states, key_states)
+            '''
             self.std.update(
                 calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
                               key_states[:,:,self.images_idx:self.images_idx+576], 
@@ -501,6 +502,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                               value_states[:,:,self.images_idx+576:],
                                 hidden_states[:,self.images_idx+576:])
             )
+            '''
         # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
         # Reference: https://github.com/pytorch/pytorch/issues/112577.
         if query_states.device.type == "cuda" and attention_mask is not None:
@@ -711,8 +713,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 new_position_ids = position_ids
         else:
             new_position_ids = position_ids
+        visual_length = new_position_ids.size(1) - position_ids.size(1) + 576
             
-        return hidden_states, new_position_ids
+        return hidden_states, new_position_ids,visual_length
     
     def attn_guided_compress(self, hidden_states, position_ids,attn_layer,attention_mask = None,importance_mask=None):
         
@@ -735,6 +738,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.selector.set_attn(attn_layer)
         compressed_states = self.finer(self.selector(self.coarser(uncompressed_states)))
         compressed_hidden_states, _, compressed_position_ids = from_vcc(compressed_states)
+        visual_length = compressed_position_ids.size(1) - importance_mask.sum(1)
         # reorder the hidden states and compressed_position_ids to match the original order
         batch_indices = torch.arange(compressed_hidden_states.size(0)).unsqueeze(1)
         reorder_ids = torch.argsort(compressed_position_ids,dim=1)
@@ -742,7 +746,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         compressed_hidden_states = compressed_hidden_states[batch_indices,reorder_ids]
         compressed_position_ids = compressed_position_ids[batch_indices,reorder_ids]
         
-        return compressed_hidden_states, compressed_position_ids
+        return compressed_hidden_states, compressed_position_ids,visual_length.long().item()
         
     
 
@@ -933,6 +937,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         all_self_attns = () if output_attentions else None
         next_decoder_cache = None
         layer_idx = 0
+        visual_length_layers = []
         for decoder_layer in self.layers:
             if self.viz and self.images_idx is not None:
                 decoder_layer.self_attn.viz = True
@@ -941,31 +946,31 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 all_hidden_states += (hidden_states,)
             if layer_idx == self.groupingLayer and self.grouping != 'none':
                 if self.grouping == 'avgpool1d':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
+                    compressed_hidden_states, compressed_position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'avgpool2d':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
+                    compressed_hidden_states, compressed_position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
                     self.label_ids = compressed_position_ids
                 elif self.grouping.find('abstractor') != -1:
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
+                    hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
                     self.label_ids = position_ids
                 elif self.grouping == 'random_drop':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
+                    hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
                     self.label_ids = position_ids
                 elif self.grouping == 'block_random_drop':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
+                    hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
                     self.label_ids = position_ids
                 elif self.grouping == 'soft_k_means':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
+                    hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'detach_soft_k_means':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
+                    hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'detach_hard_k_means':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
+                    hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'attn':
-                    hidden_states,position_ids = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
+                    hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:
@@ -975,9 +980,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
+                visual_length_layers.append(visual_length)
             else:
                 compressed_hidden_states = None
                 compressed_position_ids = None
+                visual_length_layers.append(None)
             
             if not self.halfpool and compressed_hidden_states is not None:
                 hidden_states = compressed_hidden_states
@@ -1030,7 +1037,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
             width_height_init = [576,576]
             for idx, map in enumerate(self.attention_maps):
-                width_height = width_height_init if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
+                width_height = width_height_init if visual_length_layers[idx] is None else [visual_length_layers[idx],visual_length_layers[idx]]
                 map = map.squeeze(0).cpu().detach().numpy()
                 
                 plt.figure()
@@ -1050,7 +1057,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 visual_map = map[:,top_left[0]:top_left[0]+width_height[0]]
                 visual_attention_max = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].max()
                 visual_attention_min = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].min()
-                visual_map = (visual_map - visual_attention_min) / (visual_attention_max - visual_attention_min)
+                visual_map = (visual_map - visual_attention_min) / (visual_attention_max - visual_attention_min + 1e-6)
                 plt.ylabel('Query ID')
                 plt.xlabel('Visual Key ID')
                 # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
@@ -1059,54 +1066,54 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 plt.tight_layout()
                 plt.savefig(f'tempt/attention_map_{idx}_visual_key.png',dpi=300)
                 plt.close()
-            state_std_layers = [std['state'].cpu() for std in self.std_layers]
-            query_std_layers = [std['query'].cpu() for std in self.std_layers]
-            key_std_layers = [std['key'].cpu() for std in self.std_layers]
-            value_std_layers = [std['value'].cpu() for std in self.std_layers]
-            plt.figure()
-            plt.title('Standard Deviation of QKVS, segment length = 4')
-            plt.plot(state_std_layers,label='state std')
-            plt.plot(query_std_layers,label='query std')
-            plt.plot(key_std_layers,label='key std')
-            plt.plot(value_std_layers,label='value std')
-            plt.xlabel('Layer')
-            plt.ylabel('Standard Deviation')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('tempt/visual_std_layers.png',dpi=300)
-            plt.close()
-            text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
-            text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
-            text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
-            text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
-            plt.figure()
-            plt.title('Standard Deviation of QKVS(system), segment length = 4')
-            plt.plot(text_state_std_layers,label='state std')
-            plt.plot(text_query_std_layers,label='query std')
-            plt.plot(text_key_std_layers,label='key std')
-            plt.plot(text_value_std_layers,label='value std')
-            plt.xlabel('Layer')
-            plt.ylabel('Standard Deviation')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('tempt/system_std_layers.png',dpi=300)
-            plt.close()
-            user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
-            user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
-            user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
-            user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
-            plt.figure()
-            plt.title('Standard Deviation of QKVS(user), segment length = 4')
-            plt.plot(user_state_std_layers,label='state std')
-            plt.plot(user_query_std_layers,label='query std')
-            plt.plot(user_key_std_layers,label='key std')
-            plt.plot(user_value_std_layers,label='value std')
-            plt.xlabel('Layer')
-            plt.ylabel('Standard Deviation')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('tempt/user_std_layers.png',dpi=300)
-            plt.close()
+            # state_std_layers = [std['state'].cpu() for std in self.std_layers]
+            # query_std_layers = [std['query'].cpu() for std in self.std_layers]
+            # key_std_layers = [std['key'].cpu() for std in self.std_layers]
+            # value_std_layers = [std['value'].cpu() for std in self.std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS, segment length = 4')
+            # plt.plot(state_std_layers,label='state std')
+            # plt.plot(query_std_layers,label='query std')
+            # plt.plot(key_std_layers,label='key std')
+            # plt.plot(value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/visual_std_layers.png',dpi=300)
+            # plt.close()
+            # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
+            # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
+            # text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
+            # text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS(system), segment length = 4')
+            # plt.plot(text_state_std_layers,label='state std')
+            # plt.plot(text_query_std_layers,label='query std')
+            # plt.plot(text_key_std_layers,label='key std')
+            # plt.plot(text_value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/system_std_layers.png',dpi=300)
+            # plt.close()
+            # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
+            # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
+            # user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
+            # user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS(user), segment length = 4')
+            # plt.plot(user_state_std_layers,label='state std')
+            # plt.plot(user_query_std_layers,label='query std')
+            # plt.plot(user_key_std_layers,label='key std')
+            # plt.plot(user_value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/user_std_layers.png',dpi=300)
+            # plt.close()
             from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
