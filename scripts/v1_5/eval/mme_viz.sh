@@ -9,8 +9,7 @@ python -m llava.eval.model_vqa_loader \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --grouping pos_avg \
-    --stride 2 \
-    --layer 1 
+    --layer 0 
     # --viz
 
 

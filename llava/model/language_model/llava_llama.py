@@ -896,6 +896,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         all_self_attns = () if output_attentions else None
         next_decoder_cache = None
         layer_idx = 0
+        compressed_hidden_states = None
+        compressed_position_ids = None
         for decoder_layer in self.layers:
             if self.viz and self.images_idx is not None:
                 decoder_layer.self_attn.viz = True
@@ -1083,7 +1085,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             next_cache = next_decoder_cache.to_legacy_cache() if use_legacy_cache else next_decoder_cache
         if not return_dict:
             return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns] if v is not None)
-        from ipdb import set_trace; set_trace()
         return BaseModelOutputWithPast(
             last_hidden_state=hidden_states,
             past_key_values=next_cache,
