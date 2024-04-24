@@ -21,11 +21,11 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --temperature 0 \
         --conv-mode vicuna_v1 \
         --layer 8 \
-        --stride 16\
-        --grouping avgpool1d \
-        --num-fine-blocks 1 \
+        --stride 8\
+        --grouping attn \
+        --num-fine-blocks 4 \
         --explore-prob 0.0 \
-        --viz
+        # --viz
 done
 
 wait
