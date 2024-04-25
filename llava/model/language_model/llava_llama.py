@@ -510,7 +510,6 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             query_states = query_states.contiguous()
             key_states = key_states.contiguous()
             value_states = value_states.contiguous()
-        from ipdb import set_trace; set_trace()
         attn_output = torch.nn.functional.scaled_dot_product_attention(
             query_states,
             key_states,
@@ -870,7 +869,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 past_key_values_length, seq_length + past_key_values_length, dtype=torch.long, device=device
             )
             position_ids = position_ids.unsqueeze(0)
-        from ipdb import set_trace; set_trace()
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
         if self._use_flash_attention_2:
@@ -1221,7 +1219,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     ) -> Union[GenerateOutput, torch.LongTensor]:
         position_ids = kwargs.pop("position_ids", None)
         attention_mask = kwargs.pop("attention_mask", None)
-        from ipdb import set_trace; set_trace()
         if "inputs_embeds" in kwargs:
             raise NotImplementedError("`inputs_embeds` is not supported")
         images_idx = None
