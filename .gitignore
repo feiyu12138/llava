@@ -25,6 +25,7 @@ checkpoint
 checkpoints
 playground
 ckpts*
+tempt_
 
 .ipynb_checkpoints
 *.ipynb
