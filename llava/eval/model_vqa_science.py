@@ -36,7 +36,7 @@ def eval_model(args):
     model.model.stride = args.stride
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
-
+    model.model.pos_enable = args.pos_enable
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -115,5 +115,6 @@ if __name__ == "__main__":
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool",type=str2bool,default="false")
+    parser.add_argument("--pos-enable", type=str2bool, default="true")
     args = parser.parse_args()
     eval_model(args)

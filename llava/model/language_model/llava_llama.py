@@ -426,6 +426,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         self.text_std = {}
         self.user_std = {}
         self.images_idx = None
+        self.pos_enable = True
     # Adapted from LlamaAttention.forward
     def forward(
         self,
@@ -470,7 +471,8 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         if past_key_value is not None:
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
-        query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids, source_position_ids)
+        if self.pos_enable:
+            query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids, source_position_ids)
         if past_key_value is not None:
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
@@ -508,6 +510,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             query_states = query_states.contiguous()
             key_states = key_states.contiguous()
             value_states = value_states.contiguous()
+        from ipdb import set_trace; set_trace()
         attn_output = torch.nn.functional.scaled_dot_product_attention(
             query_states,
             key_states,
@@ -645,6 +648,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.std_layers = []
         self.text_std_layers = []
         self.user_std_layers = []
+        self.pos_enable = True
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -866,7 +870,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 past_key_values_length, seq_length + past_key_values_length, dtype=torch.long, device=device
             )
             position_ids = position_ids.unsqueeze(0)
-
+        from ipdb import set_trace; set_trace()
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
         if self._use_flash_attention_2:
@@ -902,6 +906,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             if self.viz and self.images_idx is not None:
                 decoder_layer.self_attn.viz = True
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
+            if not self.pos_enable:
+                decoder_layer.self_attn.pos_enable = False
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
             if layer_idx == self.groupingLayer and self.grouping != 'none':
@@ -1215,6 +1221,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     ) -> Union[GenerateOutput, torch.LongTensor]:
         position_ids = kwargs.pop("position_ids", None)
         attention_mask = kwargs.pop("attention_mask", None)
+        from ipdb import set_trace; set_trace()
         if "inputs_embeds" in kwargs:
             raise NotImplementedError("`inputs_embeds` is not supported")
         images_idx = None
