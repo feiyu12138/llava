@@ -92,7 +92,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         image_sizes: Optional[List[List[int]]] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
-
         if inputs_embeds is None:
             (
                 input_ids,
@@ -110,7 +109,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 images,
                 image_sizes
             )
-
         return super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
