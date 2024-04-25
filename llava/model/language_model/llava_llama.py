@@ -929,7 +929,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             attention_mask = _prepare_4d_causal_attention_mask(
                 attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
             )
-
         # embed positions
         hidden_states = inputs_embeds
         # decoder layers
@@ -1114,7 +1113,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # plt.tight_layout()
             # plt.savefig('tempt/user_std_layers.png',dpi=300)
             # plt.close()
-            from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
 
@@ -1128,7 +1126,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             next_cache = next_decoder_cache.to_legacy_cache() if use_legacy_cache else next_decoder_cache
         if not return_dict:
             return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns] if v is not None)
-        from ipdb import set_trace; set_trace()
         return BaseModelOutputWithPast(
             last_hidden_state=hidden_states,
             past_key_values=next_cache,
@@ -1191,13 +1188,11 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             )
             self.model.images_idx = images_idx
         
-
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs = self.model(
             input_ids=input_ids,
