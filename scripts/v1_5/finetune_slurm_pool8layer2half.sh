@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool8layer2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool8layer2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool8layer2.out
+#SBATCH --job-name=pool8layer2half
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool8layer2half.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool8layer2half.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -37,7 +37,7 @@ deepspeed llava/train/train_mem.py \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-half \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
@@ -57,7 +57,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_pool8layer2_half \
+    --run_name pt_pool8layer2half \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
@@ -71,7 +71,7 @@ deepspeed llava/train/train_mem.py \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
+    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-half/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -79,7 +79,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-half \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -99,7 +99,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer2_half \
+    --run_name pool8layer2half \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
