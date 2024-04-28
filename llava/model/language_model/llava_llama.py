@@ -811,6 +811,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         return tokens.permute(0,2,1).contiguous(), position_ids
     
+    def apply_position_average(self, visual_states, visual_positions):
+        visual_positions = torch.mean(visual_positions.float(), dim=2).long().repeat(1, 1, visual_states.size(2)).squeeze(1)
+        return visual_states.permute(0,2,1), visual_positions
+    
     def forward(
         self,
         input_ids: torch.LongTensor = None,
