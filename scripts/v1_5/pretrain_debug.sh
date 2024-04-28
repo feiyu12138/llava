@@ -1,11 +1,13 @@
 #!/bin/bash
 export NCCL_P2P_DISABLE=1
-layer=16
-stride=2
+export CUDA_VISIBLE_DEVICES=7
+layer=2
+stride=8
 grouping=avgpool2d
 NNODES=1
 GPUS=1
 PORT=29600
+halfpool=True
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -42,4 +44,5 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --report_to wandb \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    --halfpool $halfpool
