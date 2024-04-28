@@ -1,9 +1,6 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1,3
 export NCCL_P2P_DISABLE=1
-layer=16
-stride=2
-grouping=avgpool2d
 NNODES=1
 GPUS=1
 PORT=29600
@@ -15,11 +12,11 @@ fast_v_image_token_length=576
 name=llava-v1.5-7b-fastv-rank-$rank-k-$k
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \
-    --deepspeed ./scripts/zero2.json \
+    --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
-    --version plain \
-    --data_path ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
-    --image_folder ./playground/data/LLaVA-Pretrain/images \
+    --version v1 \
+    --data_path ./playground/data/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --image_folder ./playground/data/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
@@ -47,8 +44,11 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --use_fast_v $use_fast_v \
-    --fast_v_sys_length $fast_v_sys_length \
-    --fast_v_image_token_length $fast_v_image_token_length \
-    --fast_v_attention_rank $rank \
-    --fast_v_agg_layer $k 
+    --grouping avgpool1d \
+    --stride 1 \
+    --layer 16 \
+   #  --use_fast_v $use_fast_v \
+   #  --fast_v_sys_length $fast_v_sys_length \
+   #  --fast_v_image_token_length $fast_v_image_token_length \
+   #  --fast_v_attention_rank $rank \
+   #  --fast_v_agg_layer $k \

@@ -1,11 +1,8 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1,3
 export NCCL_P2P_DISABLE=1
-layer=16
-stride=2
-grouping=avgpool2d
 NNODES=1
-GPUS=1
+GPUS=3
 PORT=29600
 rank=72
 k=2
