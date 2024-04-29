@@ -1,7 +1,8 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=2
 name=llava-v1.5-7b-viz
-ckpt=/data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d
+ckpt=/data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d-half
+halfpool=True
 python -m llava.eval.model_vqa_loader \
     --model-path $ckpt \
     --question-file ./playground/data/eval/MME/llava_mme.jsonl \
@@ -13,6 +14,8 @@ python -m llava.eval.model_vqa_loader \
     --stride 8 \
     --layer 2 \
     --viz \
+    --halfpool $halfpool \
+    --viz_savepath viz/stride-8-layer-2-grouping-avgpool1d \
     --num-fine-blocks 1 \
     --explore-prob 0.0
 

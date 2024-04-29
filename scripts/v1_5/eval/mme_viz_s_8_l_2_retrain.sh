@@ -13,6 +13,7 @@ python -m llava.eval.model_vqa_loader \
     --stride 8 \
     --layer 2 \
     --viz \
+    --viz_savepath viz/stride-8-layer-2-grouping-avgpool1d-retrain \
     --num-fine-blocks 1 \
     --explore-prob 0.0
 

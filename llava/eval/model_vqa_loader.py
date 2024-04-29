@@ -169,6 +169,7 @@ def eval_model(args):
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
     model.model.viz = args.viz
+    model.model.viz_savepath = args.viz_savepath
     if args.grouping == 'attn':
         model.model.create_vcc_from_config(args)
         use_cache = False
@@ -237,6 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--viz", action="store_true")
     parser.add_argument('--num-fine-blocks', type=int, default=9)
     parser.add_argument('--explore-prob', type=float, default=0.0)
+    parser.add_argument('--viz_savepath', type=str, default='tempt')
     args = parser.parse_args()
 
     eval_model(args)

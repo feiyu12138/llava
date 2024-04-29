@@ -8,13 +8,12 @@ def generate_attention_map(query:torch.tensor, key:torch.tensor) -> torch.tensor
     Generate attention map from query and key tensors.
     """
     # concatenate multiple heads
-    query = query.transpose(1, 2)
-    query = query.reshape(query.size(0), query.size(1), -1)
-    key = key.transpose(1, 2)
-    key = key.reshape(key.size(0), key.size(1), -1)
-    
+    causal_mask = torch.triu(torch.ones(query.size(2), key.size(2)), diagonal=1).bool().to(query.device)
+    causal_mask = causal_mask.unsqueeze(0).expand(query.size(0), -1, -1)
     # compute attention map
-    attention_map = torch.einsum('bqd,bkd->bqk', query, key) / (query.size(-1) ** 0.5)
+    attention_map = torch.einsum('bhqd,bhkd->bhqk', query, key) / (query.size(-1) ** 0.5)
+    attention_map = attention_map.mean(1)
+    attention_map.masked_fill_(causal_mask, float('-inf'))
     attention_map = torch.softmax(attention_map, dim=-1)
     
     

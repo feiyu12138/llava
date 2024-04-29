@@ -17,7 +17,7 @@ from typing import List, Optional, Tuple, Union
 
 import warnings
 import torch.distributed as dist
-
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -642,6 +642,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.hidden_size = config.hidden_size
         self.halfpool = False
         self.viz = False
+        self.viz_savepath = None
         self.attention_maps = []
         self.std_layers = []
         self.text_std_layers = []
@@ -1036,6 +1037,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 self.user_std_layers.append(decoder_layer.self_attn.user_std)
         
         if self.viz and self.images_idx is not None:
+            if not os.path.exists(self.viz_savepath):
+                os.makedirs(self.viz_savepath)
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
             width_height_init = [576,576]
             for idx, map in enumerate(self.attention_maps):
@@ -1051,7 +1054,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 plt.ylabel('Query ID')
                 plt.xlabel('Key ID')
                 plt.tight_layout()
-                plt.savefig(f'tempt/attention_map_{idx}.png',dpi=300)
+                plt.savefig(f'{self.viz_savepath}/attention_map_{idx}.png',dpi=300)
                 # x label is query id
                 # y label is key id
                 plt.close()
@@ -1066,7 +1069,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
                 plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
                 plt.tight_layout()
-                plt.savefig(f'tempt/attention_map_{idx}_visual_key.png',dpi=300)
+                plt.savefig(f'{self.viz_savepath}/attention_map_{idx}_visual_key.png',dpi=300)
                 plt.close()
             # state_std_layers = [std['state'].cpu() for std in self.std_layers]
             # query_std_layers = [std['query'].cpu() for std in self.std_layers]
@@ -1082,7 +1085,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # plt.ylabel('Standard Deviation')
             # plt.legend()
             # plt.tight_layout()
-            # plt.savefig('tempt/visual_std_layers.png',dpi=300)
+            # plt.savefig('{self.viz_savepath}/visual_std_layers.png',dpi=300)
             # plt.close()
             # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
             # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
@@ -1098,7 +1101,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # plt.ylabel('Standard Deviation')
             # plt.legend()
             # plt.tight_layout()
-            # plt.savefig('tempt/system_std_layers.png',dpi=300)
+            # plt.savefig('{self.viz_savepath}/system_std_layers.png',dpi=300)
             # plt.close()
             # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
             # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
@@ -1114,7 +1117,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # plt.ylabel('Standard Deviation')
             # plt.legend()
             # plt.tight_layout()
-            # plt.savefig('tempt/user_std_layers.png',dpi=300)
+            # plt.savefig('{self.viz_savepath}/user_std_layers.png',dpi=300)
             # plt.close()
         from ipdb import set_trace; set_trace()
         self.attention_maps = []
