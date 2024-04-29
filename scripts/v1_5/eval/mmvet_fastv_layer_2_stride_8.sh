@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=7
 name=llava-v1.5-7b-fastv-layer2-rank72
 rank=72
 k=2

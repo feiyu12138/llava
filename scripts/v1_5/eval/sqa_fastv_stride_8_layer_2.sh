@@ -1,6 +1,6 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=1
-name=llava-v1.5-7b-fastv-layer2-rank72
+name=llava-v1.5-7b-fastv-layer2-rank72-inplace
 rank=72
 k=2
 python -m llava.eval.model_vqa_science \
