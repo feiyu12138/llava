@@ -1,8 +1,9 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=1
-name=llava-v1.5-7b-fastv-layer2-rank72
-rank=72
-k=2
+layer=2
+stride=8
+grouping=avgpool1d
+name=llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d
 python -m llava.eval.model_vqa \
     --model-path liuhaotian/llava-v1.5-7b \
     --question-file ./playground/data/eval/mm-vet/llava-mm-vet.jsonl \
@@ -10,11 +11,9 @@ python -m llava.eval.model_vqa \
     --answers-file ./playground/data/eval/mm-vet/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
-    --use-fast-v True \
-    --fast-v-sys-length 36 \
-    --fast-v-image-token-length 576 \
-    --fast-v-attention-rank $rank \
-    --fast-v-agg-layer $k 
+    --layer $layer \
+    --stride $stride \
+    --grouping $grouping 
 
 mkdir -p ./playground/data/eval/mm-vet/results
 
