@@ -160,6 +160,7 @@ def create_data_loader(questions, image_folder, tokenizer, image_processor, mode
 def eval_model(args):
     # Model
     disable_torch_init()
+    use_cache = True
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
@@ -170,6 +171,7 @@ def eval_model(args):
     model.model.viz = args.viz
     if args.grouping == 'attn':
         model.model.create_vcc_from_config(args)
+        use_cache = False
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -197,7 +199,7 @@ def eval_model(args):
                 top_p=args.top_p,
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
-                use_cache=True)
+                use_cache=use_cache)
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 

@@ -969,7 +969,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'attn':
-                    hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
+                    if self.images_idx is not None:
+                        hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
+                    else:
+                        hidden_states,position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d) # do nothing
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:

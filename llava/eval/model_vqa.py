@@ -28,11 +28,17 @@ def get_chunk(lst, n, k):
 
 def eval_model(args):
     # Model
+    use_cache = True
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-
+    if args.grouping == 'attn':
+        model.model.create_vcc_from_config(args)
+        use_cache = False
+    model.model.stride = args.stride
+    model.model.groupingLayer = args.layer
+    model.model.grouping = args.grouping
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -57,9 +63,7 @@ def eval_model(args):
 
         image = Image.open(os.path.join(args.image_folder, image_file)).convert('RGB')
         image_tensor = process_images([image], image_processor, model.config)[0]
-        model.model.stride = args.stride
-        model.model.groupingLayer = args.layer
-        model.model.grouping = args.grouping
+        
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -71,7 +75,7 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 # no_repeat_ngram_size=3,
                 max_new_tokens=1024,
-                use_cache=True)
+                use_cache=use_cache)
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 
@@ -101,6 +105,8 @@ if __name__ == "__main__":
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--grouping", type=str, default="none")
+    parser.add_argument('--num-fine-blocks', type=int, default=9)
+    parser.add_argument('--explore-prob', type=float, default=0.0)
     args = parser.parse_args()
 
     eval_model(args)
