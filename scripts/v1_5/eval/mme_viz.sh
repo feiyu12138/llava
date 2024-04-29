@@ -1,6 +1,7 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=2
-name=llava-v1.5-b7
+name=llava-v1.5-7b-viz
+ckpt=
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
     --question-file ./playground/data/eval/MME/llava_mme.jsonl \

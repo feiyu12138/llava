@@ -1116,6 +1116,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # plt.tight_layout()
             # plt.savefig('tempt/user_std_layers.png',dpi=300)
             # plt.close()
+        from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
 
