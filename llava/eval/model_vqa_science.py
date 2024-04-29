@@ -28,6 +28,7 @@ def get_chunk(lst, n, k):
 
 def eval_model(args):
     # Model
+    use_cache = True
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
@@ -36,7 +37,9 @@ def eval_model(args):
     model.model.stride = args.stride
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
-
+    if args.grouping == 'attn':
+        model.model.create_vcc_from_config(args)
+        use_cache = False
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -81,8 +84,8 @@ def eval_model(args):
                 image_sizes=image_sizes,
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
-                max_new_tokens=1024,
-                use_cache=True,
+                max_new_tokens=50,
+                use_cache=use_cache,
             )
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
@@ -115,5 +118,7 @@ if __name__ == "__main__":
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool",type=str2bool,default="false")
+    parser.add_argument('--num-fine-blocks', type=int, default=9)
+    parser.add_argument('--explore-prob', type=float, default=0.0)
     args = parser.parse_args()
     eval_model(args)

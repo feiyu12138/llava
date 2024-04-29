@@ -8,7 +8,7 @@ num_fine_blocks=2
 python -m llava.eval.model_vqa \
     --model-path liuhaotian/llava-v1.5-7b \
     --question-file ./playground/data/eval/mm-vet/llava-mm-vet.jsonl \
-    --image-folder ./playground/data/eval/mm-vet/images \
+    --image-folder ./playground/data/eval/mm-vet/images_ \
     --answers-file ./playground/data/eval/mm-vet/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
