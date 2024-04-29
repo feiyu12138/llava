@@ -73,6 +73,7 @@ class ModelArguments:
     num_post_layers: Optional[int] = field(default=3)
     abstractor_rel_pos_spatial: Optional[bool] = field(default=False)
     halfpool: Optional[bool] = field(default=False)
+    unified_vpe: Optional[bool] = field(default=False)
 
 
 @dataclass
@@ -878,6 +879,7 @@ def train(attn_implementation=None):
     model.model.grouping = model_args.grouping
     model.model.stride = model_args.stride
     model.model.halfpool = model_args.halfpool
+    model.model.unified_vpe = model_args.unified_vpe
     model.model.groupingLayer = model_args.layer
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 

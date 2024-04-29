@@ -1,6 +1,9 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=5
-name=llava-v1.5-7b-kmeans-unified-vpe-halfpool
+name=llava-v1.5-7b-fastv-layer2-rank72
+rank=72
+k=2
+
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
     --question-file ./playground/data/eval/MME/llava_mme.jsonl \
@@ -8,12 +11,11 @@ python -m llava.eval.model_vqa_loader \
     --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
-    --grouping detach_hard_k_means \
-    --stride 8 \
-    --layer 2 \
-    --unified_vpe True \
-    --halfpool True
-    # --viz
+    --use-fast-v True \
+    --fast-v-sys-length 36 \
+    --fast-v-image-token-length 576 \
+    --fast-v-attention-rank $rank \
+    --fast-v-agg-layer $k 
 
 
 cd ./playground/data/eval/MME

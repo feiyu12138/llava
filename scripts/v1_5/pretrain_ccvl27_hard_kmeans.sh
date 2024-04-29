@@ -7,10 +7,11 @@ export WANDB_PROJECT='llava_team'
 # module load conda
 # conda activate llava_git
 
-layer=8
-stride=4
+layer=2
+stride=8
 halfpool=False
 grouping=detach_hard_k_means
+unified_vpe=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -49,4 +50,5 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    --halfpool $halfpool 
+    --halfpool $halfpool \
+    --unified_vpe $unified_vpe 

@@ -645,6 +645,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.std_layers = []
         self.text_std_layers = []
         self.user_std_layers = []
+        self.unified_vpe = False
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -791,7 +792,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     del one_hot_weights
                 
         centroids = torch.einsum('bcl,blq->bcq', tokens, one_hot_weights).permute(0,2,1)
-        positions = torch.arange(0, centroids.size(1), device=positions.device).unsqueeze(0).repeat(centroids.size(0),1) + start_ids
+        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
         del detach_tokens
         del detach_centroids
         del weights
@@ -901,7 +902,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
-            if layer_idx == self.groupingLayer and self.grouping != 'none':
+            if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
@@ -921,10 +922,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'detach_soft_k_means':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'detach_hard_k_means':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
@@ -935,6 +936,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
+            elif (layer_idx == 0 and self.unified_vpe):
+                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
+                compressed_hidden_states = None
+                compressed_position_ids = None
             else:
                 compressed_hidden_states = None
                 compressed_position_ids = None
