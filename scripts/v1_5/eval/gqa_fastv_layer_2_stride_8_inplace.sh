@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,2,3,4
+export CUDA_VISIBLE_DEVICES=0,2,3,4,5
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -8,7 +8,6 @@ CHUNKS=${#GPULIST[@]}
 name=llava-v1.5-7b-fastv-layer2-rank72-inplace
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="./playground/data/eval/gqa/data"
-name=llava-v1.5-7b-fastv-layer2-rank72
 rank=72
 k=2
 
