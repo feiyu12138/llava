@@ -9,11 +9,11 @@ python -m llava.eval.model_vqa_loader \
     --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
-    --grouping none \
+    --grouping avgpool1d \
     --stride 8 \
     --layer 2 \
     --viz \
-    --viz_savepath stride-8-layer-2-grouping-avgpool1d \
+    --viz_savepath viz/stride-8-layer-2-grouping-avgpool1d \
     --num-fine-blocks 1 \
     --explore-prob 0.0
 
