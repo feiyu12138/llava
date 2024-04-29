@@ -484,24 +484,24 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 )
         if self.viz:
             self.attn_map = generate_attention_map(query_states, key_states)
-            self.std.update(
-                calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
-                              key_states[:,:,self.images_idx:self.images_idx+576], 
-                              value_states[:,:,self.images_idx:self.images_idx+576], 
-                              hidden_states[:,self.images_idx:self.images_idx+576])
-            )
-            self.text_std.update(
-                calc_qkvs_std(query_states[:,:,0:self.images_idx],
-                                key_states[:,:,0:self.images_idx],
-                                value_states[:,:,0:self.images_idx],
-                                hidden_states[:,0:self.images_idx])
-            )
-            self.user_std.update(
-                calc_qkvs_std(query_states[:,:,self.images_idx+576:],
-                              key_states[:,:,self.images_idx+576:],
-                              value_states[:,:,self.images_idx+576:],
-                                hidden_states[:,self.images_idx+576:])
-            )
+            # self.std.update(
+            #     calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
+            #                   key_states[:,:,self.images_idx:self.images_idx+576], 
+            #                   value_states[:,:,self.images_idx:self.images_idx+576], 
+            #                   hidden_states[:,self.images_idx:self.images_idx+576])
+            # )
+            # self.text_std.update(
+            #     calc_qkvs_std(query_states[:,:,0:self.images_idx],
+            #                     key_states[:,:,0:self.images_idx],
+            #                     value_states[:,:,0:self.images_idx],
+            #                     hidden_states[:,0:self.images_idx])
+            # )
+            # self.user_std.update(
+            #     calc_qkvs_std(query_states[:,:,self.images_idx+576:],
+            #                   key_states[:,:,self.images_idx+576:],
+            #                   value_states[:,:,self.images_idx+576:],
+            #                     hidden_states[:,self.images_idx+576:])
+            # )
         # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
         # Reference: https://github.com/pytorch/pytorch/issues/112577.
         if query_states.device.type == "cuda" and attention_mask is not None:
@@ -1024,54 +1024,54 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 plt.tight_layout()
                 plt.savefig(f'tempt/attention_map_{idx}_visual_key.png',dpi=300)
                 plt.close()
-            state_std_layers = [std['state'].cpu() for std in self.std_layers]
-            query_std_layers = [std['query'].cpu() for std in self.std_layers]
-            key_std_layers = [std['key'].cpu() for std in self.std_layers]
-            value_std_layers = [std['value'].cpu() for std in self.std_layers]
-            plt.figure()
-            plt.title('Standard Deviation of QKVS, segment length = 4')
-            plt.plot(state_std_layers,label='state std')
-            plt.plot(query_std_layers,label='query std')
-            plt.plot(key_std_layers,label='key std')
-            plt.plot(value_std_layers,label='value std')
-            plt.xlabel('Layer')
-            plt.ylabel('Standard Deviation')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('tempt/visual_std_layers.png',dpi=300)
-            plt.close()
-            text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
-            text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
-            text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
-            text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
-            plt.figure()
-            plt.title('Standard Deviation of QKVS(system), segment length = 4')
-            plt.plot(text_state_std_layers,label='state std')
-            plt.plot(text_query_std_layers,label='query std')
-            plt.plot(text_key_std_layers,label='key std')
-            plt.plot(text_value_std_layers,label='value std')
-            plt.xlabel('Layer')
-            plt.ylabel('Standard Deviation')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('tempt/system_std_layers.png',dpi=300)
-            plt.close()
-            user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
-            user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
-            user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
-            user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
-            plt.figure()
-            plt.title('Standard Deviation of QKVS(user), segment length = 4')
-            plt.plot(user_state_std_layers,label='state std')
-            plt.plot(user_query_std_layers,label='query std')
-            plt.plot(user_key_std_layers,label='key std')
-            plt.plot(user_value_std_layers,label='value std')
-            plt.xlabel('Layer')
-            plt.ylabel('Standard Deviation')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('tempt/user_std_layers.png',dpi=300)
-            plt.close()
+            # state_std_layers = [std['state'].cpu() for std in self.std_layers]
+            # query_std_layers = [std['query'].cpu() for std in self.std_layers]
+            # key_std_layers = [std['key'].cpu() for std in self.std_layers]
+            # value_std_layers = [std['value'].cpu() for std in self.std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS, segment length = 4')
+            # plt.plot(state_std_layers,label='state std')
+            # plt.plot(query_std_layers,label='query std')
+            # plt.plot(key_std_layers,label='key std')
+            # plt.plot(value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/visual_std_layers.png',dpi=300)
+            # plt.close()
+            # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
+            # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
+            # text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
+            # text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS(system), segment length = 4')
+            # plt.plot(text_state_std_layers,label='state std')
+            # plt.plot(text_query_std_layers,label='query std')
+            # plt.plot(text_key_std_layers,label='key std')
+            # plt.plot(text_value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/system_std_layers.png',dpi=300)
+            # plt.close()
+            # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
+            # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
+            # user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
+            # user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS(user), segment length = 4')
+            # plt.plot(user_state_std_layers,label='state std')
+            # plt.plot(user_query_std_layers,label='query std')
+            # plt.plot(user_key_std_layers,label='key std')
+            # plt.plot(user_value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/user_std_layers.png',dpi=300)
+            # plt.close()
             from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
