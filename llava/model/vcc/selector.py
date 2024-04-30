@@ -26,25 +26,11 @@ class Selector(nn.Module):
     def set_attn(self, attention):
         self.attention = attention
     
-    def compute_attention_matrix(self, important_token_states, coarse_token_states, attention_mask=None, state_scores = None, num_dups = None):
+    def compute_attention_matrix(self, important_token_states, coarse_token_states, important_token_positions, coarse_token_positions, attention_mask=None, state_scores = None, num_dups = None):
 
-        half_important_token_states = important_token_states.half()
-        half_coarse_token_states = coarse_token_states.half()
+        attention_probs = self.attention.get_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
+        attention_probs = attention_probs.mean(dim = 1)
         
-        query_states = self.attention.q_proj(half_important_token_states)
-        key_states = self.attention.k_proj(half_coarse_token_states)
-
-        # scale = math.sqrt(math.sqrt(self.attention_head_size))
-        # query_states = query_states / scale
-        # key_states = key_states / scale
-        attention_scores = torch.einsum("bqd,bkd->bqk", query_states.float(), key_states.float())
-        
-        attention_scores = attention_scores / (query_states.shape[-1] ** 0.5)
-
-        attention_probs = nn.functional.softmax(attention_scores, dim = -1)
-        if state_scores is not None and num_dups is not None:
-            attention_probs = self.dropout(attention_probs)
-
         return attention_probs
 
     def forward(self, mixed_states):
@@ -66,14 +52,14 @@ class Selector(nn.Module):
             if "important_token_positions" in mixed_states and "coarse_token_positions" in mixed_states:
                 important_token_positions = mixed_states["important_token_positions"]
                 coarse_token_positions = mixed_states["coarse_token_positions"]
-                probs = self.compute_attention_matrix(important_token_states, coarse_token_states, coarse_token_mask)
+                probs = self.compute_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
             else:
-                probs = self.compute_attention_matrix(important_token_states, coarse_token_states, coarse_token_mask)
+                from ipdb import set_trace; set_trace()
+                probs = self.compute_attention_matrix(important_token_states, coarse_token_states)
 
             # probs = probs.mean(dim = 1) * importance_mask[:, :, None].to(probs.dtype)
             # average_prob_logits = torch.log(probs.mean(dim = 1) + 1e-5)
-            from ipdb import set_trace; set_trace()
-            average_prob_logits = probs[:,-1]
+            average_prob_logits = probs.mean(dim = 1)
 
             if self.training:
                 block_indices_rand = torch.argsort(torch.rand_like(average_prob_logits), dim = 1, descending = True)
@@ -90,7 +76,6 @@ class Selector(nn.Module):
 
             mixed_states["fine_block_indices"] = block_indices[:, :self.num_fine_blocks]
             mixed_states["coarse_block_indices"] = block_indices[:, self.num_fine_blocks:]
-
             fine_block_scores = probs[:, :self.num_fine_blocks]
             coarse_block_scores = 1 - probs[:, self.num_fine_blocks:]
 

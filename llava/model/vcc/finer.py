@@ -58,7 +58,6 @@ class Finer(nn.Module):
             partial_coarse_token_scores = coarse_block_scores
             partial_coarse_token_states = coarse_token_states[batch_indices, coarse_block_indices, :] # true coarse states
             partial_coarse_token_mask = coarse_token_mask[batch_indices, coarse_block_indices]
-
             partial_fine_token_scores = fine_block_scores[:, :, None].repeat(1, 1, self.block_size)
             partial_fine_token_scores = partial_fine_token_scores.reshape(batch_size, num_fine_blocks * self.block_size)
             difference = cache_select(mixed_states["difference_cache"], fine_block_indices)

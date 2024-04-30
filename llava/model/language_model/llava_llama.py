@@ -328,6 +328,7 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
 
         return attn_output, attn_weights, past_key_value
     
+    
 class MyLlamaSdpaAttention(LlamaSdpaAttention):
     """
     Llama attention module using torch.nn.functional.scaled_dot_product_attention. This module inherits from
@@ -525,6 +526,49 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         attn_output = self.o_proj(attn_output)
 
         return attn_output, None, past_key_value
+    
+    def get_attention_matrix(self,vip_states,coarse_states,vip_position_ids=None,coarse_position_ids=None):
+        #TODO how to deal with unknown position_ids
+        if vip_position_ids is None:
+            vip_position_ids = torch.arange(vip_states.size(1), device=vip_states.device).unsqueeze(0)
+        if coarse_position_ids is None:
+            coarse_position_ids = torch.arange(coarse_states.size(1), device=coarse_states.device).unsqueeze(0)
+            
+        half_vip_states = vip_states.half()
+        half_coarse_states = coarse_states.half()
+        bsz, q_len, _ = half_vip_states.size()
+        kv_len = half_coarse_states.size(1)
+        query_states = self.q_proj(half_vip_states)
+        key_states = self.k_proj(half_coarse_states)
+        
+        query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+        
+        max_pe = max(vip_position_ids.max(),coarse_position_ids.max())
+        
+        cos, sin = self.rotary_emb(query_states, seq_len=max_pe+1)
+        
+        query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, vip_position_ids, coarse_position_ids)
+        
+        key_states = repeat_kv(key_states, self.num_key_value_groups)
+        
+        causal_mask = vip_position_ids[:, :, None] >= coarse_position_ids[:, None, :]
+        causal_mask = causal_mask.expand(query_states.size(0), -1, -1).to(query_states.device)
+        
+        attn_map = generate_attention_map(query_states, key_states, ~causal_mask)
+        
+        return attn_map
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
 MY_LLAMA_ATTENTION_CLASSES = {
     "ada_flash_attention_2": MyFlashAttention2,
@@ -670,6 +714,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.finer = Finer(config)
         self.formatter = Formatter(config)
         self.selector = Selector(config)
+        self.selector.training = False
     
     def visual_operating(self, hidden_states, position_ids, operator):
         if self.images_idx is not None:
