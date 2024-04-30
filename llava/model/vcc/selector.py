@@ -71,7 +71,9 @@ class Selector(nn.Module):
                 probs = self.compute_attention_matrix(important_token_states, coarse_token_states, coarse_token_mask)
 
             # probs = probs.mean(dim = 1) * importance_mask[:, :, None].to(probs.dtype)
-            average_prob_logits = torch.log(probs.mean(dim = 1) + 1e-5)
+            # average_prob_logits = torch.log(probs.mean(dim = 1) + 1e-5)
+            from ipdb import set_trace; set_trace()
+            average_prob_logits = probs[:,-1]
 
             if self.training:
                 block_indices_rand = torch.argsort(torch.rand_like(average_prob_logits), dim = 1, descending = True)
