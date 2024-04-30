@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -15,10 +15,10 @@ GQADIR="./playground/data/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path $CKPT \
+        --model-path liuhaotian/llava-v1.5-7b \
         --question-file ./playground/data/eval/gqa/$SPLIT.jsonl \
         --image-folder ./playground/data/eval/gqa/images \
-        --answers-file ./playground/data/eval/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl \
+        --answers-file ./playground/data/eval/gqa/answers/$SPLIT/$name-13b/${CHUNKS}_${IDX}.jsonl \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
@@ -30,7 +30,7 @@ done
 
 wait
 
-output_file=./playground/data/eval/gqa/answers/$SPLIT/$CKPT/merge.jsonl
+output_file=./playground/data/eval/gqa/answers/$SPLIT/$name-13b/merge.jsonl
 
 # Clear out the output file if it exists.
 > "$output_file"

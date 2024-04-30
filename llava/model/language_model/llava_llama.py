@@ -33,6 +33,23 @@ from transformers.generation.utils import GenerateOutput
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM, unpad_image
 from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX
 
+from transformers.generation.beam_search import BeamScorer
+from transformers.generation.logits_process import LogitsProcessorList
+from transformers.generation.stopping_criteria import StoppingCriteriaList,validate_stopping_criteria
+from transformers.generation.utils import GenerateBeamDecoderOnlyOutput,GenerateBeamEncoderDecoderOutput
+from llava.model.language_model.attention_viz import generate_attention_map, calc_qkvs_std
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from llava.model.vcc.coarser import Coarser
+from llava.model.vcc.finer import Finer
+from llava.model.vcc.selector import Selector
+from llava.model.vcc.formatter import Formatter
+
+GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
+
+
 
 from transformers.modeling_outputs import BaseModelOutputWithPast
 from transformers.modeling_attn_mask_utils import (
@@ -115,9 +132,11 @@ class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
     def __init__(self, 
                  grouping=None, 
+                 cot_decoding=None,
                  **kwargs):
         super().__init__(**kwargs)
         self.grouping = grouping
+        self.cot_decoding = cot_decoding
         
 class MyFlashAttention2(LlamaFlashAttention2):
     def forward(
@@ -210,6 +229,11 @@ class MyFlashAttention2(LlamaFlashAttention2):
         return attn_output, attn_weights, past_key_value
     
 class AdaptiveFlashAttention2(LlamaFlashAttention2):
+    def __init__(self, viz, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.viz = viz
+        self.attn_map = []
+        
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -394,7 +418,14 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
     `LlamaAttention` as the weights of the module stays untouched. The only changes are on the forward pass to adapt to
     SDPA API.
     """
-
+    def __init__(self, config: LlamaConfig, layer_idx: Optional[int] = None, viz: bool = False):
+        super().__init__(config, layer_idx)
+        self.viz = viz
+        self.attn_map = None
+        self.std = {}
+        self.text_std = {}
+        self.user_std = {}
+        self.images_idx = None
     # Adapted from LlamaAttention.forward
     def forward(
         self,
@@ -451,7 +482,26 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 raise ValueError(
                     f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
                 )
-
+        if self.viz:
+            self.attn_map = generate_attention_map(query_states, key_states)
+            # self.std.update(
+            #     calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
+            #                   key_states[:,:,self.images_idx:self.images_idx+576], 
+            #                   value_states[:,:,self.images_idx:self.images_idx+576], 
+            #                   hidden_states[:,self.images_idx:self.images_idx+576])
+            # )
+            # self.text_std.update(
+            #     calc_qkvs_std(query_states[:,:,0:self.images_idx],
+            #                     key_states[:,:,0:self.images_idx],
+            #                     value_states[:,:,0:self.images_idx],
+            #                     hidden_states[:,0:self.images_idx])
+            # )
+            # self.user_std.update(
+            #     calc_qkvs_std(query_states[:,:,self.images_idx+576:],
+            #                   key_states[:,:,self.images_idx+576:],
+            #                   value_states[:,:,self.images_idx+576:],
+            #                     hidden_states[:,self.images_idx+576:])
+            # )
         # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
         # Reference: https://github.com/pytorch/pytorch/issues/112577.
         if query_states.device.type == "cuda" and attention_mask is not None:
@@ -482,16 +532,17 @@ MY_LLAMA_ATTENTION_CLASSES = {
     "adaptive_sdpa": MyLlamaSdpaAttention,
 }  
 class MyLlamaDecoderLayer(LlamaDecoderLayer):
-    def __init__(self, config: LlamaConfig, layer_idx: int):
+    def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
         # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
-        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
+        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
+        
         
 class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
-    def __init__(self, config: LlamaConfig, layer_idx: int):
+    def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
         # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
-        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
+        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -589,6 +640,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.Abstractor = None
         self.hidden_size = config.hidden_size
         self.halfpool = False
+        self.viz = False
+        self.attention_maps = []
+        self.std_layers = []
+        self.text_std_layers = []
+        self.user_std_layers = []
+        self.unified_vpe = False
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -668,6 +725,96 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
         visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
         return visual_states, visual_positions
+    
+    def apply_random_drop(self,tokens, position_ids):
+        K = tokens.size(2) // self.stride
+        position_ids = position_ids.squeeze(1)
+        # Randomly keep K tokens
+        keep_ids = torch.randperm(tokens.size(2))[:K]    
+        tokens = tokens[:,:,keep_ids]
+        position_ids = position_ids[:,keep_ids]
+        
+        return tokens.permute(0,2,1).contiguous(), position_ids.contiguous()
+    
+    def apply_soft_k_means(self, tokens,positions,iterations=1):
+        batched_centroids = []
+        start_ids = positions.min()
+        for B in range(tokens.size(0)):
+            cur_tokens = tokens[B]
+            centroids = cur_tokens[:,::self.stride]
+            for _ in range(iterations):
+                
+                # Compute squared distances between each point and each centroid
+                distances = torch.sum(torch.abs((cur_tokens.unsqueeze(2) - centroids.unsqueeze(1))), dim=0)
+                
+                # Soft assignment of points to centroids
+                weights = torch.softmax(-distances, dim=1)
+                # Update centroids as the weighted mean of data points
+                centroids = cur_tokens @ weights
+            batched_centroids.append(centroids)
+        batched_centroids = torch.stack(batched_centroids, dim=0).permute(0,2,1)
+        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).repeat(batched_centroids.size(0),1) + start_ids
+        return batched_centroids,positions
+    
+    def apply_detach_soft_k_means(self, tokens,positions,iterations=1):
+        start_ids = positions.min()
+        detach_tokens = tokens.detach()
+        detach_centroids = detach_tokens[:,:,::self.stride]
+        with torch.no_grad():
+            for i in range(iterations):
+                distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
+                weights = torch.softmax(-distances, dim=2)
+                detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, weights)
+                del distances
+                if i<iterations-1:
+                    del weights
+                
+        centroids = torch.einsum('bcl,blq->bcq', tokens, weights).permute(0,2,1)
+        positions = torch.arange(0, centroids.size(1), device=positions.device).unsqueeze(0).repeat(centroids.size(0),1) + start_ids
+        del detach_tokens
+        del detach_centroids
+        del weights
+        return centroids,positions
+    
+    def apply_detach_hard_k_means(self, tokens,positions,iterations=1):
+        start_ids = positions.min()
+        detach_tokens = tokens.detach()
+        detach_centroids = detach_tokens[:,:,::self.stride]
+        with torch.no_grad():
+            for i in range(iterations):
+                distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
+                weights = torch.argmax(-distances, dim=2)
+                one_hot_weights = F.one_hot(weights, num_classes=distances.size(2)).to(detach_tokens.dtype)
+                detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, one_hot_weights)
+                del distances
+                if i<iterations-1:
+                    del weights
+                    del one_hot_weights
+                
+        centroids = torch.einsum('bcl,blq->bcq', tokens, one_hot_weights).permute(0,2,1)
+        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
+        del detach_tokens
+        del detach_centroids
+        del weights
+        return centroids,positions
+
+    def apply_PCA(self,tokens,positions):
+        # apply PCA on the third dimension of the tokens
+        
+        return tokens,positions
+    
+    def apply_block_random_drop(self, tokens, position_ids):
+        K = tokens.size(2) // self.stride
+        # Randomly keep K continuous tokens
+        start_ids = torch.randint(0,tokens.size(2)-K+1,(1,))
+        tokens = tokens[:,:,start_ids:start_ids+K]
+        position_ids = position_ids[:,:,start_ids:start_ids+K].squeeze(1)
+        
+        return tokens.permute(0,2,1).contiguous(), position_ids
+    
+    def apply_position_average(self, visual_states, visual_positions):
+        visual_positions = torch.mean(visual_positions.float(), dim=2).long().repeat(1, 1, visual_states.size(2)).squeeze(1)
+        return visual_states.permute(0,2,1), visual_positions
     
     def forward(
         self,
@@ -750,9 +897,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         next_decoder_cache = None
         layer_idx = 0
         for decoder_layer in self.layers:
+            if self.viz and self.images_idx is not None:
+                decoder_layer.self_attn.viz = True
+                decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
-            if layer_idx == self.groupingLayer and self.grouping != 'none':
+            if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
@@ -761,6 +911,21 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     self.label_ids = compressed_position_ids
                 elif self.grouping.find('abstractor') != -1:
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
+                    self.label_ids = position_ids
+                elif self.grouping == 'random_drop':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
+                    self.label_ids = position_ids
+                elif self.grouping == 'block_random_drop':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
+                    self.label_ids = position_ids
+                elif self.grouping == 'soft_k_means':
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
+                    self.label_ids = position_ids
+                elif self.grouping == 'detach_soft_k_means':
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
+                    self.label_ids = position_ids
+                elif self.grouping == 'detach_hard_k_means':
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
@@ -771,6 +936,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
+            elif (layer_idx == 0 and self.unified_vpe):
+                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
+                compressed_hidden_states = None
+                compressed_position_ids = None
             else:
                 compressed_hidden_states = None
                 compressed_position_ids = None
@@ -803,7 +972,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                 )
-
             hidden_states = layer_outputs[0]
 
             if use_cache:
@@ -816,6 +984,97 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 compressed_position_ids = None
 
             layer_idx += 1
+            if self.viz:
+                assert decoder_layer.self_attn.attn_map is not None, "Attention map is not generated. Please set viz=True in the attn layer"
+                self.attention_maps.append(decoder_layer.self_attn.attn_map)
+                self.std_layers.append(decoder_layer.self_attn.std)
+                self.text_std_layers.append(decoder_layer.self_attn.text_std)
+                self.user_std_layers.append(decoder_layer.self_attn.user_std)
+        
+        if self.viz and self.images_idx is not None:
+            top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
+            width_height_init = [576,576]
+            for idx, map in enumerate(self.attention_maps):
+                width_height = width_height_init if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
+                map = map.squeeze(0).cpu().detach().numpy()
+                
+                plt.figure()
+                plt.imshow(map,cmap='coolwarm',interpolation='none')
+                plt.colorbar()
+                rect = patches.Rectangle((top_left[0], 0), width_height[0], map.shape[0],
+                         linewidth=1, edgecolor='r', facecolor='none')
+                plt.gca().add_patch(rect)
+                plt.ylabel('Query ID')
+                plt.xlabel('Key ID')
+                plt.tight_layout()
+                plt.savefig(f'tempt/attention_map_{idx}.png',dpi=300)
+                # x label is query id
+                # y label is key id
+                plt.close()
+                plt.figure()
+                visual_map = map[:,top_left[0]:top_left[0]+width_height[0]]
+                visual_attention_max = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].max()
+                visual_attention_min = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].min()
+                visual_map = (visual_map - visual_attention_min) / (visual_attention_max - visual_attention_min)
+                plt.ylabel('Query ID')
+                plt.xlabel('Visual Key ID')
+                # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
+                plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
+                plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
+                plt.tight_layout()
+                plt.savefig(f'tempt/attention_map_{idx}_visual_key.png',dpi=300)
+                plt.close()
+            # state_std_layers = [std['state'].cpu() for std in self.std_layers]
+            # query_std_layers = [std['query'].cpu() for std in self.std_layers]
+            # key_std_layers = [std['key'].cpu() for std in self.std_layers]
+            # value_std_layers = [std['value'].cpu() for std in self.std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS, segment length = 4')
+            # plt.plot(state_std_layers,label='state std')
+            # plt.plot(query_std_layers,label='query std')
+            # plt.plot(key_std_layers,label='key std')
+            # plt.plot(value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/visual_std_layers.png',dpi=300)
+            # plt.close()
+            # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
+            # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
+            # text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
+            # text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS(system), segment length = 4')
+            # plt.plot(text_state_std_layers,label='state std')
+            # plt.plot(text_query_std_layers,label='query std')
+            # plt.plot(text_key_std_layers,label='key std')
+            # plt.plot(text_value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/system_std_layers.png',dpi=300)
+            # plt.close()
+            # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
+            # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
+            # user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
+            # user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
+            # plt.figure()
+            # plt.title('Standard Deviation of QKVS(user), segment length = 4')
+            # plt.plot(user_state_std_layers,label='state std')
+            # plt.plot(user_query_std_layers,label='query std')
+            # plt.plot(user_key_std_layers,label='key std')
+            # plt.plot(user_value_std_layers,label='value std')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Standard Deviation')
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('tempt/user_std_layers.png',dpi=300)
+            # plt.close()
+            from ipdb import set_trace; set_trace()
+        self.attention_maps = []
+
 
         hidden_states = self.norm(hidden_states)
 
@@ -846,6 +1105,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         self.images_idx = None
         self.model.grouping = config.grouping
+        self.cot_decoding = config.cot_decoding
         # Initialize weights and apply final processing
         self.post_init()
 
@@ -1005,16 +1265,18 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self, input_ids, position_ids, attention_mask, past_key_values, labels,
         images, image_sizes=None
     ):
+        
         vision_tower = self.get_vision_tower()
         if vision_tower is None or images is None or input_ids.shape[1] == 1:
             return input_ids, position_ids, attention_mask, past_key_values, None, labels,None
-
         if type(images) is list or images.ndim == 5:
             if type(images) is list:
                 images = [x.unsqueeze(0) if x.ndim == 3 else x for x in images]
+            images = images.permute(1, 0, 2, 3, 4)
             concat_images = torch.cat([image for image in images], dim=0)
             image_features = self.encode_images(concat_images)
             split_sizes = [image.shape[0] for image in images]
+            
             image_features = torch.split(image_features, split_sizes, dim=0)
             mm_patch_merge_type = getattr(self.config, 'mm_patch_merge_type', 'flat')
             image_aspect_ratio = getattr(self.config, 'image_aspect_ratio', 'square')
@@ -1067,6 +1329,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         # it is a headache to deal with None all the time.
         # But it is not ideal, and if you have a better idea,
         # please open an issue / submit a PR, thanks.
+        
         if self.model.groupingLayer == -1:
             if self.model.grouping == 'avgpool1d':
                 image_features = torch.nn.functional.avg_pool1d(image_features.permute(0,2,1), kernel_size=self.model.stride, stride=self.model.stride).permute(0,2,1).contiguous()
@@ -1078,7 +1341,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 image_features = torch.nn.functional.avg_pool2d(image_features, kernel_size=self.model.stride, stride=self.model.stride)
                 
                 image_features,_ = flatten_image_features(image_features,  p_ids1, p_ids2,torch.zeros(B,Q))
-        
         _labels = labels
         _position_ids = position_ids
         _attention_mask = attention_mask
@@ -1124,7 +1386,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             cur_input_embeds_no_im = torch.split(cur_input_embeds, split_sizes, dim=0)
             cur_new_input_embeds = []
             cur_new_labels = []
-
             for i in range(num_images + 1):
                 cur_new_input_embeds.append(cur_input_embeds_no_im[i])
                 cur_new_labels.append(cur_labels_noim[i])
@@ -1194,10 +1455,10 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             position_ids = None
 
         return None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels, images_idx
+    
 
 AutoConfig.register("llava_llama", LlavaConfig)
 AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM)
 
-if __name__ == '__main__':
-    attn = 1
+
     

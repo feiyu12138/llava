@@ -25,6 +25,7 @@ dist
 .DS_Store
 wandb
 output
+tempt
 
 checkpoints
 checkpoint
@@ -45,3 +46,6 @@ playground
 !zero2.json
 !zero3.json
 !zero3_offload.json
+
+viz_
+viz

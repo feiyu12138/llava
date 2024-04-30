@@ -1,17 +1,16 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=5
-grouping=avgpool1d
-
-CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-reprod"
+export CUDA_VISIBLE_DEVICES=0
+grouping=random_drop
+CKPT=liuhaotian/llava-v1.5-7b
 export OPENAI_API_KEY=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
-for stride in 4 8 16; do
-    for layer in 1 8 16 30; do
-name=stride-$stride-layer-$layer-grouping-$grouping
+for stride in 4 16 64; do
+    for layer in 1 8; do
+name=stride-$stride-layer-$layer-grouping-$grouping-random_drop
 python -m llava.eval.model_vqa_science \
     --model-path $CKPT \
     --question-file ./playground/data/eval/scienceqa/llava_test_CQM-A.json \
     --image-folder /data/jieneng/data/llava_datasets/eval/scienceqa/ScienceQA/test \
-    --answers-file ./playground/data/eval/scienceqa/answers/$name-reprod-wotrain.jsonl \
+    --answers-file ./playground/data/eval/scienceqa/answers/$name.jsonl \
     --single-pred-prompt \
     --temperature 0 \
     --conv-mode vicuna_v1 \
@@ -21,9 +20,9 @@ python -m llava.eval.model_vqa_science \
 
 python llava/eval/eval_science_qa.py \
     --base-dir ./playground/data/eval/scienceqa \
-    --result-file ./playground/data/eval/scienceqa/answers/$name-reprod-wotrain.jsonl \
-    --output-file ./playground/data/eval/scienceqa/answers/$name-reprod-wotrain-output.jsonl \
-    --output-result ./playground/data/eval/scienceqa/answers/$name-reprod-wotrain-result.json
+    --result-file ./playground/data/eval/scienceqa/answers/$name.jsonl \
+    --output-file ./playground/data/eval/scienceqa/answers/$name-wotrain-output.jsonl \
+    --output-result ./playground/data/eval/scienceqa/answers/$name-wotrain-result.json
 
 python -m llava.eval.model_vqa \
     --model-path $CKPT \
@@ -40,7 +39,7 @@ mkdir -p ./playground/data/eval/mm-vet/results
 
 python scripts/convert_mmvet_for_eval.py \
     --src ./playground/data/eval/mm-vet/answers/$name.jsonl \
-    --dst ./playground/data/eval/mm-vet/results/$name-reprod-wotrain.json
+    --dst ./playground/data/eval/mm-vet/results/$name-wotrain.json
 
 python -m llava.eval.model_vqa_loader \
     --model-path $CKPT \
@@ -59,7 +58,7 @@ python convert_answer_to_mme.py --experiment $name
 
 cd eval_tool
 
-python calculation.py --results_dir answers/$name > ./eval_result/$name-reprod-wotrain.txt
+python calculation.py --results_dir answers/$name > ./eval_result/$name-wotrain.txt
 
 cd ../../../../../
 
@@ -86,7 +85,7 @@ python llava/eval/eval_gpt_review_bench.py \
     --output \
         playground/data/eval/llava-bench-in-the-wild/reviews/$name.jsonl
 
-python llava/eval/summarize_gpt_review.py -f playground/data/eval/llava-bench-in-the-wild/reviews/$name.jsonl > playground/data/eval/llava-bench-in-the-wild/review_result/$name-reprod-wotrain.txt
+python llava/eval/summarize_gpt_review.py -f playground/data/eval/llava-bench-in-the-wild/reviews/$name.jsonl > playground/data/eval/llava-bench-in-the-wild/review_result/$name-wotrain.txt
 done
 done
 sleep 5d

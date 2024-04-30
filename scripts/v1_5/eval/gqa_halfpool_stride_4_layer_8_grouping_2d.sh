@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export CUDA_VISIBLE_DEVICES=0,5,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -9,14 +9,14 @@ layer=8
 stride=4
 halfpool=True
 grouping=avgpool2d
-name=stride-$stride-layer-$layer-grouping-$grouping-halfpool-$halfpool
+name=stride-$stride-layer-$layer-grouping-$grouping
 CKPT="./checkpoints/llava-v1.5-7b-$name"
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="./playground/data/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path liuhaotian/llava-v1.5-7b \
+        --model-path $CKPT \
         --question-file ./playground/data/eval/gqa/$SPLIT.jsonl \
         --image-folder ./playground/data/eval/gqa/images \
         --answers-file ./playground/data/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \

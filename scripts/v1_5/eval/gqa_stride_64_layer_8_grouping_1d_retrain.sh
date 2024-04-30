@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export CUDA_VISIBLE_DEVICES=0,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
