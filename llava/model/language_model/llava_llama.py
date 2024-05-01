@@ -801,7 +801,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             assert self.images_idx is not None
             # label the language tokens as important i.e. the token before image_idx and after image_idx + 576(include)
             importance_mask = torch.zeros(hidden_states.size(0), hidden_states.size(1), device=hidden_states.device)
-            importance_mask[:,0:self.images_idx[0][0]] = 1
+            try:
+                importance_mask[:,0:self.images_idx[0][0]] = 1
+            except:
+                from ipdb import set_trace; set_trace()
             importance_mask[:,self.images_idx[0][0] + 576:] = 1
             
         uncompressed_states = {
@@ -1047,7 +1050,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     hidden_states, position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = position_ids
                 elif self.grouping == 'attn':
-                    if self.images_idx is not None:
+                    if self.images_idx is not None and self.images_idx[0][0].shape[0] != 0:
                         hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
                         self.label_ids = position_ids
                     else:

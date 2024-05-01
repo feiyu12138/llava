@@ -1,6 +1,6 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=2
-name=llava-v1.5-7b-vcc-layer-2-stride-32-fine-2-last
+export CUDA_VISIBLE_DEVICES=7
+name=llava-v1.5-7b-vcc-layer-2-stride-16-fine-3
 grouping=attn
 stride=16
 layer=2
