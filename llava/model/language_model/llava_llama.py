@@ -770,7 +770,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     del weights
                 
         centroids = torch.einsum('bcl,blq->bcq', tokens, weights).permute(0,2,1)
-        positions = torch.arange(0, centroids.size(1), device=positions.device).unsqueeze(0).repeat(centroids.size(0),1) + start_ids
+        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
         del detach_tokens
         del detach_centroids
         del weights
@@ -902,6 +902,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
+            if self.unified_vpe and layer_idx == 0:
+                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
             if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
@@ -936,6 +938,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
+                from ipdb import set_trace; set_trace()
             elif (layer_idx == 0 and self.unified_vpe):
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
                 compressed_hidden_states = None

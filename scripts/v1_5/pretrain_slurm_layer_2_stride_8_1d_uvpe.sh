@@ -1,16 +1,27 @@
 #!/bin/bash
-# export NCCL_P2P_DISABLE=1
-export CUDA_VISIBLE_DEVICES=0
+#
+#SBATCH --job-name=pt_1d_l2s8_uvpe
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_1d_l2s8_uvpe.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_1d_l2s8_uvpe.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+
+export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export WANDB_PROJECT='llava'
+
+module purge
+module load conda
+conda activate llava_git
+
 layer=2
 stride=8
 grouping=avgpool1d
-NNODES=1
-GPUS=1
-PORT=29600
 halfpool=False
 unified_vpe=True
-torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
- llava/train/train_mem.py \
+
+deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
@@ -23,11 +34,11 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ./checkpoint/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir /datasets/jchen293/weights/llava/checkpoint/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 24000 \
@@ -47,4 +58,4 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --layer $layer \
     --grouping $grouping \
     --halfpool $halfpool \
-    --unified_vpe $unified_vpe
+    --uniform_vpe $unified_vpe
