@@ -40,4 +40,4 @@ deepspeed llava/train/train_mem.py \
     --report_to wandb \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping 
+    --grouping $grouping > error.log

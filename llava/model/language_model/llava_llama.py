@@ -827,7 +827,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         if self.training:
             compressed_hidden_states = compressed_hidden_states.bfloat16()
-        return compressed_hidden_states, compressed_position_ids,visual_length.long().item()
+        return compressed_hidden_states, compressed_position_ids,visual_length[0].long().item()
         
     
 

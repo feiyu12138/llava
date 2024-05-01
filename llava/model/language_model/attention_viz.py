@@ -12,7 +12,7 @@ def generate_attention_map(query:torch.tensor, key:torch.tensor, causal_mask:tor
         causal_mask = torch.triu(torch.ones(query.size(2), key.size(2)), diagonal=1).bool().to(query.device)
         causal_mask = causal_mask.unsqueeze(0).expand(query.size(0), -1, -1)
     if causal_mask.dim() != 4:
-        causal_mask = causal_mask.unsqueeze(0).expand(query.size(0), 1, -1, -1).repeat(1, query.size(1), 1, 1)
+        causal_mask = causal_mask.unsqueeze(1).expand(query.size(0), 1, -1, -1).repeat(1, query.size(1), 1, 1)
     # compute attention map
     attention_map = torch.einsum('bhqd,bhkd->bhqk', query, key) / (query.size(-1) ** 0.5)
     attention_map.masked_fill_(causal_mask, float('-inf'))

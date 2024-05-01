@@ -31,7 +31,6 @@ class Formatter(nn.Module):
         importance_mask = mixed_states["importance_mask"]
         positions = mixed_states["positions"]
         cached = {"mask":mask, "importance_mask":importance_mask, "positions":positions}
-
         hidden_states = hidden_states * mask[:, :, None]
 
         sorted_order = torch.sort(importance_mask, descending = True, stable = True).indices
@@ -61,6 +60,7 @@ class Formatter(nn.Module):
             "extra_cached":cached # {'mask': B, L, 'importance_mask': B, L, 'positions': arange B, L}
         }
         if self.include_positions_in_mixed_states:
+            positions = positions.repeat(hidden_states.shape[0], 1)
             positions = positions[batch_indices, sorted_order]
             important_token_positions = positions[:, :self.num_important_tokens]
             fine_token_positions = positions[:, self.num_important_tokens:]

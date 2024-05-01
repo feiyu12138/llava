@@ -61,7 +61,6 @@ class Coarser(nn.Module):
         # outputs a mixed_states that contains
         # {mask} old
         # + {coarse_token_states, coarse_token_mask, difference_cache, cache_indice_table} new
-        
         if "fine_token_states" in mixed_states and "fine_token_mask" in mixed_states:
 
             fine_token_states = mixed_states["fine_token_states"]
