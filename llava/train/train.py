@@ -73,7 +73,8 @@ class ModelArguments:
     num_post_layers: Optional[int] = field(default=3)
     abstractor_rel_pos_spatial: Optional[bool] = field(default=False)
     halfpool: Optional[bool] = field(default=False)
-
+    num_fine_blocks: Optional[int] = field(default=0)
+    explore_prob: Optional[float] = field(default=0.0)
 
 @dataclass
 class DataArguments:
@@ -879,6 +880,8 @@ def train(attn_implementation=None):
     model.model.stride = model_args.stride
     model.model.halfpool = model_args.halfpool
     model.model.groupingLayer = model_args.layer
+    if model_args.grouping == 'attn':
+        model.model.create_vcc_from_config(model_args)
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,

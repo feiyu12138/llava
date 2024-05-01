@@ -54,14 +54,13 @@ class Selector(nn.Module):
                 coarse_token_positions = mixed_states["coarse_token_positions"]
                 probs = self.compute_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
             else:
-                from ipdb import set_trace; set_trace()
                 probs = self.compute_attention_matrix(important_token_states, coarse_token_states)
 
             # probs = probs.mean(dim = 1) * importance_mask[:, :, None].to(probs.dtype)
             # average_prob_logits = torch.log(probs.mean(dim = 1) + 1e-5)
             average_prob_logits = probs[:,-1]
 
-            if self.training:
+            if self.training and self.explore_prob > 0.0:
                 block_indices_rand = torch.argsort(torch.rand_like(average_prob_logits), dim = 1, descending = True)
                 block_indices_prob = torch.argsort(average_prob_logits, dim = 1, descending = True)
                 rand_mask = (torch.rand(batch_size, device = block_indices_rand.device) < self.explore_prob).long()

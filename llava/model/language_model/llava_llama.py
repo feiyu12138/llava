@@ -328,6 +328,37 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
 
         return attn_output, attn_weights, past_key_value
     
+    def get_attention_matrix(self,vip_states,coarse_states,vip_position_ids=None,coarse_position_ids=None):
+        #TODO how to deal with unknown position_ids
+        if vip_position_ids is None:
+            vip_position_ids = torch.arange(vip_states.size(1), device=vip_states.device).unsqueeze(0)
+        if coarse_position_ids is None:
+            coarse_position_ids = torch.arange(coarse_states.size(1), device=coarse_states.device).unsqueeze(0)
+        half_vip_states = vip_states.bfloat16()
+        half_coarse_states = coarse_states.bfloat16()
+        bsz, q_len, _ = half_vip_states.size()
+        kv_len = half_coarse_states.size(1)
+        query_states = self.q_proj(half_vip_states)
+        key_states = self.k_proj(half_coarse_states)
+        
+        query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+        
+        max_pe = max(vip_position_ids.max(),coarse_position_ids.max())
+        
+        cos, sin = self.rotary_emb(query_states, seq_len=max_pe+1)
+        
+        query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, vip_position_ids, coarse_position_ids)
+        
+        key_states = repeat_kv(key_states, self.num_key_value_groups)
+        
+        causal_mask = vip_position_ids[:, :, None] >= coarse_position_ids[:, None, :]
+        causal_mask = causal_mask.expand(query_states.size(0), -1, -1).to(query_states.device)
+        
+        attn_map = generate_attention_map(query_states, key_states, ~causal_mask)
+        
+        return attn_map
+    
     
 class MyLlamaSdpaAttention(LlamaSdpaAttention):
     """
@@ -633,7 +664,6 @@ class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
             source_states = None
             source_position_ids = None
         residual = target_states
-
         target_states = self.input_layernorm(target_states)
         if source_states is not None:
             source_states = self.input_layernorm(source_states)
@@ -792,6 +822,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         compressed_hidden_states = compressed_hidden_states[batch_indices,reorder_ids]
         compressed_position_ids = compressed_position_ids[batch_indices,reorder_ids]
         
+        if self.training:
+            compressed_hidden_states = compressed_hidden_states.bfloat16()
         return compressed_hidden_states, compressed_position_ids,visual_length.long().item()
         
     
@@ -977,7 +1009,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             )
         # embed positions
         hidden_states = inputs_embeds
-        from ipdb import set_trace; set_trace()
         # decoder layers
         all_hidden_states = () if output_hidden_states else None
         all_self_attns = () if output_attentions else None
@@ -1018,8 +1049,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 elif self.grouping == 'attn':
                     if self.images_idx is not None:
                         hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
+                        self.label_ids = position_ids
                     else:
                         hidden_states,position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d) # do nothing
+                        self.label_ids = position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:

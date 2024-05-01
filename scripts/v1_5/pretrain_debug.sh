@@ -1,15 +1,15 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,1,2,3
-export NCCL_P2P_DISABLE=1
+export CUDA_VISIBLE_DEVICES=0
+# export NCCL_P2P_DISABLE=1
 NNODES=1
 GPUS=1
 PORT=29600
 rank=72
 k=2
-use_fast_v=True
-fast_v_sys_length=36
-fast_v_image_token_length=576
-name=llava-v1.5-7b-fastv-rank-$rank-k-$k
+layer=2
+stride=8
+grouping=attn
+num_fine_blocks=2
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -26,7 +26,7 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --bf16 True \
     --output_dir ./checkpoints/$name \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
@@ -44,8 +44,8 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --use_fast_v $use_fast_v \
-    --fast_v_sys_length $fast_v_sys_length \
-    --fast_v_image_token_length $fast_v_image_token_length \
-    --fast_v_attention_rank $rank \
-    --fast_v_agg_layer $k 
+    --stride $stride \
+    --layer $layer \
+    --grouping $grouping \
+    --num_fine_blocks $num_fine_blocks \
+    --explore_prob 0.0 
