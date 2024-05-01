@@ -977,6 +977,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             )
         # embed positions
         hidden_states = inputs_embeds
+        from ipdb import set_trace; set_trace()
         # decoder layers
         all_hidden_states = () if output_hidden_states else None
         all_self_attns = () if output_attentions else None
