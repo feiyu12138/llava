@@ -1,33 +1,26 @@
 #!/bin/bash
-<<<<<<< HEAD
+
+
 export NCCL_P2P_DISABLE=1
-export CUDA_VISIBLE_DEVICES=0
-layer=2
-stride=8
-grouping=detach_hard_k_means
-NNODES=1
-GPUS=1
-PORT=29600
-halfpool=True
-=======
-# export NCCL_P2P_DISABLE=1
-export CUDA_VISIBLE_DEVICES=0
+export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
+export WANDB_PROJECT='llava_team'
+
+# module purge
+# module load conda
+# conda activate llava_git
+
 layer=2
 stride=8
 grouping=avgpool1d
-NNODES=1
-GPUS=1
-PORT=29600
 halfpool=False
->>>>>>> refs/remotes/origin/main
 unified_vpe=True
-torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
- llava/train/train_mem.py \
+
+deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
-    --data_path ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
-    --image_folder ./playground/data/LLaVA-Pretrain/images \
+    --data_path /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
@@ -35,9 +28,9 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ./checkpoint/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir  /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
