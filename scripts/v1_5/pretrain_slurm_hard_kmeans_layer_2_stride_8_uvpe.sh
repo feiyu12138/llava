@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_vcc
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_vccpool16layer2fine3uvpe_accum2_real.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_vccpool16layer2fine3uvpe_accum2_real.out
+#SBATCH --job-name=pt_hk_l2s8_uvpe
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_hk_l2s8_uvpe.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_hk_l2s8_uvpe.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -10,10 +10,14 @@
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava_team'
 
+module purge
+module load conda
+conda activate llava_git
+
 layer=2
-stride=16
-grouping=attn
-num_fine_blocks=3
+stride=8
+halfpool=False
+grouping=hard_k_means
 unified_vpe=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -24,11 +28,12 @@ deepspeed llava/train/train_mem.py \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
+    --tune_abstractor True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-real \
+    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -48,8 +53,9 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name pthkmeanslayer2stride8 \
     --stride $stride \
     --layer $layer \
-    --run_name pt_vccpool16layer2fine3_accum2_uvpe \
     --grouping $grouping \
-    --unified_vpe $unified_vpe
+    --halfpool $halfpool \
+    --unified_vpe $unified_vpe 
