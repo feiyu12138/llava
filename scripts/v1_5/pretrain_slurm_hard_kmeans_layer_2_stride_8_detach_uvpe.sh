@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pt_1d_l2s8_uvpe
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_1d_l2s8_uvpe.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_1d_l2s8_uvpe.out
+#SBATCH --job-name=pt_dhk_l2s8_uvpe
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pt_dhk_l2s8_uvpe.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pt_dhk_l2s8_uvpe.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_PROJECT='llava'
+export WANDB_PROJECT='llava_team'
 
 module purge
 module load conda
@@ -16,28 +16,28 @@ conda activate llava_git
 
 layer=2
 stride=8
-grouping=avgpool1d
 halfpool=False
+grouping=detach_hard_k_means
 unified_vpe=True
-
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
-    --data_path ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
-    --image_folder ./playground/data/LLaVA-Pretrain/images \
+    --data_path /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
+    --tune_abstractor True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
+    --output_dir /data/luoxin/data/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 2 \
+    --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 24000 \
@@ -53,8 +53,9 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+    --run_name ptdhkmeanslayer2stride8 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --halfpool $halfpool \
-    --unified_vpe $unified_vpe
+    --unified_vpe $unified_vpe 
