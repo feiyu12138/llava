@@ -725,6 +725,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.finer = None
         self.formatter = None
         self.selector = None
+        self.unified_vpe = False
         
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
@@ -750,7 +751,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         if self.images_idx is not None:
             i = 0
             # copy position ids for batch size time
-            position_ids = position_ids.repeat(hidden_states.shape[0], 1)
+            if position_ids.size(0) == 1:
+                position_ids = position_ids.repeat(hidden_states.shape[0], 1)
             # cat hidden states with position ids
             new_hidden_states = []
             new_position_ids = []
@@ -938,6 +940,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         return tokens.permute(0,2,1).contiguous(), position_ids
     
+    def apply_position_average(self, visual_states, visual_positions):
+        visual_positions = torch.mean(visual_positions.float(), dim=2).long().repeat(1, 1, visual_states.size(2)).squeeze(1)
+        return visual_states.permute(0,2,1), visual_positions
+    
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -1066,6 +1072,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
                 visual_length_layers.append(visual_length)
+            elif (layer_idx == 0 and self.unified_vpe):
+                hidden_states, position_ids, _ = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
+                compressed_hidden_states = None
+                compressed_position_ids = None
+                visual_length_layers.append(None)
             else:
                 compressed_hidden_states = None
                 compressed_position_ids = None
