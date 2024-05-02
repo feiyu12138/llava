@@ -7,7 +7,7 @@ export WANDB_PROJECT='llava_team'
 
 layer=2
 stride=8
-grouping=detach_hard_k_means
+grouping=soft_k_means
 unified_vpe=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -44,7 +44,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer2detachhardkmeansuvpe \
+    --run_name pool8layer2softkmeansuvpe \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \

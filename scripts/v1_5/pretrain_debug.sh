@@ -1,5 +1,4 @@
 #!/bin/bash
-<<<<<<< HEAD
 export NCCL_P2P_DISABLE=1
 export CUDA_VISIBLE_DEVICES=0
 layer=2
@@ -9,17 +8,6 @@ NNODES=1
 GPUS=1
 PORT=29600
 halfpool=True
-=======
-# export NCCL_P2P_DISABLE=1
-export CUDA_VISIBLE_DEVICES=0
-layer=2
-stride=8
-grouping=avgpool1d
-NNODES=1
-GPUS=1
-PORT=29600
-halfpool=False
->>>>>>> refs/remotes/origin/main
 unified_vpe=True
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \

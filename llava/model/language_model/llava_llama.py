@@ -737,24 +737,34 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         return tokens.permute(0,2,1).contiguous(), position_ids.contiguous()
     
     def apply_soft_k_means(self, tokens,positions,iterations=1):
-        batched_centroids = []
         start_ids = positions.min()
-        for B in range(tokens.size(0)):
-            cur_tokens = tokens[B]
-            centroids = cur_tokens[:,::self.stride]
-            for _ in range(iterations):
-                
-                # Compute squared distances between each point and each centroid
-                distances = torch.sum(torch.abs((cur_tokens.unsqueeze(2) - centroids.unsqueeze(1))), dim=0)
-                
-                # Soft assignment of points to centroids
-                weights = torch.softmax(-distances, dim=1)
-                # Update centroids as the weighted mean of data points
-                centroids = cur_tokens @ weights
-            batched_centroids.append(centroids)
-        batched_centroids = torch.stack(batched_centroids, dim=0).permute(0,2,1)
-        positions = torch.arange(0, batched_centroids.size(1), device=positions.device).unsqueeze(0).repeat(batched_centroids.size(0),1) + start_ids
-        return batched_centroids,positions
+        centroids = tokens[:,:,::self.stride]
+        for _ in range(iterations):
+            distances = torch.sum(torch.abs((tokens.unsqueeze(3) - centroids.unsqueeze(2))), dim=1)
+            weights = torch.softmax(-distances, dim=2)
+            centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
+        centroids = centroids.permute(0,2,1)
+        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
+        return centroids,positions
+    
+    def apply_hard_k_means(self, tokens, positions, iterations=1, tau=1.0):
+        start_ids = positions.min()
+        centroids = tokens[:, :, ::self.stride]  # initial centroids
+        for _ in range(iterations):
+            # Compute pairwise absolute differences and sum along feature dimension
+            distances = torch.sum(torch.abs(tokens.unsqueeze(3) - centroids.unsqueeze(2)), dim=1)
+            
+            # Use Gumbel softmax for differentiable 'hard' assignment
+            weights = torch.nn.functional.gumbel_softmax(-distances, tau=tau, dim=2, hard=True)
+            
+            # Update centroids: equivalent to weighted average where weights are one-hot encoded
+            centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
+        
+        centroids = centroids.permute(0, 2, 1)
+        positions = torch.zeros(centroids.shape[0], centroids.shape[1], device=positions.device).long() + start_ids
+        
+        return centroids, positions
+        
     
     def apply_detach_soft_k_means(self, tokens,positions,iterations=1):
         start_ids = positions.min()
@@ -768,7 +778,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 del distances
                 if i<iterations-1:
                     del weights
-                
         centroids = torch.einsum('bcl,blq->bcq', tokens, weights).permute(0,2,1)
         positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
         del detach_tokens
@@ -921,8 +930,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
                     self.label_ids = position_ids
                 elif self.grouping == 'soft_k_means':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
-                    self.label_ids = position_ids
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
+                    self.label_ids = compressed_position_ids
+                elif self.grouping == 'hard_k_means':
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_hard_k_means)
+                    self.label_ids = compressed_position_ids
                 elif self.grouping == 'detach_soft_k_means':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
                     self.label_ids = compressed_position_ids
@@ -938,7 +950,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
-                from ipdb import set_trace; set_trace()
             elif (layer_idx == 0 and self.unified_vpe):
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
                 compressed_hidden_states = None
