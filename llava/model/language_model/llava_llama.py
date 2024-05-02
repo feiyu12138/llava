@@ -923,10 +923,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     self.label_ids = position_ids
                 elif self.grouping == 'detach_soft_k_means':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
-                    self.label_ids = position_ids
+                    self.label_ids = compressed_position_ids
                 elif self.grouping == 'detach_hard_k_means':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
-                    self.label_ids = position_ids
+                    self.label_ids = compressed_position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:

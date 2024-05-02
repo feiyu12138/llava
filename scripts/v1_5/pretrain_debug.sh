@@ -1,13 +1,14 @@
 #!/bin/bash
 export NCCL_P2P_DISABLE=1
-export CUDA_VISIBLE_DEVICES=7
+export CUDA_VISIBLE_DEVICES=0
 layer=2
 stride=8
-grouping=avgpool2d
+grouping=detach_hard_k_means
 NNODES=1
 GPUS=1
 PORT=29600
 halfpool=True
+unified_vpe=True
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -45,4 +46,5 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    --halfpool $halfpool
+    --halfpool $halfpool \
+    --unified_vpe $unified_vpe
