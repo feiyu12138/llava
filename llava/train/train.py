@@ -75,6 +75,7 @@ class ModelArguments:
     halfpool: Optional[bool] = field(default=False)
     num_fine_blocks: Optional[int] = field(default=0)
     explore_prob: Optional[float] = field(default=0.0)
+    unified_vpe: Optional[bool] = field(default=False)
 
 @dataclass
 class DataArguments:
@@ -880,6 +881,7 @@ def train(attn_implementation=None):
     model.model.stride = model_args.stride
     model.model.halfpool = model_args.halfpool
     model.model.groupingLayer = model_args.layer
+    model.model.unified_vpe = model_args.unified_vpe
     if model_args.grouping == 'attn':
         model.model.create_vcc_from_config(model_args)
     if model.model.grouping.find('abstractor'):
