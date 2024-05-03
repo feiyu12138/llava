@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava_team'
 
@@ -13,10 +12,10 @@ deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
-    --data_path /datasets/jchen293/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder /datasets/jchen293/data/llava_datasets/LLaVA-Tuning \
+    --data_path /data/datasets/jchen293/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --image_folder /data/datasets/jchen293/data/llava_datasets/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe/mm_projector.bin \
+    --pretrain_mm_mlp_adapter /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_project_and_Abstractor.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -24,7 +23,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
+    --output_dir  /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -49,6 +48,6 @@ deepspeed llava/train/train_mem.py \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
-    > /datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer.log
+    > /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer.log
 
 sleep 2d
