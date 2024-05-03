@@ -2,7 +2,7 @@
 #
 export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_PROJECT='llava'
+export WANDB_PROJECT='llava_team'
 layer=2
 stride=16
 grouping=attn
@@ -46,6 +46,6 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    > error.log
+    > /data/datasets/jchen293/logs/exp/llava/$name.log
 
 sleep 2d
