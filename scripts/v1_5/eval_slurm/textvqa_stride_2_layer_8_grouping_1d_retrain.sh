@@ -19,7 +19,7 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 layer=2
 stride=8
 grouping=avgpool1d
-unified_vpe=True
+unified_vpe=False
 name=llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d-retrain
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d
 
