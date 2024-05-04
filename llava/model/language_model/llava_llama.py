@@ -773,6 +773,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
+                    torch.cuda.empty_cache()
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:

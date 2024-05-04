@@ -27,8 +27,8 @@ class Selector(nn.Module):
         self.attention = attention
     
     def compute_attention_matrix(self, important_token_states, coarse_token_states, important_token_positions, coarse_token_positions, attention_mask=None, state_scores = None, num_dups = None):
-
-        attention_probs = self.attention.get_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
+        with torch.no_grad():
+            attention_probs = self.attention.get_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
         attention_probs = attention_probs.mean(dim = 1)
         
         return attention_probs
