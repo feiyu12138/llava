@@ -17,11 +17,7 @@ deepspeed llava/train/train_mem.py \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-<<<<<<< HEAD:scripts/v1_5/finetune_ccvl29_detach_hard_kmeans_pool8layer2_uvpe.sh
-    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
-=======
     --pretrain_mm_mlp_adapter /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-reprod/mm_projector.bin \
->>>>>>> refs/remotes/origin/main:scripts/v1_5/finetune_ccvl29_detach_hard_kmeans_pool8layer2_uvpe_oript.sh
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -29,7 +25,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
+    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-oript \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -54,6 +50,6 @@ deepspeed llava/train/train_mem.py \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
-    > /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer.log
+    > /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-oript.log
 
 sleep 2d
