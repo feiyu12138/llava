@@ -61,6 +61,7 @@ def eval_model(args):
         model.model.groupingLayer = args.layer
         model.model.grouping = args.grouping
         model.model.halfpool = args.halfpool
+        model.model.unified_vpe = args.unified_vpe
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool", type=str2bool, default="false")
+    parser.add_argument("--unified_vpe", type=str2bool, default="false")
     args = parser.parse_args()
 
     eval_model(args)

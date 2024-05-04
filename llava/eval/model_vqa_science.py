@@ -36,6 +36,7 @@ def eval_model(args):
     model.model.stride = args.stride
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
+    model.model.unified_vpe = args.unified_vpe
 
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
@@ -115,5 +116,6 @@ if __name__ == "__main__":
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool",type=str2bool,default="false")
+    parser.add_argument("--unified_vpe",type=str2bool,default="false")
     args = parser.parse_args()
     eval_model(args)

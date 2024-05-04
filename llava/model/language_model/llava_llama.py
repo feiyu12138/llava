@@ -278,7 +278,6 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
         query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids,source_position_ids)
-
         if past_key_value is not None:
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
@@ -663,7 +662,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         if self.images_idx is not None:
             i = 0
             # copy position ids for batch size time
-            position_ids = position_ids.repeat(hidden_states.shape[0], 1)
+            if position_ids.shape[0] == 1:
+                position_ids = position_ids.repeat(hidden_states.shape[0], 1)
             # cat hidden states with position ids
             new_hidden_states = []
             new_position_ids = []

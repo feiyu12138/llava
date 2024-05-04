@@ -1,17 +1,15 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool8layer2detach_hardkmeans_uvpe
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool8layer2detach_hardkmeans_uvpe.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool8layer2detach_hardkmeans_uvpe.out
+#SBATCH --job-name=dsk
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool8layer2dskuvpe.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool8layer2dskuvpe.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user=jchen293@jh.edu
 #SBATCH --partition=main
 #SBATCH --exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_PROJECT='llava'
+export WANDB_PROJECT='llava_team'
 
 module purge
 module load conda
@@ -23,7 +21,7 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
 stride=8
-grouping=detach_hard_k_means
+grouping=detach_soft_k_means
 unified_vpe=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -57,10 +55,10 @@ deepspeed llava/train/train_mem.py \
     --tf32 True \
     --model_max_length 2048 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 4 \
+    --dataloader_num_workers 2 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer2detachhardkmeansuvpe \
+    --run_name pool8layer2detachsoftkmeansuvpe \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
