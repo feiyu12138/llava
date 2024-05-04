@@ -1,14 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=vccpool16layer2fine3uvpe
+#SBATCH --job-name=vccuvpe
 #SBATCH --error=/datasets/jchen293/logs/exp/llava/vccpool16layer2fine3uvpe.err
 #SBATCH --output=/datasets/jchen293/logs/exp/llava/vccpool16layer2fine3uvpe.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 #SBATCH --exclude=ccvl[14,33-38]
-#SBATCH --mail-type=BEGIN,END
-#SBATCH --mail-user=wma27@jh.edu
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
@@ -40,9 +38,9 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 4 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 4 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 50000 \
