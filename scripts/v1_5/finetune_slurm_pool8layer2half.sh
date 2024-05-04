@@ -15,7 +15,6 @@ module purge
 module load conda
 conda activate llava_git
 
-
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
