@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/dhkpool8layer2uvpe1doript_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/dhkpool8layer2uvpe1doript_gqa.out
+#SBATCH --job-name=gqa_sk
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/skpool8layer2uvpe_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/skpool8layer2uvpe_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -16,11 +16,11 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
 stride=8
-grouping=detach_hard_k_means
+grouping=soft_k_means
 unified_vpe=True
 
-name=llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-retrain-oript
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-oript
+name=llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-retrain
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"

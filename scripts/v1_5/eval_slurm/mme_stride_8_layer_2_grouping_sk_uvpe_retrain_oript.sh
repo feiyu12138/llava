@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=mme
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/dhkpool8layer2uvpe1doript_mme.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/dhkpool8layer2uvpe1doript_mme.out
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/skpool8layer2uvpe1doript_mme.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/skpool8layer2uvpe1doript_mme.out
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -18,10 +18,10 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
 stride=8
-grouping=detach_hard_k_means
+grouping=soft_k_means
 unified_vpe=True
 name=llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-retrain-oript
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-oript
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe
 python -m llava.eval.model_vqa_loader \
     --model-path $CKPT \
     --question-file $ROOT_DATA/eval_luoxin/eval/MME/llava_mme.jsonl \
