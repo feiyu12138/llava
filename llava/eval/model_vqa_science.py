@@ -37,7 +37,7 @@ def eval_model(args):
     model.model.grouping = args.grouping
     model.model.halfpool = args.halfpool
     model.model.unified_vpe = args.unified_vpe
-
+    model.model.citer = args.citer
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -117,5 +117,6 @@ if __name__ == "__main__":
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool",type=str2bool,default="false")
     parser.add_argument("--unified_vpe",type=str2bool,default="false")
+    parser.add_argument("--citer", type=int, default=1)
     args = parser.parse_args()
     eval_model(args)

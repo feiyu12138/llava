@@ -74,6 +74,7 @@ class ModelArguments:
     abstractor_rel_pos_spatial: Optional[bool] = field(default=False)
     halfpool: Optional[bool] = field(default=False)
     unified_vpe: Optional[bool] = field(default=False)
+    citer: Optional[int] = field(default=1)
 
 
 @dataclass
@@ -217,7 +218,7 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                 os.makedirs(mm_projector_folder, exist_ok=True)
                 torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
             else:
-                name = "mm_projector.bin" if "Abstractor" not in keys_to_match else "mm_project_and_Abstractor.bin"
+                name = "mm_projector.bin" 
                 torch.save(weight_to_save, os.path.join(output_dir, name))
                 
         return
@@ -881,6 +882,7 @@ def train(attn_implementation=None):
     model.model.halfpool = model_args.halfpool
     model.model.unified_vpe = model_args.unified_vpe
     model.model.groupingLayer = model_args.layer
+    model.model.citer = model_args.citer
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,

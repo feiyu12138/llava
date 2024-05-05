@@ -169,6 +169,7 @@ def eval_model(args):
     model.model.halfpool = args.halfpool
     model.model.unified_vpe = args.unified_vpe
     model.model.viz = args.viz
+    model.model.citer = args.citer
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -233,6 +234,7 @@ if __name__ == "__main__":
     parser.add_argument("--cot-decoding", action="store_true")
     parser.add_argument("--viz", action="store_true")
     parser.add_argument("--unified_vpe", type=str2bool, default=False)
+    parser.add_argument("--citer", type=int, default=1)
     args = parser.parse_args()
 
     eval_model(args)

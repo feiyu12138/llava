@@ -645,6 +645,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.text_std_layers = []
         self.user_std_layers = []
         self.unified_vpe = False
+        self.citer=1
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -737,6 +738,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         return tokens.permute(0,2,1).contiguous(), position_ids.contiguous()
     
     def apply_soft_k_means(self, tokens,positions,iterations=1):
+        if self.citer != 1:
+            iterations = self.citer
         start_ids = positions.min()
         centroids = tokens[:,:,::self.stride]
         for _ in range(iterations):
@@ -748,6 +751,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         return centroids,positions
     
     def apply_hard_k_means(self, tokens, positions, iterations=1, tau=1.0):
+        if self.citer != 1:
+            iterations = self.citer
         start_ids = positions.min()
         centroids = tokens[:, :, ::self.stride]  # initial centroids
         for _ in range(iterations):
@@ -767,6 +772,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
     
     def apply_detach_soft_k_means(self, tokens,positions,iterations=1):
+        if self.citer != 1:
+            iterations = self.citer
         start_ids = positions.min()
         detach_tokens = tokens.detach()
         detach_centroids = detach_tokens[:,:,::self.stride]
@@ -786,6 +793,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         return centroids,positions
     
     def apply_detach_hard_k_means(self, tokens,positions,iterations=1):
+        if self.citer != 1:
+            iterations = self.citer
         start_ids = positions.min()
         detach_tokens = tokens.detach()
         detach_centroids = detach_tokens[:,:,::self.stride]
