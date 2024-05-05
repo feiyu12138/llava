@@ -253,7 +253,6 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
 
             # overwrite attention_mask with padding_mask
             attention_mask = kwargs.pop("padding_mask")
-        output_attentions = False
         bsz, q_len, _ = hidden_states.size()
         if source_states is not None:
             kv_len = source_states.size(1)
@@ -322,11 +321,16 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
 
         attn_output = attn_output.reshape(bsz, q_len, self.hidden_size).contiguous()
         attn_output = self.o_proj(attn_output)
-
-        if not output_attentions:
+        if output_attentions:
+            attn_weights = self.get_attention_weights(query_states.transpose(1, 2),key_states.transpose(1, 2))
+        else:
             attn_weights = None
 
         return attn_output, attn_weights, past_key_value
+    
+    def get_attention_weights(self,q,k):
+        weights = generate_attention_map(q,k)
+        return weights
     
     def get_attention_matrix(self,vip_states,coarse_states,vip_position_ids=None,coarse_position_ids=None):
         #TODO how to deal with unknown position_ids
@@ -550,13 +554,17 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             # The q_len > 1 is necessary to match with AttentionMaskConverter.to_causal_4d that does not create a causal mask in case q_len == 1.
             is_causal=self.is_causal and attention_mask is None and q_len > 1,
         )
+        if output_attentions:
+            attn_weights = self.get_attention_weights(query_states, key_states)
+        else:
+            attn_weights = None
 
         attn_output = attn_output.transpose(1, 2).contiguous()
         attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
 
         attn_output = self.o_proj(attn_output)
 
-        return attn_output, None, past_key_value
+        return attn_output, attn_weights, past_key_value
     
     def get_attention_matrix(self,vip_states,coarse_states,vip_position_ids=None,coarse_position_ids=None):
         #TODO how to deal with unknown position_ids
@@ -589,18 +597,12 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         attn_map = generate_attention_map(query_states, key_states, ~causal_mask)
         
         return attn_map
+    
+    def get_attention_weights(self,q,k):
+        weights = generate_attention_map(q,k)
+        return weights
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
 MY_LLAMA_ATTENTION_CLASSES = {
     "ada_flash_attention_2": MyFlashAttention2,
     "flash_attention_2": AdaptiveFlashAttention2,
@@ -744,7 +746,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.coarser = Coarser(config)
         self.finer = Finer(config)
         self.formatter = Formatter(config)
-        self.selector = Selector(config)
+        self.selector = Selector(config,self.layers[config.layer].self_attn)
         self.selector.training = False
     
     def visual_operating(self, hidden_states, position_ids, operator):
@@ -796,7 +798,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             
         return hidden_states, new_position_ids,visual_length
     
-    def attn_guided_compress(self, hidden_states, position_ids,attn_layer,attention_mask = None,importance_mask=None):
+    def attn_guided_compress(self, hidden_states, position_ids,attention_mask = None,importance_mask=None):
         
         if attention_mask is None:
             attention_mask = torch.ones(hidden_states.size(0), hidden_states.size(1), device=hidden_states.device)
@@ -817,7 +819,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             "positions":position_ids, # [B, L]
         }
         uncompressed_states = self.formatter.to_vcc_input(uncompressed_states)
-        self.selector.set_attn(attn_layer)
         compressed_states = self.finer(self.selector(self.coarser(uncompressed_states)))
         compressed_hidden_states, _, compressed_position_ids = from_vcc(compressed_states)
         visual_length = compressed_position_ids.size(1) - importance_mask.sum(1)
@@ -1031,6 +1032,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
+            # if self.grouping == "attn" and layer_idx == self.groupingLayer - 1:
+            #     cur_output_attentions = True
+            # else:
+            #     cur_output_attentions = output_attentions
             if layer_idx == self.groupingLayer and self.grouping != 'none':
                 if self.grouping == 'avgpool1d':
                     compressed_hidden_states, compressed_position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
@@ -1058,7 +1063,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     self.label_ids = position_ids
                 elif self.grouping == 'attn':
                     if self.images_idx is not None and self.images_idx[0][0].shape[0] != 0:
-                        hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids,decoder_layer.self_attn)
+                        hidden_states,position_ids,visual_length = self.attn_guided_compress(hidden_states,position_ids)
                         self.label_ids = position_ids
                     else:
                         hidden_states,position_ids,visual_length = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d) # do nothing
@@ -1115,7 +1120,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
 
             if use_cache:
                 next_decoder_cache = layer_outputs[2 if output_attentions else 1]
-
             if output_attentions:
                 all_self_attns += (layer_outputs[1],)
             if compressed_position_ids is not None:
