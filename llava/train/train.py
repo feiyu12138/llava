@@ -218,7 +218,7 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                 os.makedirs(mm_projector_folder, exist_ok=True)
                 torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
             else:
-                name = "mm_projector.bin" if "Abstractor" not in keys_to_match else "mm_project_and_Abstractor.bin"
+                name = "mm_projector.bin" 
                 torch.save(weight_to_save, os.path.join(output_dir, name))
                 
         return
