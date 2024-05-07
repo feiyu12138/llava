@@ -105,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--grouping", type=str, default="none")
-    parser.add_argument('--num-fine-blocks', type=int, default=9)
+    parser.add_argument('--num_fine_blocks', type=int, default=3)
     parser.add_argument('--explore-prob', type=float, default=0.0)
     args = parser.parse_args()
 

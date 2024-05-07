@@ -236,7 +236,7 @@ if __name__ == "__main__":
     parser.add_argument("--icl-file", type=str, default="none")
     parser.add_argument("--cot-decoding", action="store_true")
     parser.add_argument("--viz", action="store_true")
-    parser.add_argument('--num-fine-blocks', type=int, default=9)
+    parser.add_argument('--num_fine_blocks', type=int, default=3)
     parser.add_argument('--explore-prob', type=float, default=0.0)
     parser.add_argument('--viz_savepath', type=str, default='tempt')
     args = parser.parse_args()
