@@ -5,9 +5,10 @@ def assignment_viz(image,assignment):
     image: 1 x 3 x 336 x 336
     assignment 1 x 72 x 576
     '''
-    image = image.squeeze(0).cpu().numpy().transpose(1,2,0)[:,:,::-1]
-    image = Image.fromarray((image * 255).astype('uint8'), 'RGB')
+    image = image.resize((336,336))
     imglist = []
+    if assignment is None:
+        return None
     assignment = assignment.squeeze(0).transpose(0,1)
     for i in range(assignment.shape[0]):
         #blend the image with the assignment
