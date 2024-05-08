@@ -49,3 +49,5 @@ playground
 
 viz_
 viz
+
+*.npy
