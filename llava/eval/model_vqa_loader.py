@@ -239,6 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('--num-fine-blocks', type=int, default=9)
     parser.add_argument('--explore-prob', type=float, default=0.0)
     parser.add_argument('--viz_savepath', type=str, default='tempt')
+    parser.add_argument('--viz_assign', type=str2bool, default='false')
     args = parser.parse_args()
 
     eval_model(args)

@@ -10,11 +10,18 @@ import random
 class Selector(nn.Module):
     def __init__(self, config, attention=None):
         super().__init__()
-
+        # self.start_num_fine_blocks = int(576 / config.stride)
+        # self.end_num_fine_blocks = config.num_fine_blocks
         self.num_fine_blocks = config.num_fine_blocks
         self.selector_type = "attention_based_selector"
         self.explore_prob = config.explore_prob
         self.attention = attention
+        self.step_count = 0
+    
+    def step(self):
+        self.step_count += 1
+        if self.step_count % 120 == 0:
+            self.num_fine_blocks = max(self.num_fine_blocks - 1, self.end_num_fine_blocks)
 
     def extra_repr(self):
         repr = [
@@ -27,8 +34,8 @@ class Selector(nn.Module):
         self.attention = attention
     
     def compute_attention_matrix(self, important_token_states, coarse_token_states, important_token_positions, coarse_token_positions, attention_mask=None, state_scores = None, num_dups = None):
-        with torch.no_grad():
-            attention_probs = self.attention.get_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
+        # with torch.no_grad():
+        attention_probs = self.attention.get_attention_matrix(important_token_states, coarse_token_states, important_token_positions, coarse_token_positions)
         attention_probs = attention_probs.mean(dim = 1)
         
         return attention_probs

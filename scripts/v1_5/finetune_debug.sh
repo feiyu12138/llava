@@ -2,10 +2,11 @@
 export NCCL_P2P_DISABLE=1
 layer=16
 stride=2
-grouping=avgpool2d
+grouping=attn
 NNODES=1
 GPUS=1
 PORT=29600
+num_fine_blocks=3
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
      llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -44,4 +45,5 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --report_to wandb \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    --num_fine_blocks $num_fine_blocks \

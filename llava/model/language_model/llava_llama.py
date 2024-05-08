@@ -728,6 +728,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.formatter = None
         self.selector = None
         self.unified_vpe = False
+        self.assignment = None
         
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
@@ -799,7 +800,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         return hidden_states, new_position_ids,visual_length
     
     def attn_guided_compress(self, hidden_states, position_ids,attention_mask = None,importance_mask=None):
-        
         if attention_mask is None:
             attention_mask = torch.ones(hidden_states.size(0), hidden_states.size(1), device=hidden_states.device)
         if importance_mask is None:
@@ -1169,55 +1169,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 plt.tight_layout()
                 plt.savefig(f'{self.viz_savepath}/attention_map_{idx}_visual_key.png',dpi=300)
                 plt.close()
-            # state_std_layers = [std['state'].cpu() for std in self.std_layers]
-            # query_std_layers = [std['query'].cpu() for std in self.std_layers]
-            # key_std_layers = [std['key'].cpu() for std in self.std_layers]
-            # value_std_layers = [std['value'].cpu() for std in self.std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS, segment length = 4')
-            # plt.plot(state_std_layers,label='state std')
-            # plt.plot(query_std_layers,label='query std')
-            # plt.plot(key_std_layers,label='key std')
-            # plt.plot(value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('{self.viz_savepath}/visual_std_layers.png',dpi=300)
-            # plt.close()
-            # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
-            # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
-            # text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
-            # text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS(system), segment length = 4')
-            # plt.plot(text_state_std_layers,label='state std')
-            # plt.plot(text_query_std_layers,label='query std')
-            # plt.plot(text_key_std_layers,label='key std')
-            # plt.plot(text_value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('{self.viz_savepath}/system_std_layers.png',dpi=300)
-            # plt.close()
-            # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
-            # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
-            # user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
-            # user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS(user), segment length = 4')
-            # plt.plot(user_state_std_layers,label='state std')
-            # plt.plot(user_query_std_layers,label='query std')
-            # plt.plot(user_key_std_layers,label='key std')
-            # plt.plot(user_value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('{self.viz_savepath}/user_std_layers.png',dpi=300)
-            # plt.close()
-            # from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
 
@@ -1340,6 +1291,9 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if not return_dict:
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
+        
+        # self.model.selector.step()
+        
 
         return CausalLMOutputWithPast(
             loss=loss,
