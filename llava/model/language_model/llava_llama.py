@@ -587,7 +587,6 @@ class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
             source_states = None
             source_position_ids = None
         residual = target_states
-
         target_states = self.input_layernorm(target_states)
         if source_states is not None:
             source_states = self.input_layernorm(source_states)
@@ -646,6 +645,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.user_std_layers = []
         self.unified_vpe = False
         self.citer=1
+        self.viz_assign = False
+        self.assignment = None
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -745,8 +746,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         for _ in range(iterations):
             distances = torch.sum(torch.abs((tokens.unsqueeze(3) - centroids.unsqueeze(2))), dim=1)
             weights = torch.softmax(-distances, dim=2)
+            weights = weights / (weights.sum(1) + 1e-6)
             centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
         centroids = centroids.permute(0,2,1)
+        if self.viz_assign:
+            self.assignment = weights
         positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
         return centroids,positions
     
@@ -761,10 +765,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             
             # Use Gumbel softmax for differentiable 'hard' assignment
             weights = torch.nn.functional.gumbel_softmax(-distances, tau=tau, dim=2, hard=True)
+            weights = weights / (weights.sum(1) + 1e-6)
             
             # Update centroids: equivalent to weighted average where weights are one-hot encoded
             centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
-        
+        if self.viz_assign:
+            self.assignment = weights
         centroids = centroids.permute(0, 2, 1)
         positions = torch.zeros(centroids.shape[0], centroids.shape[1], device=positions.device).long() + start_ids
         
@@ -781,11 +787,15 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             for i in range(iterations):
                 distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
                 weights = torch.softmax(-distances, dim=2)
+                weights = weights / (weights.sum(1) + 1e-6)
                 detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, weights)
                 del distances
                 if i<iterations-1:
                     del weights
-        centroids = torch.einsum('bcl,blq->bcq', tokens, weights).permute(0,2,1)
+        centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
+        centroids = centroids.permute(0,2,1)
+        if self.viz_assign:
+            self.assignment = weights
         positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
         del detach_tokens
         del detach_centroids
@@ -803,13 +813,15 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
                 weights = torch.argmax(-distances, dim=2)
                 one_hot_weights = F.one_hot(weights, num_classes=distances.size(2)).to(detach_tokens.dtype)
+                one_hot_weights = one_hot_weights / (one_hot_weights.sum(1) + 1e-6)
                 detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, one_hot_weights)
                 del distances
                 if i<iterations-1:
                     del weights
                     del one_hot_weights
-                
         centroids = torch.einsum('bcl,blq->bcq', tokens, one_hot_weights).permute(0,2,1)
+        if self.viz_assign:
+            self.assignment = one_hot_weights
         positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
         del detach_tokens
         del detach_centroids
@@ -1097,7 +1109,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # plt.close()
             from ipdb import set_trace; set_trace()
         self.attention_maps = []
-
 
         hidden_states = self.norm(hidden_states)
 

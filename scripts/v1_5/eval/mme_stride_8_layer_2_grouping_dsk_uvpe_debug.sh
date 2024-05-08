@@ -7,9 +7,9 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
 stride=8
-grouping=detach_soft_k_means
+grouping=detach_hard_k_means
 unified_vpe=True
-citer=3
+citer=1
 name=llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-retrain
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe
 python -m llava.eval.model_vqa_loader \
@@ -23,7 +23,7 @@ python -m llava.eval.model_vqa_loader \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
-    --citer 3
+    --citer $citer
 
 cd $ROOT_DATA/eval_luoxin/eval/MME
 
