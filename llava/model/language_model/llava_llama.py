@@ -728,6 +728,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.formatter = None
         self.selector = None
         self.unified_vpe = False
+        self.viz_assign = False
+        self.assignment = None
         
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
