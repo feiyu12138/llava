@@ -11,8 +11,9 @@ from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
-
+from matplotlib import pyplot as plt
 from PIL import Image
+from llava.eval.assignment_viz import assignment_viz
 import math
 
 CHOICE_MAPPING = {
@@ -157,6 +158,8 @@ def create_data_loader(questions, image_folder, tokenizer, image_processor, mode
     return data_loader
 
 
+
+
 def eval_model(args):
     # Model
     disable_torch_init()
@@ -170,6 +173,7 @@ def eval_model(args):
     model.model.unified_vpe = args.unified_vpe
     model.model.viz = args.viz
     model.model.citer = args.citer
+    model.model.viz_assign = args.viz_assign
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -185,7 +189,6 @@ def eval_model(args):
     for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
         idx = line["question_id"]
         cur_prompt = line["text"]
-
         input_ids = input_ids.to(device='cuda', non_blocking=True)
         with torch.inference_mode():
             output_ids = model.generate(
@@ -198,7 +201,13 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
                 use_cache=True)
-
+        image_idx = os.path.splitext(idx)[0]
+        if args.viz_assign:
+            if not os.path.exists(f'{args.savedir}/{image_idx}'):
+                os.makedirs(f'{args.savedir}/{image_idx}')
+            assign_viz = assignment_viz(image_tensor,model.model.assignment)
+            for i, img in enumerate(assign_viz):
+                img.save(f'{args.savedir}/{image_idx}/{i}.png')
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 
         ans_id = shortuuid.uuid()
@@ -235,6 +244,8 @@ if __name__ == "__main__":
     parser.add_argument("--viz", action="store_true")
     parser.add_argument("--unified_vpe", type=str2bool, default=False)
     parser.add_argument("--citer", type=int, default=1)
+    parser.add_argument("--viz_assign",type=str2bool,default="false")
+    parser.add_argument("--savedir",type=str,default="viz")
     args = parser.parse_args()
 
     eval_model(args)
