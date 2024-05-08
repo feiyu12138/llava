@@ -647,6 +647,14 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.citer=1
         self.viz_assign = False
         self.assignment = None
+        self.progressive = False
+        self.step = 0
+        
+    def step_stride(self):
+        if self.step % 1500 == 0 and self.step != 0 and self.stride > 1:
+            self.stride = self.stride // 2
+            print(f"Stride reduction, present stride is {self.stride}")
+        self.step += 1
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -934,7 +942,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 all_hidden_states += (hidden_states,)
             if self.unified_vpe and layer_idx == 0:
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
-            if (layer_idx == self.groupingLayer and self.grouping != 'none'):
+            if (layer_idx == self.groupingLayer and self.grouping != 'none' and self.stride > 1):
                 if self.grouping == 'avgpool1d':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
@@ -1231,6 +1239,9 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if not return_dict:
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
+        
+        if self.model.progressive:
+            self.model.step_stride()
 
         return CausalLMOutputWithPast(
             loss=loss,

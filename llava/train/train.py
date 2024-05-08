@@ -75,6 +75,7 @@ class ModelArguments:
     halfpool: Optional[bool] = field(default=False)
     unified_vpe: Optional[bool] = field(default=False)
     citer: Optional[int] = field(default=1)
+    progressive: Optional[bool] = field(default=False)
 
 
 @dataclass
@@ -876,6 +877,7 @@ def train(attn_implementation=None):
             torch_dtype=(torch.bfloat16 if training_args.bf16 else None),
             **bnb_model_from_pretrained_args
         )
+        
     model.config.use_cache = False
     model.model.grouping = model_args.grouping
     model.model.stride = model_args.stride
@@ -883,6 +885,8 @@ def train(attn_implementation=None):
     model.model.unified_vpe = model_args.unified_vpe
     model.model.groupingLayer = model_args.layer
     model.model.citer = model_args.citer
+    model.model.progressive = model_args.progressive
+    
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
