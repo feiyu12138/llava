@@ -651,8 +651,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.step = 0
         
     def step_stride(self):
-        if self.step % 1500 == 0 and self.step != 0 and self.stride > 1:
-            self.stride = self.stride // 2
+        if self.step % 2600 == 0 and self.step != 0 and self.stride > 1:
+            self.stride = 1
             print(f"Stride reduction, present stride is {self.stride}")
         self.step += 1
 
