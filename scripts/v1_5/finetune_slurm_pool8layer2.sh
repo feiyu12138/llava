@@ -9,7 +9,7 @@
 #SBATCH --exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_PROJECT='llava'
+export WANDB_PROJECT='llava_team'
 
 module purge
 module load conda

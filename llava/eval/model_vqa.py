@@ -10,6 +10,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
+from llava.eval.assignment_viz import assignment_viz
 
 from PIL import Image
 import math
@@ -61,6 +62,9 @@ def eval_model(args):
         model.model.groupingLayer = args.layer
         model.model.grouping = args.grouping
         model.model.halfpool = args.halfpool
+        model.model.unified_vpe = args.unified_vpe
+        model.model.citer = args.citer
+        model.model.viz_assign = args.viz_assign
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -73,9 +77,23 @@ def eval_model(args):
                 # no_repeat_ngram_size=3,
                 max_new_tokens=1024,
                 use_cache=True)
+        
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-
+        if isinstance(idx,str):
+            image_idx = os.path.splitext(idx)[0]
+        elif isinstance(idx,int):
+            image_idx = str(idx)
+        if args.viz_assign and image is not None:
+            from ipdb import set_trace; set_trace()
+            if not os.path.exists(f'{args.savedir}/{image_idx}'):
+                os.makedirs(f'{args.savedir}/{image_idx}')
+            assign_viz = assignment_viz(image,model.model.assignment)
+            for i, img in enumerate(assign_viz):
+                img.save(f'{args.savedir}/{image_idx}/{i}.png')
+            with open(f'{args.savedir}/{image_idx}/output.txt','w') as f:
+                f.write(cur_prompt)
+                f.write(outputs)
         ans_id = shortuuid.uuid()
         ans_file.write(json.dumps({"question_id": idx,
                                    "prompt": cur_prompt,
@@ -103,6 +121,10 @@ if __name__ == "__main__":
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool", type=str2bool, default="false")
+    parser.add_argument("--unified_vpe", type=str2bool, default="false")
+    parser.add_argument("--citer", type=int, default=1)
+    parser.add_argument("--viz_assign",type=str2bool,default="false")
+    parser.add_argument("--savedir",type=str,default="viz")
     args = parser.parse_args()
 
     eval_model(args)

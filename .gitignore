@@ -49,3 +49,7 @@ playground
 
 viz_
 viz
+
+*.npy
+
+viz_assign

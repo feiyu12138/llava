@@ -3,26 +3,19 @@
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava_team'
 
-<<<<<<< HEAD
-export NCCL_P2P_DISABLE=1
-=======
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
->>>>>>> refs/remotes/origin/main
 layer=2
 stride=8
-grouping=hard_k_means
+grouping=detach_hard_k_means
 unified_vpe=True
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
-<<<<<<< HEAD
-    --data_path /data/jieneng/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder /data/jieneng/data/llava_datasets/LLaVA-Tuning \
-=======
-    --data_path /data/datasets/jchen293/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder /data/datasets/jchen293/data/llava_datasets/LLaVA-Tuning \
->>>>>>> refs/remotes/origin/main
+    --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --pretrain_mm_mlp_adapter /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-reprod/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
@@ -32,7 +25,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
+    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-oript \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -52,15 +45,11 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer2hardkmeansuvpe \
+    --run_name pool8layer2detachhardkmeansuvpe \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
-<<<<<<< HEAD
     > /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-oript.log
-=======
-    > /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer.log
->>>>>>> refs/remotes/origin/main
 
 sleep 2d
