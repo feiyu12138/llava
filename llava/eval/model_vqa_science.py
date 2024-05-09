@@ -10,6 +10,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
+from llava.eval.assignment_viz import assignment_viz
 
 from PIL import Image
 import math
@@ -133,7 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--halfpool",type=str2bool,default="false")
     parser.add_argument('--num_fine_blocks', type=int, default=3)
-    parser.add_argument('--explore-prob', type=float, default=0.0)
+    parser.add_argument('--explore_prob', type=float, default=0.0)
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
     args = parser.parse_args()

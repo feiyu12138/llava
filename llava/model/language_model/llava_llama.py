@@ -47,6 +47,7 @@ from llava.model.vcc.finer import Finer
 from llava.model.vcc.selector import Selector
 from llava.model.vcc.formatter import Formatter
 from llava.model.vcc.interface import from_vcc
+from llava.eval.assignment_viz import assignment_viz
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -830,7 +831,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         batch_indices = batch_indices.expand_as(reorder_ids)
         compressed_hidden_states = compressed_hidden_states[batch_indices,reorder_ids]
         compressed_position_ids = compressed_position_ids[batch_indices,reorder_ids]
-        
+        if self.viz_assign:
+            indices = compressed_position_ids[:,self.images_idx[0][0]:self.images_idx[0][0]+ visual_length[0].long().item()] - self.images_idx[0][0]
+            self.assignment = torch.zeros(1,576).to(indices.device)
+            self.assignment[:,indices] = 1
+            self.assignment = self.assignment.unsqueeze(-1)
         if self.training:
             compressed_hidden_states = compressed_hidden_states.bfloat16()
         return compressed_hidden_states, compressed_position_ids,visual_length[0].long().item()

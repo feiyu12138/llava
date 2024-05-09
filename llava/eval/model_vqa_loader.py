@@ -11,6 +11,7 @@ from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
+from llava.eval.assignment_viz import assignment_viz
 
 from PIL import Image
 import math
@@ -170,6 +171,7 @@ def eval_model(args):
     model.model.halfpool = args.halfpool
     model.model.viz = args.viz
     model.model.viz_savepath = args.viz_savepath
+    model.model.viz_assign = args.viz_assign
     if args.grouping == 'attn':
         model.model.create_vcc_from_config(args)
         use_cache = False
@@ -201,8 +203,23 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
                 use_cache=use_cache)
-
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        if isinstance(idx,str):
+            image_idx = os.path.splitext(idx)[0]
+        elif isinstance(idx,int):
+            image_idx = str(idx)
+        if args.viz_assign and image_tensor is not None:
+            image = Image.open(os.path.join(args.image_folder, line["image"])).convert('RGB')
+            if not os.path.exists(f'{args.savedir}/{image_idx}'):
+                os.makedirs(f'{args.savedir}/{image_idx}')
+            assign_viz = assignment_viz(image,model.model.assignment)
+            for i, img in enumerate(assign_viz):
+                img.save(f'{args.savedir}/{image_idx}/{i}.png')
+            with open(f'{args.savedir}/{image_idx}/output.txt','w') as f:
+                f.write(cur_prompt)
+                f.write(outputs)
+
+        
 
         ans_id = shortuuid.uuid()
         ans_file.write(json.dumps({"question_id": idx,
@@ -237,7 +254,7 @@ if __name__ == "__main__":
     parser.add_argument("--cot-decoding", action="store_true")
     parser.add_argument("--viz", action="store_true")
     parser.add_argument('--num_fine_blocks', type=int, default=3)
-    parser.add_argument('--explore-prob', type=float, default=0.0)
+    parser.add_argument('--explore_prob', type=float, default=0.0)
     parser.add_argument('--viz_savepath', type=str, default='tempt')
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")

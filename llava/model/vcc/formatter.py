@@ -26,13 +26,13 @@ class Formatter(nn.Module):
         return ", ".join(options)
 
     def to_vcc_input(self, mixed_states):
+        from ipdb import set_trace; set_trace()
         hidden_states = mixed_states["hidden_states"]
         mask = mixed_states["mask"]
         importance_mask = mixed_states["importance_mask"]
         positions = mixed_states["positions"]
         cached = {"mask":mask, "importance_mask":importance_mask, "positions":positions}
         hidden_states = hidden_states * mask[:, :, None]
-
         sorted_order = torch.sort(importance_mask, descending = True, stable = True).indices
         batch_indices = torch.arange(hidden_states.shape[0], device = hidden_states.device)[:, None]
 
