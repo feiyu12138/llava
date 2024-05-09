@@ -85,7 +85,6 @@ def eval_model(args):
         elif isinstance(idx,int):
             image_idx = str(idx)
         if args.viz_assign and image is not None:
-            from ipdb import set_trace; set_trace()
             if not os.path.exists(f'{args.savedir}/{image_idx}'):
                 os.makedirs(f'{args.savedir}/{image_idx}')
             assign_viz = assignment_viz(image,model.model.assignment)

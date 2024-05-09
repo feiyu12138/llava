@@ -1,18 +1,23 @@
 #!/bin/bash
+export NCCL_P2P_DISABLE=1
 export CUDA_VISIBLE_DEVICES=0
-name=vcc_16_3_2_wotrain
+
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+
+name=vcc_16_3_2_wotrain_jieneng27
 grouping=attn
 stride=16
 layer=2
 num_fine_blocks=3
 viz_assign=True
 savedir=./viz_assign/$name-mme
-ckpt=/home/lye21/llava_git/llava/playground/data/checkpoint/llava-v1.5-7b-stride-16-layer-2-grouping-attn-num_fine_block-3
+ckpt=/data/jieneng/huggingface/llava-v1.5-7b
 python -m llava.eval.model_vqa_loader \
-    --model-path liuhaotian/llava-v1.5-7b \
-    --question-file ./playground/data/eval/MME/llava_mme.jsonl \
-    --image-folder ./playground/data/eval/MME/MME_Benchmark_release_version \
-    --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
+    --model-path $ckpt \
+    --question-file $ROOT_DATA/eval_luoxin/eval/MME/llava_mme.jsonl \
+    --image-folder $ROOT_DATA/eval_luoxin/eval/MME/MME_Benchmark_release_version \
+    --answers-file $ROOT_DATA/eval_luoxin/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --grouping attn \
@@ -24,7 +29,7 @@ python -m llava.eval.model_vqa_loader \
     --savedir $savedir
 
 
-cd ./playground/data/eval/MME
+cd $ROOT_DATA/eval_luoxin/eval/MME
 
 python convert_answer_to_mme.py --experiment $name
 
