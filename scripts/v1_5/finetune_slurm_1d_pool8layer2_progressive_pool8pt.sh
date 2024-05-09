@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2dpool2layer8
+#SBATCH --job-name=progressive8pt
 #SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.err
 #SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.out
 #SBATCH --gpus=8
@@ -100,7 +100,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer21d_progressive \
+    --run_name pool8layer21dprogressivepool8pt \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
