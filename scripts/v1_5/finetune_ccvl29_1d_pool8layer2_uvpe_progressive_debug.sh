@@ -90,13 +90,22 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
+<<<<<<< HEAD
     --run_name pool8layer21duvpe_progressive \
+=======
+    --run_name pool8layer21duvpe_progressive_debug \
+>>>>>>> refs/remotes/origin/main
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
+<<<<<<< HEAD
     1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive-debug.out \
     2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive-debug.err
+=======
+    # 1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive-debug.out \
+    # 2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive-debug.err
+>>>>>>> refs/remotes/origin/main
 
 sleep 2d

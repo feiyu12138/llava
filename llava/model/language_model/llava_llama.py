@@ -942,7 +942,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 all_hidden_states += (hidden_states,)
             if self.unified_vpe and layer_idx == 0:
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
-            if (layer_idx == self.groupingLayer and self.grouping != 'none' and self.stride > 1):
+            if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
