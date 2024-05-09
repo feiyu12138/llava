@@ -60,6 +60,7 @@ def eval_model(args):
     model.model.stride = args.stride
     model.model.groupingLayer = args.layer
     model.model.grouping = args.grouping
+    model.model.viz_assign = args.viz_assign
     if args.grouping == 'attn':
         model.model.create_vcc_from_config(args)
         use_cache = False
@@ -143,7 +144,7 @@ def eval_model(args):
             options = options[1:] + options[:1]
             cur_option_char = cur_option_char[1:] + cur_option_char[:1]
     ans_file.close()
-
+str2bool = lambda x: (str(x).lower() == 'true')
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
@@ -165,6 +166,8 @@ if __name__ == "__main__":
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default='none')
+    parser.add_argument("--viz_assign",type=str2bool,default="false")
+    parser.add_argument("--savedir",type=str,default="viz")
     args = parser.parse_args()
 
     eval_model(args)

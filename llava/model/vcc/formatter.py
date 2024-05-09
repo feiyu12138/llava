@@ -26,7 +26,6 @@ class Formatter(nn.Module):
         return ", ".join(options)
 
     def to_vcc_input(self, mixed_states):
-        from ipdb import set_trace; set_trace()
         hidden_states = mixed_states["hidden_states"]
         mask = mixed_states["mask"]
         importance_mask = mixed_states["importance_mask"]
