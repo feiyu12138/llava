@@ -39,7 +39,6 @@ def eval_model(args):
     model.model.halfpool = args.halfpool
     model.model.unified_vpe = args.unified_vpe
     model.model.citer = args.citer
-    model.model.citer = args.citer
     model.model.viz_assign = args.viz_assign
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
