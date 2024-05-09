@@ -201,14 +201,23 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
                 use_cache=True)
-        image_idx = os.path.splitext(idx)[0]
+        
+        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        if isinstance(idx,str):
+            image_idx = os.path.splitext(idx)[0]
+        elif isinstance(idx,int):
+            image_idx = str(idx)
         if args.viz_assign:
+            from ipdb import set_trace; set_trace()
+            image_ = Image.open(os.path.join(args.image_folder, line["image"])).convert('RGB')
             if not os.path.exists(f'{args.savedir}/{image_idx}'):
                 os.makedirs(f'{args.savedir}/{image_idx}')
-            assign_viz = assignment_viz(image_tensor,model.model.assignment)
+            assign_viz = assignment_viz(image_,model.model.assignment)
             for i, img in enumerate(assign_viz):
-                img.save(f'{args.savedir}/{image_idx}/{i}.png')
-        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+                img.save(f'{args.savedir}/{image_idx}/{i}.png')  
+            with open(f'{args.savedir}/{image_idx}/output.txt','w') as f:
+                f.write(cur_prompt)
+                f.write(outputs)
 
         ans_id = shortuuid.uuid()
         ans_file.write(json.dumps({"question_id": idx,
