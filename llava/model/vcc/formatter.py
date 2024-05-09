@@ -32,7 +32,6 @@ class Formatter(nn.Module):
         positions = mixed_states["positions"]
         cached = {"mask":mask, "importance_mask":importance_mask, "positions":positions}
         hidden_states = hidden_states * mask[:, :, None]
-
         sorted_order = torch.sort(importance_mask, descending = True, stable = True).indices
         batch_indices = torch.arange(hidden_states.shape[0], device = hidden_states.device)[:, None]
 

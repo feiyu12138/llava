@@ -83,7 +83,6 @@ class Coarser(nn.Module):
             cache_update(mixed_states["difference_cache"], difference, cache_indice_table)
 
         elif "fine_block_indices" in mixed_states and "coarse_block_indices" in mixed_states:
-            from ipdb import set_trace; set_trace()
 
             fine_block_indices = mixed_states["fine_block_indices"]
             partial_fine_token_states = mixed_states["partial_fine_token_states"]

@@ -1,11 +1,14 @@
 #!/bin/bash
-# export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export NCCL_P2P_DISABLE=1
+export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
+export WANDB_PROJECT='llava_team'
 layer=2
 stride=16
 grouping=attn
 num_fine_blocks=3
 unified_vpe=True
+
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \

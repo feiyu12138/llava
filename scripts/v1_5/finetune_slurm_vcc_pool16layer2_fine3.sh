@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-#SBATCH --job-name=vccuvpe
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/vccpool16layer2fine3uvpe.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/vccpool16layer2fine3uvpe.out
+#SBATCH --job-name=vcc
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/vccp16l2f3.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/vccp16l2f3.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 #SBATCH --exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_PROJECT='llava'
+export WANDB_PROJECT='llava_team'
 
 module purge
 module load conda
@@ -19,16 +19,18 @@ layer=2
 stride=16
 grouping=attn
 num_fine_blocks=3
-unified_vpe=True
+
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
-    --data_path /datasets/jchen293/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder /datasets/jchen293/data/llava_datasets/LLaVA-Tuning \
+    --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe/mm_projector.bin \
+    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -36,7 +38,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping \
     --num_train_epochs 1 \
     --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 4 \
@@ -53,13 +55,12 @@ deepspeed llava/train/train_mem.py \
     --tf32 True \
     --model_max_length 2048 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 4 \
+    --dataloader_num_workers 2 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name vccpool16layer2fine3uvpe \
+    --run_name vccpool16layer2fine3 \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping \
-    --unified_vpe $unified_vpe
+    --grouping $grouping 
 
 sleep 2d
