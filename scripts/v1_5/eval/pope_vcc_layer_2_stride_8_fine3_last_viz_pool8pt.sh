@@ -5,15 +5,15 @@ export NCCL_P2P_DISABLE=1
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-name=vcc-layer-2-stride-16-fine-3-wotrain-jn
+name=vcc-layer-2-stride-8-fine-3-pool8
 grouping=attn
-stride=16
+stride=8
 layer=2
 num_fine_blocks=3
 viz_assign=True
 selector_type=last_token
 savedir=./viz_assign/$name-pope-$selector_type
-ckpt=/data/jieneng/huggingface/llava-v1.5-7b
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d
 
 python -m llava.eval.model_vqa_loader \
     --model-path $ckpt \

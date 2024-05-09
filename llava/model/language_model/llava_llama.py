@@ -820,6 +820,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             "mask":attention_mask, # [B, L]
             "importance_mask":importance_mask, # [B, L]
             "positions":position_ids, # [B, L]
+            "image_idx":self.images_idx
         }
         uncompressed_states = self.formatter.to_vcc_input(uncompressed_states)
         compressed_states = self.finer(self.selector(self.coarser(uncompressed_states)))

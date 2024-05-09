@@ -12,7 +12,7 @@ class Selector(nn.Module):
         super().__init__()
 
         self.num_fine_blocks = config.num_fine_blocks
-        self.selector_type = "attention_based_selector"
+        self.selector_type = config.selector_type
         self.explore_prob = config.explore_prob
         self.attention = attention
         self.viz_assign = config.viz_assign
@@ -40,7 +40,7 @@ class Selector(nn.Module):
         # outputs a mixed_states that contains
         # {mask, coarse_token_states, coarse_token_mask, difference_cache, cache_indice_table} old
         # + {fine_block_indices, coarse_block_indices} new
-        if self.selector_type == "attention_based_selector":
+        if self.selector_type != "random":
 
             important_token_states = mixed_states["important_token_states"]
             importance_mask = mixed_states["importance_mask"]
@@ -59,7 +59,13 @@ class Selector(nn.Module):
 
             # probs = probs.mean(dim = 1) * importance_mask[:, :, None].to(probs.dtype)
             # average_prob_logits = torch.log(probs.mean(dim = 1) + 1e-5)
-            average_prob_logits = probs[:,-1]
+            if self.selector_type == 'user_token':
+                image_idx = mixed_states['image_idx'][0][0]
+                average_prob_logits = probs[:,image_idx:].mean(1)
+            elif self.selector_type == 'last_token':
+                average_prob_logits = probs[:,-1]
+            elif self.selector_type == 'language_token':
+                average_prob_logits = probs.mean(1)
 
             if self.training and self.explore_prob > 0.0:
                 block_indices_rand = torch.argsort(torch.rand_like(average_prob_logits), dim = 1, descending = True)

@@ -258,6 +258,7 @@ if __name__ == "__main__":
     parser.add_argument('--viz_savepath', type=str, default='tempt')
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
+    parser.add_argument("--selector_type",type=str,default="last_token")
     args = parser.parse_args()
 
     eval_model(args)

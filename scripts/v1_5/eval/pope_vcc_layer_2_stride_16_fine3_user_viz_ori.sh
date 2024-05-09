@@ -11,7 +11,7 @@ stride=16
 layer=2
 num_fine_blocks=3
 viz_assign=True
-selector_type=last_token
+selector_type=user_token
 savedir=./viz_assign/$name-pope-$selector_type
 ckpt=/data/jieneng/huggingface/llava-v1.5-7b
 
