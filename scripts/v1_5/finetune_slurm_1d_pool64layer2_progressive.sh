@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=progressive8pt
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool16layer2prog.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool16layer2prog.out
+#SBATCH --job-name=progressive64
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool64layer2prog.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool64layer2prog.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -16,7 +16,7 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
-stride=8
+stride=64
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
@@ -60,7 +60,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name 1dpool16layer2prog \
+    --run_name 1dpool64layer2prog \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
