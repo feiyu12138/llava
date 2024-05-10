@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -8,13 +8,14 @@ CHUNKS=${#GPULIST[@]}
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-name=pool1d-stride-8-layer-2-grouping-avgpool1d-progressive
+name=pool1d-stride-64-layer-2-grouping-avgpool1d-progressive
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 grouping=avgpool1d
-stride=8
+stride=64
 layer=2
 unified_vpe=False
+name=pool1d-stride-$stride-layer-$layer-grouping-$grouping-progressive
 ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-progressive
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
