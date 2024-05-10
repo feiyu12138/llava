@@ -66,6 +66,9 @@ class Selector(nn.Module):
                 average_prob_logits = probs[:,-1]
             elif self.selector_type == 'language_token':
                 average_prob_logits = probs.mean(1)
+            elif self.selector_type == 'max_first':
+                image_idx = mixed_states['image_idx'][0][0]
+                average_prob_logits = probs[:,image_idx:].max(1)[0]
 
             if self.training and self.explore_prob > 0.0:
                 block_indices_rand = torch.argsort(torch.rand_like(average_prob_logits), dim = 1, descending = True)
