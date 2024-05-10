@@ -11,8 +11,8 @@ export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
 stride=8
@@ -20,9 +20,9 @@ grouping=avgpool1d
 unified_vpe=False
 progressive=True
 
-module purge
-module load conda
-conda activate llava_git
+# module purge
+# module load conda
+# conda activate llava_git
 
 
 # deepspeed llava/train/train_mem.py \
@@ -106,5 +106,7 @@ deepspeed llava/train/train_mem.py \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
+    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive-pool8pt.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive-pool9pt.err
 
 sleep 2d
