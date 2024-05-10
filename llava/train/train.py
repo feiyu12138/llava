@@ -76,6 +76,7 @@ class ModelArguments:
     unified_vpe: Optional[bool] = field(default=False)
     citer: Optional[int] = field(default=1)
     progressive: Optional[bool] = field(default=False)
+    pivot: Optional[int] = field(default=2600)
 
 
 @dataclass
@@ -886,6 +887,7 @@ def train(attn_implementation=None):
     model.model.groupingLayer = model_args.layer
     model.model.citer = model_args.citer
     model.model.progressive = model_args.progressive
+    model.model.pivot = model_args.pivot
     
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
