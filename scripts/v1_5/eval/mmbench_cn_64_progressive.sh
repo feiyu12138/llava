@@ -7,11 +7,11 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 grouping=none
-stride=8
+stride=64
 layer=2
 unified_vpe=False
 ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-avgpool1d-unified_vpe-$unified_vpe-progressive
-name=llava-v1.5-7b-progressive
+name=llava-v1.5-7b-64-progressive
 
 SPLIT="mmbench_dev_cn_20231003"
 
