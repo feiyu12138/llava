@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=1
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
