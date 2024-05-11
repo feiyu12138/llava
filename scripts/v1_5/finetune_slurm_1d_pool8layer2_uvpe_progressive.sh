@@ -1,18 +1,29 @@
 #!/bin/bash
 #
-# export NCCL_P2P_DISABLE=1
+#SBATCH --job-name=progressive8pt
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
 stride=8
 grouping=avgpool1d
 unified_vpe=True
 progressive=True
+
+module purge
+module load conda
+conda activate llava_git
 
 
 # deepspeed llava/train/train_mem.py \
