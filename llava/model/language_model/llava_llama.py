@@ -650,6 +650,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.progressive = False
         self.step = 0
         self.pivot = 0
+    
         
     def step_stride(self):
         if self.step % self.pivot == 0 and self.step != 0 and self.stride > 1:
