@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=1dpool8layer2uvpeprog
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.out
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2uvpeprog.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2uvpeprog.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -24,47 +24,6 @@ progressive=True
 module purge
 module load conda
 conda activate llava_git
-
-
-# deepspeed llava/train/train_mem.py \
-#     --deepspeed ./scripts/zero2.json \
-#     --model_name_or_path lmsys/vicuna-7b-v1.5 \
-#     --version plain \
-#     --data_path /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
-#     --image_folder /data/datasets/jchen293/data/llava_datasets/LLaVA-Pretrain/images \
-#     --vision_tower openai/clip-vit-large-patch14-336 \
-#     --mm_projector_type mlp2x_gelu \
-#     --tune_mm_mlp_adapter True \
-#     --mm_vision_select_layer -2 \
-#     --mm_use_im_start_end False \
-#     --mm_use_im_patch_token False \
-#     --bf16 True \
-#     --output_dir  /data/datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe \
-#     --num_train_epochs 1 \
-#     --per_device_train_batch_size 32 \
-#     --per_device_eval_batch_size 4 \
-#     --gradient_accumulation_steps 1 \
-#     --evaluation_strategy "no" \
-#     --save_strategy "steps" \
-#     --save_steps 24000 \
-#     --save_total_limit 1 \
-#     --learning_rate 1e-3 \
-#     --weight_decay 0. \
-#     --warmup_ratio 0.03 \
-#     --lr_scheduler_type "cosine" \
-#     --logging_steps 1 \
-#     --tf32 True \
-#     --model_max_length 2048 \
-#     --gradient_checkpointing True \
-#     --dataloader_num_workers 4 \
-#     --lazy_preprocess True \
-#     --report_to wandb \
-#     --stride $stride \
-#     --layer $layer \
-#     --grouping $grouping \
-#     --unified_vpe $unified_vpe \
-#     > /data/datasets/jchen293/logs/exp/llava/pt_$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe.log
-
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -101,13 +60,11 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name 1dpool8layer2uvpe_progressive \
+    --run_name 1dpool8layer2uvpeprog \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
-    --progressive $progressive \
-    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive.out \
-    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive.err
+    --progressive $progressive
 
 sleep 2d
