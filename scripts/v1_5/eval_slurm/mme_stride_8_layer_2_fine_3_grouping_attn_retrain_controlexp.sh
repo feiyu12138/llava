@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=mme
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/attnpool16layer2fine3controlexp_mme.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/attnpool16layer2fine3controlexp_mme.out
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/attnpool8layer2fine3controlexpuser_mme.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/attnpool8layer2fine3controlexpuser_mme.out
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -24,6 +24,7 @@ unified_vpe=False
 
 name=llava-v1.5-7b-stride-$stride-layer-$layer-fine-$num_fine_blocks-grouping-$grouping-controlexp
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d
+selector_type='user_token'
 
 python -m llava.eval.model_vqa_loader \
     --model-path $CKPT \
@@ -35,7 +36,8 @@ python -m llava.eval.model_vqa_loader \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    --num_fine_blocks $num_fine_blocks
+    --num_fine_blocks $num_fine_blocks \
+    --selector_type $selector_type
 
 cd $ROOT_DATA/eval_luoxin/eval/MME
 
