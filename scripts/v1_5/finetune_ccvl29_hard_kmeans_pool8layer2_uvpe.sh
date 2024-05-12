@@ -3,7 +3,6 @@
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava_team'
 
-
 layer=2
 stride=8
 grouping=hard_k_means
