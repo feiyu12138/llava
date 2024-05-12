@@ -46,6 +46,7 @@ from llava.model.vcc.coarser import Coarser
 from llava.model.vcc.finer import Finer
 from llava.model.vcc.selector import Selector
 from llava.model.vcc.formatter import Formatter
+from llava.model.language_model.rpe import get_decomposed_rel_pos_bias,PositionalEncoding2D
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -233,6 +234,8 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
         super().__init__(*args, **kwargs)
         self.viz = viz
         self.attn_map = []
+        self.rpe = False
+        self.rpe_enc = PositionalEncoding2D(128)
         
     def forward(
         self,
@@ -316,7 +319,10 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
             query_states = query_states.to(target_dtype)
             key_states = key_states.to(target_dtype)
             value_states = value_states.to(target_dtype)
-
+        if self.rpe and len(self.images_idx) != 0:
+            B, q_len, head_num, head_dim = query_states.shape
+            query_rpe = self.rpe_enc(query_states[:,self.images_idx:self.images_idx+576].view(B,24,24,head_num,head_dim))
+            query_states[:,self.images_idx:self.images_idx+576] = query_states[:,self.images_idx:self.images_idx+576] + query_rpe.view(B,576,1,head_dim)
         attn_output = self._flash_attention_forward(
             query_states, key_states, value_states, attention_mask, q_len, dropout=dropout_rate
         )
@@ -427,6 +433,10 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         self.user_std = {}
         self.images_idx = None
         self.pos_enable = True
+        self.rpe = False
+        self.rpe_enc = PositionalEncoding2D(128)
+        
+    
     # Adapted from LlamaAttention.forward
     def forward(
         self,
@@ -510,6 +520,10 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             query_states = query_states.contiguous()
             key_states = key_states.contiguous()
             value_states = value_states.contiguous()
+        if self.rpe and len(self.images_idx) != 0:
+            B,head_num, q_len, head_dim = query_states.shape
+            query_rpe = self.rpe_enc(query_states[:,:,self.images_idx:self.images_idx+576].view(B,head_num,24,24,head_dim))
+            query_states[:,:,self.images_idx:self.images_idx+576] = query_states[:,:,self.images_idx:self.images_idx+576] + query_rpe.view(B,576,head_dim)
         attn_output = torch.nn.functional.scaled_dot_product_attention(
             query_states,
             key_states,
@@ -537,6 +551,8 @@ class MyLlamaDecoderLayer(LlamaDecoderLayer):
     def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
         # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
+
+            
         self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
         
         
@@ -648,6 +664,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.text_std_layers = []
         self.user_std_layers = []
         self.pos_enable = True
+        self.rpe = False
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
         self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
@@ -665,7 +682,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         if self.images_idx is not None:
             i = 0
             # copy position ids for batch size time
-            position_ids = position_ids.repeat(hidden_states.shape[0], 1)
+            if position_ids.shape[0] == 1:
+                position_ids = position_ids.repeat(hidden_states.shape[0], 1)
             # cat hidden states with position ids
             new_hidden_states = []
             new_position_ids = []
@@ -817,7 +835,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     def apply_position_average(self, visual_states, visual_positions):
         visual_positions = torch.mean(visual_positions.float(), dim=2).long().repeat(1, 1, visual_states.size(2)).squeeze(1)
         return visual_states.permute(0,2,1), visual_positions
-        
     
     def forward(
         self,
@@ -836,6 +853,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
         use_cache = use_cache if use_cache is not None else self.config.use_cache
+        
 
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
@@ -903,6 +921,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         for decoder_layer in self.layers:
             if self.viz and self.images_idx is not None:
                 decoder_layer.self_attn.viz = True
+                decoder_layer.self_attn.images_idx = self.images_idx[0][0]
+            if self.rpe:
+                decoder_layer.self_attn.rpe = True
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if not self.pos_enable:
                 decoder_layer.self_attn.pos_enable = False
@@ -1170,7 +1191,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
-
         hidden_states = outputs[0]
         if self.config.pretraining_tp > 1:
             lm_head_slices = self.lm_head.weight.split(self.vocab_size // self.config.pretraining_tp, dim=0)

@@ -61,6 +61,7 @@ def eval_model(args):
         model.model.groupingLayer = args.layer
         model.model.grouping = args.grouping
         model.model.pos_enable = args.pos_enable
+        model.model.rpe = args.rpe
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--grouping", type=str, default="none")
     parser.add_argument("--pos-enable", type=str2bool, default="true")
+    parser.add_argument("--rpe", type=str2bool, default="false")
     args = parser.parse_args()
 
     eval_model(args)

@@ -6,6 +6,7 @@ grouping=pos_avg
 NNODES=1
 GPUS=1
 PORT=29600
+rpe=False
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -42,4 +43,5 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --report_to wandb \
     --stride $stride \
     --layer $layer \
-    --grouping $grouping
+    --grouping $grouping \
+    --rpe $rpe 
