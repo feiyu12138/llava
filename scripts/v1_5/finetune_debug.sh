@@ -1,5 +1,4 @@
 #!/bin/bash
-export NCCL_P2P_DISABLE=1
 layer=16
 stride=2
 grouping=pos_avg
@@ -16,6 +15,7 @@ torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
     --image_folder ./playground/data/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --pretrain_mm_mlp_adapter ./checkpoint/llava-v1.5-7b-pretrain-stride-2-layer-16-grouping-avgpool2d/mm_projector.bin \
+    --tune_mm_mlp_adapter True \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
