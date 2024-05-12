@@ -8,10 +8,10 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-layer=2
+layer=0
 stride=8
 grouping=avgpool1d
-unified_vpe=True
+unified_vpe=False
 progressive=True
 
 
@@ -90,13 +90,13 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer21duvpe_progressive \
+    --run_name pool8layer01d_progressive \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive.out \
-    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-uvpe-$unified_vpe-progressive.err
+    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive.err
 
 sleep 2d

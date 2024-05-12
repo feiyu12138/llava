@@ -174,6 +174,7 @@ def eval_model(args):
     model.model.viz = args.viz
     model.model.citer = args.citer
     model.model.viz_assign = args.viz_assign
+    model.model.savedir = args.savedir
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
