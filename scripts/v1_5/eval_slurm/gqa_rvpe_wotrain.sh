@@ -27,7 +27,7 @@ GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 grouping=pos_avg
 rpe=True
 ckpt=$ROOT_WEIGHT/llava-v1.5-7b-reprod
-name=rvpe
+name=rvpe_wotrain
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

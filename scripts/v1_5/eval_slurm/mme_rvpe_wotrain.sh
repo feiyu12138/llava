@@ -19,7 +19,7 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 grouping=pos_avg
 rpe=True
 ckpt=$ROOT_WEIGHT/llava-v1.5-7b-reprod
-name=rvpe
+name=rvpe_wotrain
 
 python -m llava.eval.model_vqa_loader \
     --model-path $ckpt \
