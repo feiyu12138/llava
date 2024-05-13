@@ -520,10 +520,10 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             query_states = query_states.contiguous()
             key_states = key_states.contiguous()
             value_states = value_states.contiguous()
-        if self.rpe and len(self.images_idx) != 0:
+        if self.rpe and len(self.images_idx) != 0 and query_states.shape[2] != 1:
             B,head_num, q_len, head_dim = query_states.shape
-            query_rpe = self.rpe_enc(query_states[:,:,self.images_idx:self.images_idx+576].view(B,head_num,24,24,head_dim))
-            query_states[:,:,self.images_idx:self.images_idx+576] = query_states[:,:,self.images_idx:self.images_idx+576] + query_rpe.view(B,576,head_dim)
+            query_rpe = self.rpe_enc(query_states[:,:,self.images_idx:self.images_idx+576].view(B,head_num,24,24,head_dim).permute(0,2,3,1,4))
+            query_states[:,:,self.images_idx:self.images_idx+576] = query_states[:,:,self.images_idx:self.images_idx+576] + query_rpe.view(B,1,576,head_dim)
         attn_output = torch.nn.functional.scaled_dot_product_attention(
             query_states,
             key_states,
@@ -922,9 +922,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             if self.viz and self.images_idx is not None:
                 decoder_layer.self_attn.viz = True
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
-            if self.rpe:
+            if self.rpe and self.images_idx is not None:
                 decoder_layer.self_attn.rpe = True
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
+            else:
+                decoder_layer.self_attn.rpe = False
             if not self.pos_enable:
                 decoder_layer.self_attn.pos_enable = False
             if output_hidden_states:

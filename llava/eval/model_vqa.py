@@ -57,11 +57,13 @@ def eval_model(args):
 
         image = Image.open(os.path.join(args.image_folder, image_file)).convert('RGB')
         image_tensor = process_images([image], image_processor, model.config)[0]
+        
         model.model.stride = args.stride
         model.model.groupingLayer = args.layer
         model.model.grouping = args.grouping
         model.model.pos_enable = args.pos_enable
         model.model.rpe = args.rpe
+        
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
