@@ -89,7 +89,6 @@ def get_modality_length_grouped_indices(lengths, batch_size, world_size, generat
         megabatch_indices = torch.randperm(len(megabatches), generator=generator)
         megabatches = [megabatches[i] for i in megabatch_indices]
 
-
         if len(additional_batch) > 0:
             megabatches.append(sorted(additional_batch))
 

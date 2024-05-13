@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
-
+from transformers import AutoModel
 from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
 
+from PIL import Image
+from transformers import PreTrainedTokenizerFast
 
 class CLIPVisionTower(nn.Module):
     def __init__(self, vision_tower, args, delay_load=False):
@@ -19,17 +21,27 @@ class CLIPVisionTower(nn.Module):
         elif getattr(args, 'unfreeze_mm_vision_tower', False):
             self.load_model()
         else:
-            self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
+            if "ViTamin" in self.vision_tower_name:
+                self.cfg_only = None # ViTaminVisionConfig.from_pretrained(self.vision_tower_name)
+            else:
+                self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
 
     def load_model(self, device_map=None):
         if self.is_loaded:
             print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
             return
 
-        self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
-        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
-        self.vision_tower.requires_grad_(False)
+        if "ViTamin" in self.vision_tower_name:
+            from ipdb import set_trace; set_trace()
+            self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
+            self.vision_tower = AutoModel.from_pretrained(self.vision_tower_name, trust_remote_code=True, device_map=device_map)
+            self.vision_tower.eval()
 
+        else:
+            self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
+            self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        
+        self.vision_tower.requires_grad_(False)
         self.is_loaded = True
 
     def feature_select(self, image_forward_outs):
@@ -47,12 +59,18 @@ class CLIPVisionTower(nn.Module):
         if type(images) is list:
             image_features = []
             for image in images:
-                image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True)
-                image_feature = self.feature_select(image_forward_out).to(image.dtype)
+                if "ViTamin" in self.vision_tower_name:
+                    image_feature = self.vision_tower.forward_visual4llava(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), self.select_layer)
+                else:
+                    image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True)
+                    image_feature = self.feature_select(image_forward_out).to(image.dtype)
                 image_features.append(image_feature)
         else:
-            image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
-            image_features = self.feature_select(image_forward_outs).to(images.dtype)
+            if "ViTamin" in self.vision_tower_name:
+                image_features = self.vision_tower.forward_visual4llava(images.to(device=self.device, dtype=self.dtype), self.select_layer)
+            else:
+                image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
+                image_features = self.feature_select(image_forward_outs).to(images.dtype)
 
         return image_features
 
@@ -70,10 +88,11 @@ class CLIPVisionTower(nn.Module):
 
     @property
     def config(self):
-        if self.is_loaded:
-            return self.vision_tower.config
-        else:
-            return self.cfg_only
+        # if self.is_loaded:
+        #     return self.vision_tower.config
+        # else:
+        #     return self.cfg_only
+        return self.cfg_only
 
     @property
     def hidden_size(self):
@@ -82,7 +101,10 @@ class CLIPVisionTower(nn.Module):
     @property
     def num_patches_per_side(self):
         return self.config.image_size // self.config.patch_size
+        # return 224 // 16
 
     @property
     def num_patches(self):
-        return (self.config.image_size // self.config.patch_size) ** 2
+        # return (self.config.image_size // self.config.patch_size) ** 2
+        # TODO
+        return (224 // 16) ** 2
