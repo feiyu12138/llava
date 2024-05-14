@@ -677,24 +677,32 @@ def preprocess(
 class LazySupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str,
+    def __init__(self, data_path: str,data_path_ext: str,
                  tokenizer: transformers.PreTrainedTokenizer,
                  data_args: DataArguments):
         super(LazySupervisedDataset, self).__init__()
         list_data_dict = json.load(open(data_path, "r"))
-
         rank0_print("Formatting inputs...Skip in lazy mode")
+        
+        list_data_dict_ext = json.load(open(data_path_ext, "r"))
+        rank0_print("Formatting ext inputs...Skip in lazy mode")
+        
         self.tokenizer = tokenizer
         self.list_data_dict = list_data_dict
+        self.list_data_dict_ext = list_data_dict_ext
         self.data_args = data_args
 
     def __len__(self):
-        return len(self.list_data_dict)
+        return len(self.list_data_dict) + len(self.list_data_dict_ext)
 
     @property
     def lengths(self):
         length_list = []
         for sample in self.list_data_dict:
+            img_tokens = 128 if 'image' in sample else 0
+            length_list.append(sum(len(conv['value'].split()) for conv in sample['conversations']) + img_tokens)
+            
+        for sample in self.list_data_dict_ext:
             img_tokens = 128 if 'image' in sample else 0
             length_list.append(sum(len(conv['value'].split()) for conv in sample['conversations']) + img_tokens)
         return length_list
@@ -706,16 +714,25 @@ class LazySupervisedDataset(Dataset):
             cur_len = sum(len(conv['value'].split()) for conv in sample['conversations'])
             cur_len = cur_len if 'image' in sample else -cur_len
             length_list.append(cur_len)
+        for sample in self.list_data_dict_ext:
+            cur_len = sum(len(conv['value'].split()) for conv in sample['conversations'])
+            cur_len = cur_len if 'image' in sample else -cur_len
+            length_list.append(cur_len)
         return length_list
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
-        sources = self.list_data_dict[i]
+        if i >= len(self.list_data_dict):
+            i -= len(self.list_data_dict)
+            cur_dict = self.list_data_dict_ext
+        else:
+            cur_dict = self.list_data_dict
+        sources = cur_dict[i]
         # print(i)
         if isinstance(i, int):
             sources = [sources]
         assert len(sources) == 1, "Don't know why it is wrapped to a list"  # FIXME
         if 'image' in sources[0]:
-            image_file = self.list_data_dict[i]['image']
+            image_file = cur_dict[i]['image']
             image_folder = self.data_args.image_folder
             processor = self.data_args.image_processor
             try:
@@ -723,7 +740,7 @@ class LazySupervisedDataset(Dataset):
             except:
                 print(image_file + "not appeared; getitem from the first image")
                 i = 0
-                image_file = self.list_data_dict[i]['image']
+                image_file = cur_dict[i]['image']
                 image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
 
 
@@ -752,20 +769,19 @@ class LazySupervisedDataset(Dataset):
         data_dict = preprocess(
             sources,
             self.tokenizer,
-            has_image=('image' in self.list_data_dict[i]))
+            has_image=('image' in cur_dict[i]))
         if isinstance(i, int):
             data_dict = dict(input_ids=data_dict["input_ids"][0],
                              labels=data_dict["labels"][0])
-
         # image exist in the data
-        if 'image' in self.list_data_dict[i]:
+        if 'image' in cur_dict[i]:
             data_dict['image'] = image
         elif self.data_args.is_multimodal:
             # image does not exist in the data, but the model is multimodal
             crop_size = self.data_args.image_processor.crop_size
             data_dict['image'] = torch.zeros(3, crop_size['height'], crop_size['width'])
         # added by jieneng
-        data_dict['sample_id'] = self.list_data_dict[i]['id']
+        data_dict['sample_id'] = cur_dict[i]['id']
         return data_dict
 
 
