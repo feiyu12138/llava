@@ -83,6 +83,8 @@ class ModelArguments:
 class DataArguments:
     data_path: str = field(default=None,
                            metadata={"help": "Path to the training data."})
+    data_path_ext: Optional[str] = field(default=None,
+                           metadata={"help": "Path to the extended training data."})
     lazy_preprocess: bool = False
     is_multimodal: bool = False
     image_folder: Optional[str] = field(default=None)
@@ -677,14 +679,14 @@ def preprocess(
 class LazySupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str,data_path_ext: str,
+    def __init__(self, data_path: str,
                  tokenizer: transformers.PreTrainedTokenizer,
-                 data_args: DataArguments):
+                 data_args: DataArguments,data_path_ext: str=None):
         super(LazySupervisedDataset, self).__init__()
         list_data_dict = json.load(open(data_path, "r"))
         rank0_print("Formatting inputs...Skip in lazy mode")
         
-        list_data_dict_ext = json.load(open(data_path_ext, "r"))
+        list_data_dict_ext = json.load(open(data_path_ext, "r")) if data_path_ext is not None else None
         rank0_print("Formatting ext inputs...Skip in lazy mode")
         
         self.tokenizer = tokenizer
@@ -693,7 +695,10 @@ class LazySupervisedDataset(Dataset):
         self.data_args = data_args
 
     def __len__(self):
-        return len(self.list_data_dict) + len(self.list_data_dict_ext)
+        if self.list_data_dict_ext is None:
+            return len(self.list_data_dict)
+        else:
+            return len(self.list_data_dict) + len(self.list_data_dict_ext)
 
     @property
     def lengths(self):
@@ -710,15 +715,17 @@ class LazySupervisedDataset(Dataset):
     @property
     def modality_lengths(self):
         length_list = []
+        length_list_ext = []
         for sample in self.list_data_dict:
             cur_len = sum(len(conv['value'].split()) for conv in sample['conversations'])
             cur_len = cur_len if 'image' in sample else -cur_len
             length_list.append(cur_len)
-        for sample in self.list_data_dict_ext:
-            cur_len = sum(len(conv['value'].split()) for conv in sample['conversations'])
-            cur_len = cur_len if 'image' in sample else -cur_len
-            length_list.append(cur_len)
-        return length_list
+        if self.list_data_dict_ext is not None:
+            for sample in self.list_data_dict_ext:
+                cur_len = sum(len(conv['value'].split()) for conv in sample['conversations'])
+                cur_len = cur_len if 'image' in sample else -cur_len
+                length_list_ext.append(cur_len)
+        return (length_list,length_list_ext)
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         if i >= len(self.list_data_dict):
@@ -828,7 +835,7 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
     """Make dataset and collator for supervised fine-tuning."""
     train_dataset = LazySupervisedDataset(tokenizer=tokenizer,
                                 data_path=data_args.data_path,
-                                data_args=data_args)
+                                data_args=data_args,data_path_ext=data_args.data_path_ext)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
     return dict(train_dataset=train_dataset,
                 eval_dataset=None,
