@@ -75,11 +75,11 @@ def get_modality_length_grouped_indices(lengths, batch_size, world_size, generat
     
     if len(lengths_ext) != 0:
         mm_indices_ext, mm_lengths_ext = zip(*[(i, l) for i, l in enumerate(lengths_ext) if l > 0])
-        lang_indices_ext, lang_lengths_ext = zip(*[(i, -l) for i, l in enumerate(lengths_ext) if l < 0])
+        # lang_indices_ext, lang_lengths_ext = zip(*[(i, -l) for i, l in enumerate(lengths_ext) if l < 0])
         mm_shuffle_ext = [mm_indices_ext[i] for i in get_length_grouped_indices(mm_lengths_ext, batch_size, world_size, generator=None)]
-        lang_shuffle_ext = [lang_indices_ext[i] for i in get_length_grouped_indices(lang_lengths_ext, batch_size, world_size, generator=None)]
+        # lang_shuffle_ext = [lang_indices_ext[i] for i in get_length_grouped_indices(lang_lengths_ext, batch_size, world_size, generator=None)]
         mm_megabatches_ext = [mm_shuffle_ext[i : i + megabatch_size] for i in range(0, len(mm_shuffle_ext), megabatch_size)]
-        lang_megabatches_ext = [lang_shuffle_ext[i : i + megabatch_size] for i in range(0, len(lang_shuffle_ext), megabatch_size)]
+        # lang_megabatches_ext = [lang_shuffle_ext[i : i + megabatch_size] for i in range(0, len(lang_shuffle_ext), megabatch_size)]
         
     if True:
         megabatches_ext = []
@@ -93,9 +93,9 @@ def get_modality_length_grouped_indices(lengths, batch_size, world_size, generat
             megabatches.append(additional_batch)
         if len(lengths_ext) != 0:
             last_mm_ext = mm_megabatches_ext[-1] + mm_megabatches_ext[0][:megabatch_size-len(mm_megabatches_ext[-1])]
-            last_lang_ext = lang_megabatches_ext[-1] + lang_megabatches_ext[0][:megabatch_size-len(lang_megabatches_ext[-1])]
-            additional_batch_ext = last_mm_ext + last_lang_ext
-            megabatches_ext = mm_megabatches_ext[:-1] + lang_megabatches_ext[:-1]
+            # last_lang_ext = lang_megabatches_ext[-1] + lang_megabatches_ext[0][:megabatch_size-len(lang_megabatches_ext[-1])]
+            additional_batch_ext = last_mm_ext #+ last_lang_ext
+            megabatches_ext = mm_megabatches_ext[:-1] #+ lang_megabatches_ext[:-1]
             megabatch_indices_ext = torch.randperm(len(megabatches_ext), generator=generator)
             megabatches_ext = [megabatches_ext[i] for i in megabatch_indices_ext]
             if len(additional_batch_ext) > 0:
@@ -151,7 +151,7 @@ class LengthGroupedSampler(Sampler):
         self.group_by_modality = group_by_modality
 
     def __len__(self):
-        return len(self.lengths)
+        return len(self.lengths[0] + self.lengths[1])
 
     def __iter__(self):
         if self.group_by_modality:
