@@ -1,10 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patches as patches
+import pandas as pd
 
 # 数据
-tasks = ["gqa", "textvqa", "vqav2","vg"]
-accuracies = [(80, 85), (75, 80), (65, 66),(67,68)]
+#read task name from xlsx file
+df = pd.read_excel('tasks.xlsx')
+tasks = df['task'].tolist()
+accuracies = df['accuracy'].tolist()
+from ipdb import set_trace; set_trace()
+# tasks = ["gqa", "textvqa", "vqav2","vg"]
+# accuracies = [(80, 85), (75, 80), (65, 66),(67,68)]
 sensitive_num = 2
 
 # 设置柱状图的宽度和位置
