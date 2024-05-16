@@ -252,9 +252,9 @@ class TextVQAAccuracyEvaluator:
             unique_answer_scores = self._compute_answer_scores(entry["gt_answers"])
             score = unique_answer_scores.get(pred_answer, 0.0)
             pred_scores.append(score)
-
+        
         accuracy = sum(pred_scores) / len(pred_scores)
-        return accuracy
+        return accuracy, pred_scores
 
 
 class STVQAAccuracyEvaluator:

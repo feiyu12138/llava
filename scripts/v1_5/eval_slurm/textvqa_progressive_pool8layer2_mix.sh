@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=textvqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/pool8layer2prog2600hl_textvqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/pool8layer2prog2600hl_textvqa.out
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/pool8layer2prog2600mix_textvqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/pool8layer2prog2600mix_textvqa.out
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -19,8 +19,8 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 unified_vpe=False
 stride=8
 layer=0
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-8-layer-2-grouping-avgpool1d-unified_vpe-False-progressive-hightlight
-name=pool8layer2prog2600hl
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-8-layer-2-grouping-avgpool1d-unified_vpe-False-progressive-ext702mix
+name=pool8layer2prog2600mix
 
 # python -m llava.eval.model_vqa_loader \
 #     --model-path $ckpt \

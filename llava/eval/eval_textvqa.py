@@ -2,6 +2,7 @@ import os
 import argparse
 import json
 import re
+import numpy as np
 
 from llava.eval.m4c_evaluator import TextVQAAccuracyEvaluator
 
@@ -48,7 +49,10 @@ def eval_single(annotation_file, result_file):
         })
 
     evaluator = TextVQAAccuracyEvaluator()
-    print('Samples: {}\nAccuracy: {:.2f}%\n'.format(len(pred_list), 100. * evaluator.eval_pred_list(pred_list)))
+    acc = evaluator.eval_pred_list(pred_list)[0] * 100
+    pred_score = evaluator.eval_pred_list(pred_list)[1]
+    print('Samples: {}\nAccuracy: {:.2f}%\n'.format(len(pred_list), acc))
+    np.save(f'{experiment_name}_pred_score.npy', pred_score)
 
 
 if __name__ == "__main__":
