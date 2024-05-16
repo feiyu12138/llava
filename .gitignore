@@ -53,3 +53,7 @@ viz
 *.npy
 
 viz_assign
+
+pictures
+
+*.png
