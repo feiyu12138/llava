@@ -889,9 +889,9 @@ def train(attn_implementation=None):
     model.model.progressive = model_args.progressive
     # model.model.pivot = model_args.pivot
     str2list = lambda x: list(map(int, x.split(",")))
-    model.model.set_lists(strideList=str2list(model_args.strides), layerList=str2list(model_args.layers), pivotList=str2list(model_args.pivots))
+    model.model.set_lists(strideList=str2list(model_args.strides), groupingLayerList=str2list(model_args.layers), pivotList=str2list(model_args.pivots))
     
-    if model.model.grouping.find('abstractor'):
+    if model.model.grouping.find('abstractor') != -1:
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
                                        stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,

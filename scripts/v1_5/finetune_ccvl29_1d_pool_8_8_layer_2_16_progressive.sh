@@ -14,6 +14,7 @@ pivots=1300,2600
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
+name=1dpool8layer2_16pivot1300_2600prog
 
 
 # deepspeed llava/train/train_mem.py \
@@ -71,7 +72,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-progressive \
+    --output_dir  $ROOT_WEIGHT/$name \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -91,14 +92,14 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer21d_progressive \
+    --run_name $name \
     --strides $strides \
     --layers $layers \
     --pivots $pivots \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive.out \
-    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive.err
+    1> /data/datasets/jchen293/logs/exp/llava/$name.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$name.err
 
 sleep 2d
