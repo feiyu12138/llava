@@ -5,8 +5,8 @@ export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
 
 
-layer=2
-stride=8
+layer=16
+stride=2
 grouping=avgpool1d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -43,10 +43,10 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool4layer8 \
+    --run_name pool16layer2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    > /data/datasets/jchen293/logs/exp/llava/pool4layer8.log
+    > /data/datasets/jchen293/logs/exp/llava/pool16layer2.log
 
 sleep 2d
