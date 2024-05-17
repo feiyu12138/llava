@@ -696,7 +696,63 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
+                    visual_positions_res = visual_positions
                     visual_states,visual_positions = operator(visual_states,visual_positions)
+                    visual_length = visual_states.shape[2]
+                    states_segment.append(visual_states)
+                    position_segment.append(visual_positions.to(position_ids.dtype))
+                    if vi == image_idx[0].shape[0] - 1:
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
+                states_segment = torch.cat(states_segment, dim=1)
+                position_segment = torch.cat(position_segment, dim=1)
+                new_hidden_states.append(states_segment) 
+                new_position_ids.append(position_segment)
+                i += 1
+            # filling the position ids so that the model can use them
+            if FLAG:
+                hidden_states = torch.cat(new_hidden_states, dim=0)
+                new_position_ids = torch.cat(new_position_ids, dim=0).to(position_ids.device).to(position_ids.dtype)
+            else:
+                new_position_ids = position_ids
+        else:
+            new_position_ids = position_ids
+            
+        return hidden_states, new_position_ids, visual_positions_res, visual_length
+    
+    def recovering(self, visual_states, visual_positions, residual_states, residual_position_id):
+        visual_states = torch.repeat_interleave(visual_states, self.stride, dim=2)
+        visual_states = visual_states + residual_states
+        visual_positions = residual_position_id
+        
+        return visual_states, visual_positions
+    
+    def visual_recovering(self, hidden_states, position_ids, visual_length, residual_states,residual_position_id):
+        if self.images_idx is not None:
+            i = 0
+            # copy position ids for batch size time
+            if position_ids.shape[0] == 1:
+                position_ids = position_ids.repeat(hidden_states.shape[0], 1)
+            # cat hidden states with position ids
+            new_hidden_states = []
+            new_position_ids = []
+            FLAG = False
+            for image_idx in self.images_idx:
+                if image_idx[0].shape[0] == 0:
+                    continue
+                FLAG = True
+                states_segment = []
+                position_segment = []
+                for vi in range(image_idx[0].shape[0]):
+                    if vi == 0:
+                        states_segment.append(hidden_states[i:i+1,0: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,0: image_idx[vi]])
+                    else:
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + visual_length].permute(0,2,1)
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + visual_length].unsqueeze(1)
+                    visual_states,visual_positions = self.recovering(visual_states,visual_positions,residual_states,residual_position_id)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
