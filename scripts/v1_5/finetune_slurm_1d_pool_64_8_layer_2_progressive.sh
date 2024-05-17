@@ -69,8 +69,6 @@ deepspeed llava/train/train_mem.py \
     --pivots $pivots \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
-    --progressive $progressive \
-    # 1> /data/datasets/jchen293/logs/exp/llava/$name.out \
-    # 2> /data/datasets/jchen293/logs/exp/llava/$name.err
+    --progressive $progressive
 
 sleep 2d

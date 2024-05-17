@@ -1,18 +1,30 @@
 #!/bin/bash
 #
-# export NCCL_P2P_DISABLE=1
+#SBATCH --job-name=1dpool8layer2prog3900
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2prog3900.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2prog3900.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layer=0
+layer=2
 stride=8
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
+pivot=3900
+
+module purge
+module load conda
+conda activate llava_git
 
 
 deepspeed llava/train/train_mem.py \
@@ -30,7 +42,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-progressive \
+    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-progressive-4600 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -50,13 +62,12 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer01d_progressive \
+    --run_name 1dpool8layer2prog3900 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive.out \
-    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive.err
+    --pivot $pivot \
 
 sleep 2d
