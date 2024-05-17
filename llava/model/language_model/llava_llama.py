@@ -630,7 +630,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.images_idx = None
         self.grouping = None
         self.groupingLayer = None
+        self.groupingLayerList = []
         self.stride = None
+        self.strideList = []
         self.layers = nn.ModuleList(
             [AdaptiveLlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
@@ -650,12 +652,26 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.progressive = False
         self.step = 0
         self.pivot = 0
+        self.pivotList = []
     
+    def set_lists(self, strideList, pivotList, groupingLayerList):
+        '''
+        strides, pivots, layers
+        '''
+        self.strideList = strideList
+        self.pivotList = pivotList
+        self.groupingLayerList = groupingLayerList
+        self.stride = self.strideList.pop(0)
+        self.pivot = self.pivotList.pop(0)
+        self.groupingLayer = self.groupingLayerList.pop(0)
+        print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
         
-    def step_stride(self):
+    def step_stride_and_layer(self):
         if self.step % self.pivot == 0 and self.step != 0 and self.stride > 1:
-            self.stride = 1
-            print(f"Stride reduction, present stride is {self.stride}")
+            self.stride = self.strideList.pop(0)
+            self.groupingLayer = self.groupingLayerList.pop(0)
+            self.pivot = self.pivotList.pop(0) if len(self.pivotList) > 0 else 10000
+            print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
         self.step += 1
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
@@ -1243,7 +1259,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             return (loss,) + output if loss is not None else output
         
         if self.model.progressive:
-            self.model.step_stride()
+            self.model.step_stride_and_layer()
 
         return CausalLMOutputWithPast(
             loss=loss,

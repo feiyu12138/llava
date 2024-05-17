@@ -65,8 +65,8 @@ class ModelArguments:
     mm_use_im_patch_token: bool = field(default=True)
     mm_patch_merge_type: Optional[str] = field(default='flat')
     mm_vision_select_feature: Optional[str] = field(default="patch")
-    layer: Optional[int] =field(default=16)
-    stride : Optional[int]= field(default=2)
+    layers: Optional[str] =field(default='33')
+    strides : Optional[str]= field(default='1')
     abstractor_kernel_size: Optional[int] = field(default=3)
     grouping: Optional[str] = field(default="none")
     num_pre_layers: Optional[int] = field(default=3)
@@ -76,7 +76,7 @@ class ModelArguments:
     unified_vpe: Optional[bool] = field(default=False)
     citer: Optional[int] = field(default=1)
     progressive: Optional[bool] = field(default=False)
-    pivot: Optional[int] = field(default=2600)
+    pivots: Optional[str] = field(default='2600')
 
 
 @dataclass
@@ -881,13 +881,15 @@ def train(attn_implementation=None):
         
     model.config.use_cache = False
     model.model.grouping = model_args.grouping
-    model.model.stride = model_args.stride
+    # model.model.stride = model_args.stride
     model.model.halfpool = model_args.halfpool
     model.model.unified_vpe = model_args.unified_vpe
-    model.model.groupingLayer = model_args.layer
+    # model.model.groupingLayer = model_args.layer
     model.model.citer = model_args.citer
     model.model.progressive = model_args.progressive
-    model.model.pivot = model_args.pivot
+    # model.model.pivot = model_args.pivot
+    str2list = lambda x: list(map(int, x.split(",")))
+    model.model.set_lists(strideList=str2list(model_args.strides), layerList=str2list(model_args.layers), pivotList=str2list(model_args.pivots))
     
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
