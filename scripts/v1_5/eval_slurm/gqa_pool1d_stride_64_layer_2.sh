@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer2_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2_gqa.out
+#SBATCH --job-name=1dpool64layer2_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -15,11 +15,11 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
-stride=16
+stride=64
 grouping=avgpool1d
 unified_vpe=False
 
-name=1dpool16layer2
+name=1dpool64layer2
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
@@ -29,7 +29,7 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 SPLIT="llava_gqa_testdev_balanced"
-GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
+GQADIR="./playground/data/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

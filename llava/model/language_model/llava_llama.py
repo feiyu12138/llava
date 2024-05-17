@@ -46,6 +46,7 @@ from llava.model.vcc.coarser import Coarser
 from llava.model.vcc.finer import Finer
 from llava.model.vcc.selector import Selector
 from llava.model.vcc.formatter import Formatter
+import seaborn as sns
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -482,7 +483,7 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                     f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
                 )
         if self.viz:
-            self.attn_map = generate_attention_map(query_states, key_states)
+            self.attn_map = generate_attention_map(query_states, key_states).mean(1)
             # self.std.update(
             #     calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
             #                   key_states[:,:,self.images_idx:self.images_idx+576], 
@@ -1032,91 +1033,89 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             if self.viz:
                 assert decoder_layer.self_attn.attn_map is not None, "Attention map is not generated. Please set viz=True in the attn layer"
                 self.attention_maps.append(decoder_layer.self_attn.attn_map)
-                self.std_layers.append(decoder_layer.self_attn.std)
-                self.text_std_layers.append(decoder_layer.self_attn.text_std)
-                self.user_std_layers.append(decoder_layer.self_attn.user_std)
+                # self.std_layers.append(decoder_layer.self_attn.std)
+                # self.text_std_layers.append(decoder_layer.self_attn.text_std)
+                # self.user_std_layers.append(decoder_layer.self_attn.user_std)
         
         if self.viz and self.images_idx is not None:
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
             width_height_init = [576,576]
+            attn_curve_last = []
+            attn_curve_prompt = []
+            attn_curve_visual = []
+            attn_curve_system = []
             for idx, map in enumerate(self.attention_maps):
-                width_height = width_height_init if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
+                # map = torch.nn.functional.avg_pool2d(map, kernel_size=10, stride=10)
+                width_height = width_height_init #if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
                 map = map.squeeze(0).cpu().detach().numpy()
                 
                 plt.figure()
-                plt.imshow(map,cmap='coolwarm',interpolation='none')
-                plt.colorbar()
-                rect = patches.Rectangle((top_left[0], 0), width_height[0], map.shape[0],
-                         linewidth=1, edgecolor='r', facecolor='none')
-                plt.gca().add_patch(rect)
+                mask = np.triu(np.ones_like(map, dtype=bool))
+                # plt.imshow(map,cmap='viridis',interpolation='none',vmin=0,vmax=0.2)
+                sns.heatmap(map, mask=mask, cmap='viridis',vmin=0,vmax=0.025)
+                # rect = patches.Rectangle((top_left[0], 0), width_height[0], map.shape[0],
+                #          linewidth=1, edgecolor='r', facecolor='none')
+                # plt.gca().add_patch(rect)
                 plt.ylabel('Query ID')
                 plt.xlabel('Key ID')
+                plt.title(f'Layer {idx}')
                 plt.tight_layout()
                 plt.savefig(f'{self.savedir}/attention_map_{idx}.png',dpi=300)
                 # x label is query id
                 # y label is key id
                 plt.close()
-                plt.figure()
-                visual_map = map[:,top_left[0]:top_left[0]+width_height[0]]
-                visual_attention_max = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].max()
-                visual_attention_min = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].min()
-                visual_map = (visual_map - visual_attention_min) / (visual_attention_max - visual_attention_min)
-                plt.ylabel('Query ID')
-                plt.xlabel('Visual Key ID')
-                # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
-                plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
-                plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
-                plt.tight_layout()
-                plt.savefig(f'{self.savedir}/attention_map_{idx}_visual_key.png',dpi=300)
-                plt.close()
-            # state_std_layers = [std['state'].cpu() for std in self.std_layers]
-            # query_std_layers = [std['query'].cpu() for std in self.std_layers]
-            # key_std_layers = [std['key'].cpu() for std in self.std_layers]
-            # value_std_layers = [std['value'].cpu() for std in self.std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS, segment length = 4')
-            # plt.plot(state_std_layers,label='state std')
-            # plt.plot(query_std_layers,label='query std')
-            # plt.plot(key_std_layers,label='key std')
-            # plt.plot(value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('tempt/visual_std_layers.png',dpi=300)
-            # plt.close()
-            # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
-            # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
-            # text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
-            # text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS(system), segment length = 4')
-            # plt.plot(text_state_std_layers,label='state std')
-            # plt.plot(text_query_std_layers,label='query std')
-            # plt.plot(text_key_std_layers,label='key std')
-            # plt.plot(text_value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('tempt/system_std_layers.png',dpi=300)
-            # plt.close()
-            # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
-            # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
-            # user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
-            # user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS(user), segment length = 4')
-            # plt.plot(user_state_std_layers,label='state std')
-            # plt.plot(user_query_std_layers,label='query std')
-            # plt.plot(user_key_std_layers,label='key std')
-            # plt.plot(user_value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('tempt/user_std_layers.png',dpi=300)
-            # plt.close()
+                # plt.figure()
+                # visual_map = map[:,top_left[0]:top_left[0]+width_height[0]]
+                # visual_attention_max = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].max()
+                # visual_attention_min = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].min()
+                # visual_map = (visual_map - visual_attention_min) / (visual_attention_max - visual_attention_min)
+                # plt.ylabel('Query ID')
+                # plt.xlabel('Visual Key ID')
+                # # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
+                # plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
+                # plt.imshow(visual_map,cmap='viridis',interpolation='none')
+                # plt.tight_layout()
+                # plt.savefig(f'{self.savedir}/attention_map_{idx}_visual_key.png',dpi=300)
+                # plt.close()
+                # normalized_map 
+                attn_curve_last.append(map[:,-1].mean(0))
+                attn_curve_visual.append(map[:,35:35+576].mean())
+                attn_curve_system.append(map[:,0:35].mean())
+                attn_curve_prompt.append(map[:,35+576:].mean())
+            
+            plt.figure()
+            plt.plot(attn_curve_last,marker='o')
+            plt.title('Average Attention to the last Tokens on each layer')
+            plt.xlabel('Layer')
+            plt.ylabel('Average Attention')
+            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            plt.savefig(f'{self.savedir}/attention_curve_last.png',dpi=300)
+            plt.close()
+            plt.figure()
+            plt.plot(attn_curve_visual,marker='o')
+            plt.title('Average Attention to Visual Tokens on each layer')
+            plt.xlabel('Layer')
+            plt.ylabel('Average Attention')
+            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            plt.savefig(f'{self.savedir}/attention_curve_visual.png',dpi=300)
+            plt.close()
+            plt.figure()
+            plt.plot(attn_curve_system,marker='o')
+            plt.title('Average Attention to System Prompt Tokens on each layer')
+            plt.xlabel('Layer')
+            plt.ylabel('Average Attention')
+            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            plt.savefig(f'{self.savedir}/attention_curve_system.png',dpi=300)
+            plt.close()
+            plt.figure()
+            plt.plot(attn_curve_prompt,marker='o')
+            plt.title('Average Attention to User Prompt Tokens on each layer')
+            plt.xlabel('Layer')
+            plt.ylabel('Average Attention')
+            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            plt.savefig(f'{self.savedir}/attention_curve_prompt.png',dpi=300)
+            plt.close()
+            
             from ipdb import set_trace; set_trace()
         self.attention_maps = []
 
