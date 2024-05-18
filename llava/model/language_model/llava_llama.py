@@ -46,7 +46,6 @@ from llava.model.vcc.coarser import Coarser
 from llava.model.vcc.finer import Finer
 from llava.model.vcc.selector import Selector
 from llava.model.vcc.formatter import Formatter
-import seaborn as sns
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
