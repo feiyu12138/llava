@@ -77,6 +77,7 @@ class ModelArguments:
     citer: Optional[int] = field(default=1)
     progressive: Optional[bool] = field(default=False)
     pivot: Optional[int] = field(default=2600)
+    rec_layer: Optional[int] = field(default=27)
 
 
 @dataclass
@@ -888,8 +889,9 @@ def train(attn_implementation=None):
     model.model.citer = model_args.citer
     model.model.progressive = model_args.progressive
     model.model.pivot = model_args.pivot
+    model.model.rec_layer = model_args.rec_layer
     
-    if model.model.grouping.find('abstractor'):
+    if model.model.grouping.find('abstractor') != -1:
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
                                        stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,

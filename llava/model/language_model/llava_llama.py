@@ -651,6 +651,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.progressive = False
         self.step = 0
         self.pivot = 0
+        self.rec_layer = 27
     
         
     def step_stride(self):
@@ -680,6 +681,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # cat hidden states with position ids
             new_hidden_states = []
             new_position_ids = []
+            res_states = []
+            res_position_ids = []
             FLAG = False
             for image_idx in self.images_idx:
                 if image_idx[0].shape[0] == 0:
@@ -696,9 +699,10 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
-                    visual_positions_res = visual_positions
+                    res_states.append(visual_states)
+                    res_position_ids.append(visual_positions)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
-                    visual_length = visual_states.shape[2]
+                    visual_length = visual_states.shape[1]
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
@@ -713,19 +717,27 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             if FLAG:
                 hidden_states = torch.cat(new_hidden_states, dim=0)
                 new_position_ids = torch.cat(new_position_ids, dim=0).to(position_ids.device).to(position_ids.dtype)
+                res_states = torch.cat(res_states, dim=0)
+                res_position_ids = torch.cat(res_position_ids, dim=0).to(position_ids.device).to(position_ids.dtype)
             else:
                 new_position_ids = position_ids
+                res_states = None
+                res_position_ids = None
+                visual_length = 576
         else:
             new_position_ids = position_ids
+            visual_length = 576
+            res_states = None
+            res_position_ids = None
             
-        return hidden_states, new_position_ids, visual_positions_res, visual_length
+        return hidden_states, new_position_ids, visual_length, res_states, res_position_ids, 
     
     def recovering(self, visual_states, visual_positions, residual_states, residual_position_id):
         visual_states = torch.repeat_interleave(visual_states, self.stride, dim=2)
         visual_states = visual_states + residual_states
         visual_positions = residual_position_id
         
-        return visual_states, visual_positions
+        return visual_states.permute(0,2,1), visual_positions.squeeze(1)
     
     def visual_recovering(self, hidden_states, position_ids, visual_length, residual_states,residual_position_id):
         if self.images_idx is not None:
@@ -752,12 +764,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + visual_length].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + visual_length].unsqueeze(1)
-                    visual_states,visual_positions = self.recovering(visual_states,visual_positions,residual_states,residual_position_id)
+                    visual_states,visual_positions = self.recovering(visual_states,visual_positions,residual_states[i:i+1],residual_position_id[i:i+1])
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + visual_length: ])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi] + visual_length: ])
                 states_segment = torch.cat(states_segment, dim=1)
                 position_segment = torch.cat(position_segment, dim=1)
                 new_hidden_states.append(states_segment) 
@@ -923,7 +935,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+        return_dict: Optional[bool] = None
     ) -> Union[Tuple, BaseModelOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -999,35 +1011,33 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
-            if self.unified_vpe and layer_idx == 0:
-                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
             if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
+                    compressed_hidden_states, compressed_position_ids, visual_length, res_states, res_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'avgpool2d':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
+                    compressed_hidden_states, compressed_position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
                     self.label_ids = compressed_position_ids
                 elif self.grouping.find('abstractor') != -1:
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
+                    hidden_states, position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
                     self.label_ids = position_ids
                 elif self.grouping == 'random_drop':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
+                    hidden_states, position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
                     self.label_ids = position_ids
                 elif self.grouping == 'block_random_drop':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
+                    hidden_states, position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
                     self.label_ids = position_ids
                 elif self.grouping == 'soft_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
+                    compressed_hidden_states, compressed_position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'hard_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_hard_k_means)
+                    compressed_hidden_states, compressed_position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_hard_k_means)
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'detach_soft_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
+                    compressed_hidden_states, compressed_position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'detach_hard_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
+                    compressed_hidden_states, compressed_position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
                     self.label_ids = compressed_position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
@@ -1039,9 +1049,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
             elif (layer_idx == 0 and self.unified_vpe):
-                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
+                hidden_states, position_ids, visual_length, visual_position_ids_res = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
                 compressed_hidden_states = None
                 compressed_position_ids = None
+            elif (layer_idx == self.rec_layer and self.grouping != 'none'):
+                hidden_states, position_ids = self.visual_recovering(hidden_states, position_ids, visual_length, res_states,res_position_ids)
+                self.label_ids = None
             else:
                 compressed_hidden_states = None
                 compressed_position_ids = None
