@@ -1037,6 +1037,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 # self.user_std_layers.append(decoder_layer.self_attn.user_std)
         
         if self.viz and self.images_idx is not None:
+            import seaborn as sns
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
             width_height_init = [576,576]
             attn_curve_last = []
