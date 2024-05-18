@@ -16,7 +16,9 @@ python -m llava.eval.model_vqa_loader \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    --rec_layer $rec_layer
+    --rec_layer $rec_layer \
+    --viz \
+    --savedir pictures/rec_attn_avg
 
 cd ./playground/data/eval/MME
 

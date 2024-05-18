@@ -46,7 +46,7 @@ from llava.model.vcc.coarser import Coarser
 from llava.model.vcc.finer import Finer
 from llava.model.vcc.selector import Selector
 from llava.model.vcc.formatter import Formatter
-import seaborn as sns
+
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -741,7 +741,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         # rec_states = torch.zeros_like(residual_states)
         # batch_idx = torch.arange(visual_states.shape[0]) 
         # rec_states[batch_idx.unsqueeze(1),nonzero] = visual_states
-        visual_states = torch.repeat_interleave(visual_states, self.stride, dim=1)
+        rec_states = torch.repeat_interleave(visual_states, self.stride, dim=1)
         rec_states = rec_states +  residual_states
         visual_positions = residual_position_id
         
@@ -770,7 +770,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
-                    from ipdb import set_trace; set_trace()
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + visual_length]
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + visual_length]
                     visual_states,visual_positions = self.recovering(visual_states,visual_positions,residual_states[i:i+1],residual_position_id[i:i+1])
@@ -1062,6 +1061,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 compressed_hidden_states = None
                 compressed_position_ids = None
             elif (layer_idx == self.rec_layer and self.grouping != 'none'):
+                
                 hidden_states, position_ids = self.visual_recovering(hidden_states, position_ids, visual_length, res_states,res_position_ids)
                 self.label_ids = None
             else:
@@ -1073,6 +1073,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 position_ids = compressed_position_ids
                 compressed_hidden_states = None
                 compressed_position_ids = None
+            # if layer_idx == 30 or layer_idx == 31:
+            #     from ipdb import set_trace; set_trace()
             if self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
@@ -1116,6 +1118,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 # self.user_std_layers.append(decoder_layer.self_attn.user_std)
         
         if self.viz and self.images_idx is not None:
+            import seaborn as sns
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
             width_height_init = [576,576]
             attn_curve_last = []
@@ -1156,43 +1159,43 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 # plt.savefig(f'{self.savedir}/attention_map_{idx}_visual_key.png',dpi=300)
                 # plt.close()
                 # normalized_map 
-                attn_curve_last.append(map[:,-1].mean(0))
-                attn_curve_visual.append(map[:,35:35+576].mean())
-                attn_curve_system.append(map[:,0:35].mean())
-                attn_curve_prompt.append(map[:,35+576:].mean())
+                # attn_curve_last.append(map[:,-1].mean(0))
+                # attn_curve_visual.append(map[:,35:35+576].mean())
+                # attn_curve_system.append(map[:,0:35].mean())
+                # attn_curve_prompt.append(map[:,35+576:].mean())
             
-            plt.figure()
-            plt.plot(attn_curve_last,marker='o')
-            plt.title('Average Attention to the last Tokens on each layer')
-            plt.xlabel('Layer')
-            plt.ylabel('Average Attention')
-            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-            plt.savefig(f'{self.savedir}/attention_curve_last.png',dpi=300)
-            plt.close()
-            plt.figure()
-            plt.plot(attn_curve_visual,marker='o')
-            plt.title('Average Attention to Visual Tokens on each layer')
-            plt.xlabel('Layer')
-            plt.ylabel('Average Attention')
-            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-            plt.savefig(f'{self.savedir}/attention_curve_visual.png',dpi=300)
-            plt.close()
-            plt.figure()
-            plt.plot(attn_curve_system,marker='o')
-            plt.title('Average Attention to System Prompt Tokens on each layer')
-            plt.xlabel('Layer')
-            plt.ylabel('Average Attention')
-            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-            plt.savefig(f'{self.savedir}/attention_curve_system.png',dpi=300)
-            plt.close()
-            plt.figure()
-            plt.plot(attn_curve_prompt,marker='o')
-            plt.title('Average Attention to User Prompt Tokens on each layer')
-            plt.xlabel('Layer')
-            plt.ylabel('Average Attention')
-            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-            plt.savefig(f'{self.savedir}/attention_curve_prompt.png',dpi=300)
-            plt.close()
+            # plt.figure()
+            # plt.plot(attn_curve_last,marker='o')
+            # plt.title('Average Attention to the last Tokens on each layer')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Average Attention')
+            # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            # plt.savefig(f'{self.savedir}/attention_curve_last.png',dpi=300)
+            # plt.close()
+            # plt.figure()
+            # plt.plot(attn_curve_visual,marker='o')
+            # plt.title('Average Attention to Visual Tokens on each layer')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Average Attention')
+            # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            # plt.savefig(f'{self.savedir}/attention_curve_visual.png',dpi=300)
+            # plt.close()
+            # plt.figure()
+            # plt.plot(attn_curve_system,marker='o')
+            # plt.title('Average Attention to System Prompt Tokens on each layer')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Average Attention')
+            # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            # plt.savefig(f'{self.savedir}/attention_curve_system.png',dpi=300)
+            # plt.close()
+            # plt.figure()
+            # plt.plot(attn_curve_prompt,marker='o')
+            # plt.title('Average Attention to User Prompt Tokens on each layer')
+            # plt.xlabel('Layer')
+            # plt.ylabel('Average Attention')
+            # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            # plt.savefig(f'{self.savedir}/attention_curve_prompt.png',dpi=300)
+            # plt.close()
             
             from ipdb import set_trace; set_trace()
         self.attention_maps = []
