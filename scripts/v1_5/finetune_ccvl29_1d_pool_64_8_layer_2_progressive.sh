@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-export NCCL_P2P_DISABLE=1
+# export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
@@ -8,13 +8,13 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,16,0
-strides=8,8,1
+layers=2,2,33
+strides=64,8,1
 pivots=1300,2600
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
-name=1dpool8layer2_16pivot1300_2600prog
+name=1dpool_64_8layer2pivot1300_2600prog
 
 
 # deepspeed llava/train/train_mem.py \
@@ -99,7 +99,7 @@ deepspeed llava/train/train_mem.py \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-    # 1> /data/datasets/jchen293/logs/exp/llava/$name.out \
-    # 2> /data/datasets/jchen293/logs/exp/llava/$name.err
+    1> /data/datasets/jchen293/logs/exp/llava/$name.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$name.err
 
 sleep 2d
