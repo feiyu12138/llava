@@ -33,7 +33,7 @@ checkpoint
 ckpts*
 
 .ipynb_checkpoints
-# *.ipynb
+*.ipynb
 
 # DevContainer
 !.devcontainer/*
@@ -53,5 +53,7 @@ viz
 *.npy
 
 viz_assign
+
+pictures
 
 *.png
