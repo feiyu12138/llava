@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool_64_8layer2pivot1300_2600prog
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool_64_8layer2pivot1300_2600prog.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool_64_8layer2pivot1300_2600prog.out
+#SBATCH --job-name=1dpool_64_8layer2pivot1300_2600prog_v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool_64_8layer2pivot1300_2600prog_v2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool_64_8layer2pivot1300_2600prog_v2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -15,13 +15,13 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,2,33
+layers=2,2,0
 strides=64,8,1
 pivots=1300,2600
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
-name=1dpool_64_8layer2pivot1300_2600prog
+name=1dpool_64_8layer2pivot1300_2600prog_v2
 
 module purge
 module load conda
