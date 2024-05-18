@@ -99,7 +99,7 @@ deepspeed llava/train/train_mem.py \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-    # 1> /data/datasets/jchen293/logs/exp/llava/$name.out \
-    # 2> /data/datasets/jchen293/logs/exp/llava/$name.err
+    1> /data/datasets/jchen293/logs/exp/llava/$name.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$name.err
 
 sleep 2d
