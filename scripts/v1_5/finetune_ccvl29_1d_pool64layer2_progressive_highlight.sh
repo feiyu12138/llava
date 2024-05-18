@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# export NCCL_P2P_DISABLE=1
+export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'

@@ -1,17 +1,10 @@
 #!/bin/bash
-#
-#SBATCH --job-name=mmbench_cn
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer21d_mmbench_cn.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer21d_mmbench_cn.out
-#SBATCH --gpus=1
-#SBATCH --nodes=1
-#SBATCH --partition=main
 
 export CUDA_VISIBLE_DEVICES=0
 
-module purge
-module load conda
-conda activate llava_git
+# module purge
+# module load conda
+# conda activate llava_git
 
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
