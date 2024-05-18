@@ -699,9 +699,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
-                    res_states.append(visual_states)
+                    # res_states.append(visual_states)
+                    res_state = visual_states.permute(0,2,1)
                     res_position_ids.append(visual_positions)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
+                    res_state = res_state - torch.repeat_interleave(visual_states,self.stride,dim=1)
+                    res_states.append(res_state)
                     visual_length = visual_states.shape[1]
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
@@ -733,11 +736,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         return hidden_states, new_position_ids, visual_length, res_states, res_position_ids, 
     
     def recovering(self, visual_states, visual_positions, residual_states, residual_position_id):
-        visual_states = torch.repeat_interleave(visual_states, self.stride, dim=2)
+        visual_states = torch.repeat_interleave(visual_states, self.stride, dim=1)
         visual_states = visual_states + residual_states
         visual_positions = residual_position_id
         
-        return visual_states.permute(0,2,1), visual_positions.squeeze(1)
+        return visual_states, visual_positions.squeeze(1)
     
     def visual_recovering(self, hidden_states, position_ids, visual_length, residual_states,residual_position_id):
         if self.images_idx is not None:
@@ -762,8 +765,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     else:
                         states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
                         position_segment.append(position_ids[i:i+1,image_idx[vi-1] + visual_length: image_idx[vi]])
-                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + visual_length].permute(0,2,1)
-                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + visual_length].unsqueeze(1)
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + visual_length]
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + visual_length]
                     visual_states,visual_positions = self.recovering(visual_states,visual_positions,residual_states[i:i+1],residual_position_id[i:i+1])
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))

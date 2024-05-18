@@ -2,7 +2,7 @@
 # export NCCL_P2P_DISABLE=1
 layer=8
 stride=2
-grouping=avgpool2d
+grouping=avgpool1d
 NNODES=1
 GPUS=1
 PORT=29600
