@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool64layer2_mme
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2_mme.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2_mme.out
+#SBATCH --job-name=1dpool64layer2retrain_mme
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2retrain_mme.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2retrain_mme.out
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -20,8 +20,8 @@ layer=2
 stride=64
 grouping=avgpool1d
 unified_vpe=False
-name=1dpool64layer2
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+name=1dpool64layer2retrain
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
 
 python -m llava.eval.model_vqa_loader \
     --model-path $CKPT \

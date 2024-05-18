@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer2_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2_gqa.out
+#SBATCH --job-name=1dpool16layer2_retrain_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2_retrain_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2_retrain_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -19,8 +19,8 @@ stride=16
 grouping=avgpool1d
 unified_vpe=False
 
-name=1dpool16layer2
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+name=1dpool16layer2_retrain
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-2-grouping-avgpool1d
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
