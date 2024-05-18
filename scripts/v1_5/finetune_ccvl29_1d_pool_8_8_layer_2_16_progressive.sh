@@ -8,7 +8,7 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,16,33
+layers=2,16,0
 strides=8,8,1
 pivots=1300,2600
 grouping=avgpool1d
@@ -99,7 +99,7 @@ deepspeed llava/train/train_mem.py \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-    1> /data/datasets/jchen293/logs/exp/llava/$name.out \
-    2> /data/datasets/jchen293/logs/exp/llava/$name.err
+    # 1> /data/datasets/jchen293/logs/exp/llava/$name.out \
+    # 2> /data/datasets/jchen293/logs/exp/llava/$name.err
 
 sleep 2d
