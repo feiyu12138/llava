@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer2progressive_pope
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2progressive_pope.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2progressive_pope.out
+#SBATCH --job-name=1dpool64layer2proghighlight_mme_pope
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2proghighlight_mme_pope.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer2proghighlight_mme_pope.out
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -20,8 +20,9 @@ unified_vpe=False
 stride=16
 layer=2
 grouping=avgpool1d
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-1dpool16layer2progressive
-name=1dpool16layer2progressive
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-1dpool64layer2proghighlight
+name=1dpool64layer2proghighlight
+
 
 python -m llava.eval.model_vqa_loader \
     --model-path $ckpt \

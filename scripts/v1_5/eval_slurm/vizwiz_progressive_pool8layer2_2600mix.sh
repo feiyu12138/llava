@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer2progressive_vizwiz
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2progressive_vizwiz.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer2progressive_vizwiz.out
+#SBATCH --job-name=1dpool8layer2progmix_vizwiz
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2progmix_vizwiz.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2progmix_vizwiz.out
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -17,11 +17,11 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 unified_vpe=False
-stride=16
+stride=8
 layer=2
 grouping=avgpool1d
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-1dpool16layer2progressive
-name=1dpool16layer2progressive
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-8-layer-2-grouping-avgpool1d-unified_vpe-False-progressive-ext702mix
+name=1dpool8layer2progmix
 
 python -m llava.eval.model_vqa_loader \
     --model-path $ckpt \

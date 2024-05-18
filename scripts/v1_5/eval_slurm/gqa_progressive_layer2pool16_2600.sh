@@ -28,7 +28,7 @@ unified_vpe=False
 stride=8
 layer=2
 grouping=avgpool1d
-ckpt=$ROOT_WEIGHT/1dpool16layer2progressive
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-1dpool16layer2progressive
 name=1dpool16layer2progressive
 
 for IDX in $(seq 0 $((CHUNKS-1))); do

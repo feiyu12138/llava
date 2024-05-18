@@ -20,7 +20,7 @@ unified_vpe=False
 stride=16
 layer=2
 grouping=avgpool1d
-ckpt=$ROOT_WEIGHT/1dpool16layer2progressive
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-1dpool16layer2progressive
 name=1dpool16layer2progressive
 
 SPLIT="mmbench_dev_cn_20231003"
