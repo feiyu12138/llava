@@ -15,7 +15,7 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,2,33
+layers=2,2,0
 strides=64,8,1
 pivots=1300,2600
 grouping=avgpool1d
