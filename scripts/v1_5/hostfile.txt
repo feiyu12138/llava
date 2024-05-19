@@ -1,0 +1,2 @@
+ccvl35 slots=8
+ccvl36 slots=8
