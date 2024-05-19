@@ -1,11 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool_64_8layer2pivot1300_2600prog
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool_64_8layer2pivot1300_2600prog.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool_64_8layer2pivot1300_2600prog.out
+#SBATCH --job-name=1dpool_64layer16_2pivot1730_3460prog
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool_64layer16_2pivot1730_3460prog.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool_64layer16_2pivot1730_3460prog.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
+#SBATCH --cpus-per-task=90
 #SBATCH --exclude=ccvl[14,33-38]
 
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
@@ -15,13 +16,13 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,2,33
-strides=64,8,1
-pivots=1300,2600
+layers=16,2,0
+strides=64,64,1
+pivots=1730,3460
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
-name=1dpool_64_8layer2pivot1300_2600prog
+name=1dpool_64layer16_2pivot1730_3460prog
 
 module purge
 module load conda
@@ -43,7 +44,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  $ROOT_WEIGHT/$name \
+    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-$name \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
