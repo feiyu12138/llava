@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool_64_8layer2pivot1300_2600prog_v2_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool_64_8layer2pivot1300_2600prog_v2_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool_64_8layer2pivot1300_2600prog_v2_gqa.out
+#SBATCH --job-name=1dpool64_8layer2_2pivot1730_3460prog_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64_8layer2_2pivot1730_3460prog_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64_8layer2_2pivot1730_3460prog_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -25,8 +25,8 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool_64_8layer2pivot1300_2600prog_v2
-NAME=1dpool_64_8layer2pivot1300_2600prog_v2
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool64_8layer2_2pivot1730_3460prog
+NAME=1dpool64_8layer2_2pivot1730_3460prog
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool_64_8layer2pivot1300_2600prog_v2_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool_64_8layer2pivot1300_2600prog_v2_combined.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool_64_8layer2pivot1300_2600prog_v2_combined.out
+#SBATCH --job-name=1dpool8layer2_16pivot1300_2600prog_combined
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_16pivot1300_2600prog_combined.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_16pivot1300_2600prog_combined.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -15,8 +15,8 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool_64_8layer2pivot1300_2600prog_v2
-NAME=1dpool_64_8layer2pivot1300_2600prog_v2
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool64_8layer2_2pivot1730_3460prog
+NAME=1dpool64_8layer2_2pivot1730_3460prog
 
 run_mmbench_cn() {
     local GPU_ID=$1
