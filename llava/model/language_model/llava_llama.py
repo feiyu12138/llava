@@ -37,13 +37,13 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     def __init__(self, config: LlamaConfig):
         super(LlavaLlamaModel, self).__init__(config)
         self.query_tokens = None
-        if config.has_qformer:
-            self.Qformer, self.query_tokens = self.init_Qformer(
-                    config.num_query_token, self.visual_encoder.num_features, config.freeze_qformer
-                )
-            q_former_model = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained_flant5xxl.pth"
+        # if config.has_qformer: #TODO: load after vision tower
+        #     self.Qformer, self.query_tokens = self.init_Qformer(
+        #             config.num_query_token, self.visual_encoder.num_features, config.freeze_qformer
+        #         )
+        #     q_former_model = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained_flant5xxl.pth"
             
-            self.load_from_pretrained(url_or_filename=q_former_model)
+        #     self.load_from_pretrained(url_or_filename=q_former_model)
         
     def load_from_pretrained(self, url_or_filename):
         if is_url(url_or_filename):
@@ -103,7 +103,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             image = image.reshape(-1, *image.shape[-3:])
 
         with self.maybe_autocast():
-            image_embeds = self.ln_vision(self.get_vision_tower()(image)).to(device)
+            image_embeds = self.get_vision_tower().ln_vision(self.get_vision_tower()(image)).to(device)
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
 
             query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
@@ -136,7 +136,8 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     def encode_images(self, images):
         if self.get_model().query_tokens is not None:
             image_features = self.get_model().encode_img_qformer(images)
-        image_features = self.get_model().get_vision_tower()(images)
+        else:
+            image_features = self.get_model().get_vision_tower()(images)
         image_features = self.get_model().mm_projector(image_features)
         return image_features
 

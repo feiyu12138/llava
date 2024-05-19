@@ -61,7 +61,7 @@ class CLIPVisionTowerEva(nn.Module):
             return
         Processor = Blip2ImageTrainProcessor if self.is_train else Blip2ImageEvalProcessor
         self.image_processor = Processor.from_config(self.args)
-        self.vision_tower = self.init_vision_encoder()
+        self.vision_tower, self.ln_vision = self.init_vision_encoder()
         self.is_loaded = True
 
     def feature_select(self, image_forward_outs): #TODO: Not sure if this is correct
@@ -88,7 +88,10 @@ class CLIPVisionTowerEva(nn.Module):
             image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
             image_features = self.feature_select(image_forward_outs).to(images.dtype)
 
-        return image_features
+        return image_features   
+    
+    def preprocess(self, images): #TODO: must implement
+        return self.image_processor(images)
 
     @property
     def dummy_feature(self):

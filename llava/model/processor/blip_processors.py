@@ -7,25 +7,24 @@
 
 import re
 
-from minigpt4.common.registry import registry
-from minigpt4.processors.base_processor import BaseProcessor
-from minigpt4.processors.randaugment import RandomAugment
+from llava.model.processors.base_processor import BaseProcessor
+from llava.model.processors.randaugment import RandomAugment
 from omegaconf import OmegaConf
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
+from transformers.image_processing_utils import BatchFeature
 
 
 class BlipImageBaseProcessor(BaseProcessor):
-    def __init__(self, mean=None, std=None):
-        if mean is None:
-            mean = (0.48145466, 0.4578275, 0.40821073)
-        if std is None:
-            std = (0.26862954, 0.26130258, 0.27577711)
+    def __init__(self, image_mean=None, image_std=None):
+        if image_mean is None:
+            image_mean = (0.48145466, 0.4578275, 0.40821073)
+        if image_std is None:
+            image_std = (0.26862954, 0.26130258, 0.27577711)
 
-        self.normalize = transforms.Normalize(mean, std)
+        self.normalize = transforms.Normalize(image_mean, image_std) 
 
 
-@registry.register_processor("blip_caption")
 class BlipCaptionProcessor(BaseProcessor):
     def __init__(self, prompt="", max_words=50):
         self.prompt = prompt
@@ -67,11 +66,9 @@ class BlipCaptionProcessor(BaseProcessor):
 
         return caption
 
-
-@registry.register_processor("blip2_image_train")
 class Blip2ImageTrainProcessor(BlipImageBaseProcessor):
-    def __init__(self, image_size=224, mean=None, std=None, min_scale=0.5, max_scale=1.0):
-        super().__init__(mean=mean, std=std)
+    def __init__(self, image_size=224, image_mean=None, image_std=None, min_scale=0.5, max_scale=1.0):
+        super().__init__(image_mean=image_mean, image_std=image_std)
 
         self.transform = transforms.Compose(
             [
@@ -87,8 +84,10 @@ class Blip2ImageTrainProcessor(BlipImageBaseProcessor):
     def __call__(self, item):
         return self.transform(item)
     
-    def preprocess(self, item):
-        return self.transform(item)
+    def preprocess(self, item,return_tensors='pt'):
+        item = self.transform(item)
+        data = {"pixel_values":item}
+        return BatchFeature(data,tensor_type=return_tensors)
 
     @classmethod
     def from_config(cls, cfg=None):
@@ -97,25 +96,24 @@ class Blip2ImageTrainProcessor(BlipImageBaseProcessor):
 
         image_size = cfg.get("image_size", 224)
 
-        mean = cfg.get("mean", None)
-        std = cfg.get("std", None)
+        image_mean = cfg.get("image_mean", None)
+        image_std = cfg.get("image_std", None)
 
         min_scale = cfg.get("min_scale", 0.5)
         max_scale = cfg.get("max_scale", 1.0)
 
         return cls(
             image_size=image_size,
-            image_mean=mean,
-            image_std=std,
+            image_mean=image_mean,
+            image_std=image_std,
             min_scale=min_scale,
             max_scale=max_scale,
         )
 
 
-@registry.register_processor("blip2_image_eval")
 class Blip2ImageEvalProcessor(BlipImageBaseProcessor):
-    def __init__(self, image_size=224, mean=None, std=None):
-        super().__init__(mean=mean, std=std)
+    def __init__(self, image_size=224, image_mean=None, image_std=None):
+        super().__init__(image_mean=image_mean, image_std=image_std)
 
         self.transform = transforms.Compose(
             [
@@ -129,6 +127,11 @@ class Blip2ImageEvalProcessor(BlipImageBaseProcessor):
 
     def __call__(self, item):
         return self.transform(item)
+    
+    def preprocess(self, item,return_tensors='pt'):
+        item = self.transform(item)
+        data = {"pixel_values":item}
+        return BatchFeature(data,tensor_type=return_tensors)
 
     @classmethod
     def from_config(cls, cfg=None):
@@ -137,7 +140,7 @@ class Blip2ImageEvalProcessor(BlipImageBaseProcessor):
 
         image_size = cfg.get("image_size", 224)
 
-        mean = cfg.get("mean", None)
-        std = cfg.get("std", None)
+        image_mean = cfg.get("image_mean", None)
+        image_std = cfg.get("image_std", None)
 
-        return cls(image_size=image_size, image_mean=mean, image_std=std)
+        return cls(image_size=image_size, image_mean=image_mean, image_std=image_std)
