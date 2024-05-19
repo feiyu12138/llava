@@ -14,24 +14,47 @@
 
 
 from abc import ABC, abstractmethod
+import os
 
 import torch
 import torch.nn as nn
 
 from .multimodal_encoder.builder import build_vision_tower
 from .multimodal_projector.builder import build_vision_projector
+from .multimodal_encoder.Qformer import BertConfig, BertLMHeadModel
+from llava.dist_utils import download_cached_file, is_url
 
 from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
 from llava.mm_utils import get_anyres_image_grid_shape
+from llava.model.eva_vit import create_eva_vit_g, LayerNorm
 
+
+
+import logging
+
+def disabled_train(self, mode=True):
+    """Overwrite model.train with this function to make sure train/eval mode
+    does not change anymore."""
+    return self
 
 class LlavaMetaModel:
 
     def __init__(self, config):
         super(LlavaMetaModel, self).__init__(config)
+        self.query_tokens = None
+        self.Qformer, self.query_tokens = self.init_Qformer(
+                config.num_query_token, self.visual_encoder.num_features, config.freeze_qformer
+            )
+        q_former_model = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained_flant5xxl.pth"
+        
+        self.load_from_pretrained(url_or_filename=q_former_model)
 
         if hasattr(config, "mm_vision_tower"):
+            if config.mm_vision_tower == 'vit':
+                self.vision_tower, self.ln_vision = self.init_vision_encoder(
+                    config.vit_model, config.image_size, config.drop_path_rate, config.use_grad_checkpoint, config.vit_precision, config.freeze_vision
+                )
             self.vision_tower = build_vision_tower(config, delay_load=True)
             self.mm_projector = build_vision_projector(config)
 
@@ -39,6 +62,89 @@ class LlavaMetaModel:
                 self.image_newline = nn.Parameter(
                     torch.empty(config.hidden_size, dtype=self.dtype)
                 )
+        
+        
+                
+    def load_from_pretrained(self, url_or_filename):
+        if is_url(url_or_filename):
+            cached_file = download_cached_file(
+                url_or_filename, check_hash=False, progress=True
+            )
+            checkpoint = torch.load(cached_file, map_location="cpu")
+        elif os.path.isfile(url_or_filename):
+            checkpoint = torch.load(url_or_filename, map_location="cpu")
+        else:
+            raise RuntimeError("checkpoint url or path is invalid")
+
+        state_dict = checkpoint["model"]
+
+        msg = self.load_state_dict(state_dict, strict=False)
+
+        # logging.info("Missing keys {}".format(msg.missing_keys))
+        logging.info("load checkpoint from %s" % url_or_filename)
+
+        return msg
+    
+    @classmethod
+    def init_vision_encoder(
+        cls, model_name, img_size, drop_path_rate, use_grad_checkpoint, precision, freeze
+    ):
+        logging.info('Loading VIT')
+
+        assert model_name == "eva_clip_g", "vit model must be eva_clip_g for current version of MiniGPT-4"
+        if not freeze:
+            precision = "fp32"  # fp16 is not for training
+
+        visual_encoder = create_eva_vit_g(
+            img_size, drop_path_rate, use_grad_checkpoint, precision
+        )
+
+        ln_vision = LayerNorm(visual_encoder.num_features)
+
+        if freeze:
+            for name, param in visual_encoder.named_parameters():
+                param.requires_grad = False
+            visual_encoder = visual_encoder.eval()
+            visual_encoder.train = disabled_train
+            for name, param in ln_vision.named_parameters():
+                param.requires_grad = False
+            ln_vision = ln_vision.eval()
+            ln_vision.train = disabled_train
+            logging.info("freeze vision encoder")
+
+        logging.info('Loading VIT Done')
+        return visual_encoder, ln_vision
+    
+    @classmethod
+    def init_Qformer(cls, num_query_token, vision_width, freeze):
+        encoder_config = BertConfig.from_pretrained("bert-base-uncased")
+        encoder_config.encoder_width = vision_width
+        # insert cross-attention layer every other block
+        encoder_config.add_cross_attention = True
+        encoder_config.cross_attention_freq = 2
+        encoder_config.query_length = num_query_token
+        Qformer = BertLMHeadModel(config=encoder_config)
+        query_tokens = nn.Parameter(
+            torch.zeros(1, num_query_token, encoder_config.hidden_size)
+        )
+        query_tokens.data.normal_(mean=0.0, std=encoder_config.initializer_range)
+
+        Qformer.cls = None
+        Qformer.bert.embeddings.word_embeddings = None
+        Qformer.bert.embeddings.position_embeddings = None
+        for layer in Qformer.bert.encoder.layer:
+            layer.output = None
+            layer.intermediate = None
+
+        if freeze:
+            for name, param in Qformer.named_parameters():
+                param.requires_grad = False
+            Qformer = Qformer.eval()
+            Qformer.train = disabled_train
+            query_tokens.requires_grad = False
+            logging.info("freeze Qformer")
+
+        return Qformer, query_tokens
 
     def get_vision_tower(self):
         vision_tower = getattr(self, 'vision_tower', None)
@@ -56,7 +162,18 @@ class LlavaMetaModel:
         self.config.mm_vision_tower = vision_tower
 
         if self.get_vision_tower() is None:
-            vision_tower = build_vision_tower(model_args)
+            if vision_tower == 'vit':
+                vision_tower,ln_vision = self.init_vision_encoder(
+                    model_args.vit_model, 
+                    model_args.image_size, 
+                    model_args.drop_path_rate, 
+                    model_args.use_grad_checkpoint, 
+                    model_args.vit_precision, 
+                    model_args.freeze_vision
+                )
+                self.ln_vision = ln_vision
+            else:
+                vision_tower = build_vision_tower(model_args)
 
             if fsdp is not None and len(fsdp) > 0:
                 self.vision_tower = [vision_tower]
@@ -67,7 +184,8 @@ class LlavaMetaModel:
                 vision_tower = self.vision_tower[0]
             else:
                 vision_tower = self.vision_tower
-            vision_tower.load_model()
+            if vision_tower != 'vit':
+                vision_tower.load_model()
 
         self.config.use_mm_proj = True
         self.config.mm_projector_type = getattr(model_args, 'mm_projector_type', 'linear')
@@ -95,6 +213,27 @@ class LlavaMetaModel:
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
 
             self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
+    
+    def encode_img_qformer(self, image):
+        device = image.device
+
+        if len(image.shape) > 4:
+            image = image.reshape(-1, *image.shape[-3:])
+
+        with self.maybe_autocast():
+            image_embeds = self.ln_vision(self.get_vision_tower()(image)).to(device)
+            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
+
+            query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
+            inputs_before_proj = self.Qformer.bert(
+                query_embeds=query_tokens,
+                encoder_hidden_states=image_embeds,
+                encoder_attention_mask=image_atts,
+                return_dict=True,
+            )
+
+
+        return inputs_before_proj
 
 
 def unpad_image(tensor, original_size):
@@ -138,6 +277,8 @@ class LlavaMetaForCausalLM(ABC):
         return self.get_model().get_vision_tower()
 
     def encode_images(self, images):
+        if self.get_model().query_tokens is not None:
+            image_features = self.get_model().encode_img_qformer(images)
         image_features = self.get_model().get_vision_tower()(images)
         image_features = self.get_model().mm_projector(image_features)
         return image_features
