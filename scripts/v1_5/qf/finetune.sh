@@ -12,7 +12,7 @@ deepspeed llava/train/train_mem.py \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder $ROOT_DATA/LLaVA-Tuning/images \
+    --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
