@@ -7,12 +7,13 @@
 
 import re
 
-from llava.model.processors.base_processor import BaseProcessor
-from llava.model.processors.randaugment import RandomAugment
+from llava.model.processor.base_processor import BaseProcessor
 from omegaconf import OmegaConf
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
 from transformers.image_processing_utils import BatchFeature
+from transformers.image_transforms import to_channel_dimension_format
+from transformers.image_utils import ChannelDimension, infer_channel_dimension_format
 
 
 class BlipImageBaseProcessor(BaseProcessor):
@@ -40,8 +41,8 @@ class BlipCaptionProcessor(BaseProcessor):
         if cfg is None:
             cfg = OmegaConf.create()
 
-        prompt = cfg.get("prompt", "")
-        max_words = cfg.get("max_words", 50)
+        prompt = getattr(cfg,"prompt", "")
+        max_words = getattr(cfg,"max_words", 50)
 
         return cls(prompt=prompt, max_words=max_words)
 
@@ -84,8 +85,10 @@ class Blip2ImageTrainProcessor(BlipImageBaseProcessor):
     def __call__(self, item):
         return self.transform(item)
     
-    def preprocess(self, item,return_tensors='pt'):
+    def preprocess(self, item,return_tensors='pt',
+                   data_format=ChannelDimension.FIRST):
         item = self.transform(item)
+        item = item.permute(0, 3, 1, 2)
         data = {"pixel_values":item}
         return BatchFeature(data,tensor_type=return_tensors)
 
@@ -94,13 +97,13 @@ class Blip2ImageTrainProcessor(BlipImageBaseProcessor):
         if cfg is None:
             cfg = OmegaConf.create()
 
-        image_size = cfg.get("image_size", 224)
+        image_size = getattr(cfg,"image_size", 224)
 
-        image_mean = cfg.get("image_mean", None)
-        image_std = cfg.get("image_std", None)
+        image_mean = getattr(cfg,"image_mean", None)
+        image_std = getattr(cfg,"image_std", None)
 
-        min_scale = cfg.get("min_scale", 0.5)
-        max_scale = cfg.get("max_scale", 1.0)
+        min_scale = getattr(cfg,"min_scale", 0.5)
+        max_scale = getattr(cfg,"max_scale", 1.0)
 
         return cls(
             image_size=image_size,
@@ -128,19 +131,21 @@ class Blip2ImageEvalProcessor(BlipImageBaseProcessor):
     def __call__(self, item):
         return self.transform(item)
     
-    def preprocess(self, item,return_tensors='pt'):
-        item = self.transform(item)
+    def preprocess(self, item,return_tensors='pt',
+                   data_format=ChannelDimension.FIRST):
+        item = self.transform(item).unsqueeze(0).bfloat16()
+        
         data = {"pixel_values":item}
-        return BatchFeature(data,tensor_type=return_tensors)
+        return data
 
     @classmethod
     def from_config(cls, cfg=None):
         if cfg is None:
             cfg = OmegaConf.create()
 
-        image_size = cfg.get("image_size", 224)
+        image_size = getattr(cfg,"image_size", 224)
 
-        image_mean = cfg.get("image_mean", None)
-        image_std = cfg.get("image_std", None)
+        image_mean = getattr(cfg,"image_mean", None)
+        image_std = getattr(cfg,"image_std", None)
 
         return cls(image_size=image_size, image_mean=image_mean, image_std=image_std)

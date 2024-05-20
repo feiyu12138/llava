@@ -14,7 +14,7 @@
 
 
 from typing import List, Optional, Tuple, Union
-
+import os
 import torch
 import torch.nn as nn
 
@@ -26,6 +26,12 @@ from transformers.generation.utils import GenerateOutput
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
+
+
+def disabled_train(self, mode=True):
+    """Overwrite model.train with this function to make sure train/eval mode
+    does not change anymore."""
+    return self
 
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
@@ -45,76 +51,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             
         #     self.load_from_pretrained(url_or_filename=q_former_model)
         
-    def load_from_pretrained(self, url_or_filename):
-        if is_url(url_or_filename):
-            cached_file = download_cached_file(
-                url_or_filename, check_hash=False, progress=True
-            )
-            checkpoint = torch.load(cached_file, map_location="cpu")
-        elif os.path.isfile(url_or_filename):
-            checkpoint = torch.load(url_or_filename, map_location="cpu")
-        else:
-            raise RuntimeError("checkpoint url or path is invalid")
-
-        state_dict = checkpoint["model"]
-
-        msg = self.load_state_dict(state_dict, strict=False)
-
-        # logging.info("Missing keys {}".format(msg.missing_keys))
-        logging.info("load checkpoint from %s" % url_or_filename)
-
-        return msg
     
-    @classmethod
-    def init_Qformer(cls, num_query_token, vision_width, freeze):
-        encoder_config = BertConfig.from_pretrained("bert-base-uncased")
-        encoder_config.encoder_width = vision_width
-        # insert cross-attention layer every other block
-        encoder_config.add_cross_attention = True
-        encoder_config.cross_attention_freq = 2
-        encoder_config.query_length = num_query_token
-        Qformer = BertLMHeadModel(config=encoder_config)
-        query_tokens = nn.Parameter(
-            torch.zeros(1, num_query_token, encoder_config.hidden_size)
-        )
-        query_tokens.data.normal_(mean=0.0, std=encoder_config.initializer_range)
-
-        Qformer.cls = None
-        Qformer.bert.embeddings.word_embeddings = None
-        Qformer.bert.embeddings.position_embeddings = None
-        for layer in Qformer.bert.encoder.layer:
-            layer.output = None
-            layer.intermediate = None
-
-        if freeze:
-            for name, param in Qformer.named_parameters():
-                param.requires_grad = False
-            Qformer = Qformer.eval()
-            Qformer.train = disabled_train
-            query_tokens.requires_grad = False
-            logging.info("freeze Qformer")
-
-        return Qformer, query_tokens
     
-    def encode_img_qformer(self, image):
-        device = image.device
-
-        if len(image.shape) > 4:
-            image = image.reshape(-1, *image.shape[-3:])
-
-        with self.maybe_autocast():
-            image_embeds = self.get_vision_tower().ln_vision(self.get_vision_tower()(image)).to(device)
-            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
-
-            query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
-            inputs_before_proj = self.Qformer.bert(
-                query_embeds=query_tokens,
-                encoder_hidden_states=image_embeds,
-                encoder_attention_mask=image_atts,
-                return_dict=True,
-            )
-
-        return inputs_before_proj
+    
 
 
 class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
@@ -134,10 +73,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         return self.model
     
     def encode_images(self, images):
-        if self.get_model().query_tokens is not None:
-            image_features = self.get_model().encode_img_qformer(images)
-        else:
-            image_features = self.get_model().get_vision_tower()(images)
+        image_features = self.get_model().get_vision_tower()(images)
         image_features = self.get_model().mm_projector(image_features)
         return image_features
 

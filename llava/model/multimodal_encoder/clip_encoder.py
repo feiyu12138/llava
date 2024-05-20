@@ -25,6 +25,7 @@ class CLIPVisionTower(nn.Module):
         if self.is_loaded:
             print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
             return
+        
 
         self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
         self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
@@ -43,7 +44,8 @@ class CLIPVisionTower(nn.Module):
         return image_features
 
     @torch.no_grad()
-    def forward(self, images):
+    def forward(self, images): # images : tensor[B,3,336,336]
+        from ipdb import set_trace; set_trace()
         if type(images) is list:
             image_features = []
             for image in images:

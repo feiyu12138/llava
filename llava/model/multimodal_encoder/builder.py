@@ -1,6 +1,6 @@
 import os
 from .clip_encoder import CLIPVisionTower, CLIPVisionTowerS2
-from .clip_encoder_eva import CLIPVisionTowerEVA
+from .clip_encoder_eva import CLIPVisionTowerEva
 
 
 def build_vision_tower(vision_tower_cfg, **kwargs):
