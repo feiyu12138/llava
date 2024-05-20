@@ -67,6 +67,9 @@ class ModelArguments:
     has_qformer: Optional[bool] = field(default=False)
     num_query_token: Optional[int] = field(default=32)
     freeze_qformer: Optional[bool] = field(default=True)
+    qformer_path: Optional[str] = field(default=None)
+    vision_model_path: Optional[str] = field(default=None)
+    query_tokens_path: Optional[str] = field(default=None)
 
 
 @dataclass
@@ -701,7 +704,13 @@ class LazySupervisedDataset(Dataset):
             image_file = self.list_data_dict[i]['image']
             image_folder = self.data_args.image_folder
             processor = self.data_args.image_processor
-            image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
+            try:
+                image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
+            except:
+                print(image_file + "not appeared; getitem from the first image")
+                i = 0
+                image_file = self.list_data_dict[i]['image']
+                image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
             if self.data_args.image_aspect_ratio == 'pad':
                 def expand2square(pil_img, background_color):
                     width, height = pil_img.size

@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 
 from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
+from transformers import BlipImageProcessor,Blip2Processor,Blip2QFormerModel,Blip2VisionModel,Blip2QFormerConfig,Blip2Model
 from llava.model.processor.blip_processors import Blip2ImageTrainProcessor, Blip2ImageEvalProcessor
 
 from llava.dist_utils import download_cached_file, is_url
@@ -24,7 +25,7 @@ class CLIPVisionTowerEva(nn.Module):
         super().__init__()
 
         self.is_loaded = False
-
+        
         self.vision_tower_name = vision_tower
         self.select_layer = args.mm_vision_select_layer
         self.select_feature = getattr(args, 'mm_vision_select_feature', 'patch')
@@ -34,13 +35,11 @@ class CLIPVisionTowerEva(nn.Module):
             self.load_model()
         elif getattr(args, 'unfreeze_mm_vision_tower', False):
             self.load_model()
-        else:
-            self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
         
     
         
     def init_vision_encoder(
-        self, model_name='eva_clip_g', img_size=224, drop_path_rate=0.0, use_grad_checkpoint=False, precision="fp16", freeze=True
+        self, model_name='eva_clip_g', img_size=224, drop_path_rate=0.0, use_grad_checkpoint=True, precision="fp16", freeze=True
     ):
         logging.info('Loading VIT')
 
@@ -106,19 +105,36 @@ class CLIPVisionTowerEva(nn.Module):
         if self.is_loaded:
             print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
             return
-        Processor = Blip2ImageTrainProcessor if self.is_train else Blip2ImageEvalProcessor
-        self.image_processor = Processor.from_config(self.args)
-        self.vision_tower, self.ln_vision = self.init_vision_encoder()
-        vision_tower_old = CLIPVisionModel.from_pretrained("openai/clip-vit-large-patch14-336")
-        self.vision_tower.to(dtype=vision_tower_old.dtype, device=vision_tower_old.device)
-        self.vision_tower.device = vision_tower_old.device
-        self.vision_tower.dtype = vision_tower_old.dtype
-        if self.args.has_qformer: #TODO: load after vision tower
-            self.Qformer, self.query_tokens = self.init_Qformer(
-                    self.args.num_query_token, self.vision_tower.num_features, self.args.freeze_qformer
-                )
-            q_former_model = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained_flant5xxl.pth"
-            self.load_from_pretrained(url_or_filename=q_former_model)
+        # Processor = Blip2ImageTrainProcessor if self.is_train else Blip2ImageEvalProcessor
+        # self.image_processor = Processor.from_config(self.args)
+        # self.image_processor = BlipImageProcessor.from_pretrained("Salesforce/blip2-opt-2.7b",device_map=device_map)
+        # self.vision_tower = Blip2VisionModel.from_pretrained("Salesforce/blip2-opt-2.7b", device_map=device_map)
+        # self.vision_tower.requires_grad_(False)
+        # if self.args.has_qformer: #TODO: load after vision tower
+        #     # self.Qformer, self.query_tokens = self.init_Qformer(
+        #     #         self.args.num_query_token, self.vision_tower.num_features, self.args.freeze_qformer
+        #     #     )
+        #     # q_former_model = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained_flant5xxl.pth"
+        #     # self.load_from_pretrained(url_or_filename=q_former_model)
+        #     qformer_config = Blip2QFormerConfig()
+        #     self.Qformer = Blip2QFormerModel.from_pretrained("Salesforce/blip2-opt-2.7b", config=qformer_config ,device_map=device_map)
+        #     self.Qformer.requires_grad_(False)
+        #     self.query_tokens = nn.Parameter(
+        #         torch.zeros(1, self.args.num_query_token, 768)
+        # )
+        old_model = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b",device_map=device_map)
+        self.vision_tower = old_model.vision_model
+        # self.vision_tower = torch.load(self.args.vision_model_path)
+        self.image_processor = BlipImageProcessor.from_pretrained("Salesforce/blip2-opt-2.7b",device_map=device_map)
+        self.image_processor.crop_size = self.image_processor.size
+        # self.Qformer = torch.load(self.args.qformer_path)
+        self.Qformer = old_model.qformer
+        # self.query_tokens = torch.load(self.args.query_tokens_path)
+        self.query_tokens = old_model.query_tokens
+        self.vision_tower.requires_grad_(False)
+        self.Qformer.requires_grad_(False)
+        self.query_tokens.requires_grad_(False)
+        del old_model
         
         self.is_loaded = True
 
@@ -185,23 +201,34 @@ class CLIPVisionTowerEva(nn.Module):
         return Qformer, query_tokens
     
     def encode_img_qformer(self, image):
-        device = image.device
-        if len(image.shape) > 4:
-            image = image.reshape(-1, *image.shape[-3:])
+        # device = image.device
+        # if len(image.shape) > 4:
+        #     image = image.reshape(-1, *image.shape[-3:])
 
-        with self.maybe_autocast(self.dtype):
-            image_embeds = self.ln_vision(self.vision_tower(image)).to(device)
-            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
+        # with self.maybe_autocast(self.dtype):
+        #     image_embeds = self.ln_vision(self.vision_tower(image)).to(device)
+        #     image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
 
-            query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
-            inputs_before_proj = self.Qformer.bert(
-                query_embeds=query_tokens,
-                encoder_hidden_states=image_embeds,
-                encoder_attention_mask=image_atts,
-                return_dict=True,
-            )
+        #     query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
+        #     inputs_before_proj = self.Qformer.bert(
+        #         query_embeds=query_tokens,
+        #         encoder_hidden_states=image_embeds,
+        #         encoder_attention_mask=image_atts,
+        #         return_dict=True,
+        #     )
+        vision_outputs = self.vision_tower(
+            pixel_values=image
+        )
+        image_embeds = vision_outputs[0]
+        image_attention_mask = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=image_embeds.device)
+        query_tokens = self.query_tokens.expand(image_embeds.shape[0], -1, -1)
+        query_outputs = self.Qformer(
+            query_embeds=query_tokens,
+            encoder_hidden_states=image_embeds,
+            encoder_attention_mask=image_attention_mask,
+        )
 
-        return inputs_before_proj
+        return query_outputs
 
     @torch.no_grad()
     def forward(self, images):
@@ -239,12 +266,12 @@ class CLIPVisionTowerEva(nn.Module):
 
     @property
     def dtype(self):
-        return self.vision_tower.blocks[0].mlp.fc1.weight.dtype
+        return self.vision_tower.dtype
 
     @property
     def device(self):
         # return self.vision_tower.device
-        return self.vision_tower.blocks[0].mlp.fc1.weight.device
+        return self.vision_tower.device
 
     @property
     def config(self):

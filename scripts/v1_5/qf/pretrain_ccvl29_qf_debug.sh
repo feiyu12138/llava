@@ -1,8 +1,10 @@
 #!/bin/bash
 
-export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
-export WANDB_PROJECT='llava_team'
-export WANDB_ENTITY='jchen293'
+export CUDA_VISIBLE_DEVICES=0
+
+NNODES=1
+GPUS=1
+PORT=29600
 
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
@@ -12,7 +14,8 @@ HASQF=True
 NUM_QUERY_TOKEN=32
 FREEZEQF=True
 
-deepspeed llava/train/train_mem.py \
+torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
+ llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
@@ -30,7 +33,7 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir $ROOT_WEIGHT/llava-v1.5-7b-$NAME \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
@@ -47,5 +50,3 @@ deepspeed llava/train/train_mem.py \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb \
-    --run_name $NAME 
