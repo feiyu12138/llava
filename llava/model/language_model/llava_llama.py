@@ -43,18 +43,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     def __init__(self, config: LlamaConfig):
         super(LlavaLlamaModel, self).__init__(config)
         self.query_tokens = None
-        # if config.has_qformer: #TODO: load after vision tower
-        #     self.Qformer, self.query_tokens = self.init_Qformer(
-        #             config.num_query_token, self.visual_encoder.num_features, config.freeze_qformer
-        #         )
-        #     q_former_model = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/blip2_pretrained_flant5xxl.pth"
-            
-        #     self.load_from_pretrained(url_or_filename=q_former_model)
-        
-    
-    
-    
-
 
 class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     config_class = LlavaConfig

@@ -1,5 +1,5 @@
 #!/bin/bash
-# export NCCL_P2P_DISABLE=1
+export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
@@ -7,7 +7,7 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-NAME=qformer-pretrain
+NAME=qformer
 HASQF=True
 NUM_QUERY_TOKEN=32
 FREEZEQF=True
@@ -28,7 +28,7 @@ deepspeed llava/train/train_mem.py \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-$NAME \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-pretrain-$NAME \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
@@ -48,4 +48,4 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name $NAME 
+    --run_name pt-$NAME

@@ -1,4 +1,16 @@
 #!/bin/bash
+export NCCL_P2P_DISABLE=1
+export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
+export WANDB_PROJECT='llava_team'
+export WANDB_ENTITY='jchen293'
+
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+
+NAME=qformer
+HASQF=True
+NUM_QUERY_TOKEN=32
+FREEZEQF=True
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -6,8 +18,8 @@ deepspeed llava/train/train_mem.py \
     --version v1 \
     --data_path ./playground/data/llava_v1_5_mix665k.json \
     --image_folder ./playground/data \
-    --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter ./checkpoints/llava-v1.5-13b-pretrain/mm_projector.bin \
+    --vision_tower eva_clip_g \
+    --pretrain_mm_mlp_adapter llava-v1.5-7b-pretrain-$NAME/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
