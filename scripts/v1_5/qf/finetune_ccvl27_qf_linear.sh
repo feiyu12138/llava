@@ -7,13 +7,14 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-NAME=qformer
+NAME=qformer-linearproj
 HASQF=True
 NUM_QUERY_TOKEN=32
 FREEZEQF=True
 QFPATH=$ROOT_WEIGHT/qformer/qformer.bin
 QTPATH=$ROOT_WEIGHT/qformer/query_tokens.bin
 VMPATH=$ROOT_WEIGHT/qfvm/vm.bin
+PROJECTOR_TYPE=linear
 
 
 deepspeed llava/train/train_mem.py \
@@ -23,14 +24,13 @@ deepspeed llava/train/train_mem.py \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --has_qformer $HASQF \
-    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-$NAME-0520/mm_projector.bin \
     --num_query_token $NUM_QUERY_TOKEN \
     --freeze_qformer $FREEZEQF \
     --qformer_path $QFPATH \
     --vision_model_path $VMPATH \
     --query_tokens_path $QFPATH \
     --vision_tower eva_clip_g \
-    --mm_projector_type mlp2x_gelu \
+    --mm_projector_type $PROJECTOR_TYPE \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \

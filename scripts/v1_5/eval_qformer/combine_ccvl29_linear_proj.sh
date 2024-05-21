@@ -1,26 +1,14 @@
 #!/bin/bash
-#
-#SBATCH --job-name=qf_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/qf_combined.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/qf_combined.out
-#SBATCH --gpus=8
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=60
-#SBATCH --partition=main
 
-module purge
-module load conda
-conda activate llava_qformer
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
-
-NAME=llava-v1.5-7b-finetune-qformer
+NAME=llava-v1.5-7b-finetune-qformer-linearproj
 CKPT=$ROOT_WEIGHT/$NAME
 HASQF=True
-# LOG_PREFIX=${NAME}-mmbench
-# cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 
+# LOG_PREFIX=${NAME}-mmbench
+# cat /data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 
 run_mmbench_cn() {
     local GPU_ID=$1
@@ -44,7 +32,7 @@ run_mmbench_cn() {
             --result-dir $ROOT_DATA/eval_luoxin/eval/mmbench/answers/$SPLIT \
             --upload-dir $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT \
             --experiment $NAME
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_mmbench() {
@@ -68,7 +56,7 @@ run_mmbench() {
             --result-dir $ROOT_DATA/eval_luoxin/eval/mmbench/answers/$SPLIT \
             --upload-dir $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT \
             --experiment $NAME
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_mme() {
@@ -89,7 +77,7 @@ run_mme() {
         cd eval_tool
         python calculation.py --results_dir answers/$NAME > ./eval_result/$NAME.txt
         cd ~/llava_git/llava
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_mmvet() {
@@ -109,7 +97,7 @@ run_mmvet() {
         python scripts/convert_mmvet_for_eval.py \
             --src $ROOT_DATA/eval_luoxin/eval/mm-vet/answers/$NAME.jsonl \
             --dst $ROOT_DATA/eval_luoxin/eval/mm-vet/results/$NAME.json
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_pope() {
@@ -129,7 +117,7 @@ run_pope() {
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
             --question-file $ROOT_DATA/eval_luoxin/eval/pope/llava_pope_test.jsonl \
             --result-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_sqa() {
@@ -151,7 +139,7 @@ run_sqa() {
             --result-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME.jsonl \
             --output-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME-output.jsonl \
             --output-result $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME-result.json
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_textvqa() {
@@ -170,7 +158,7 @@ run_textvqa() {
         python -m llava.eval.eval_textvqa \
             --annotation-file $ROOT_DATA/eval_luoxin/eval/textvqa/TextVQA_0.5.1_val.json \
             --result-file $ROOT_DATA/eval_luoxin/eval/textvqa/answers/$NAME.jsonl
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_vizwiz() {
@@ -190,7 +178,7 @@ run_vizwiz() {
             --annotation-file $ROOT_DATA/eval_luoxin/eval/vizwiz/llava_test.jsonl \
             --result-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers/$NAME.jsonl \
             --result-upload-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers_upload/$NAME.json
-    " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
