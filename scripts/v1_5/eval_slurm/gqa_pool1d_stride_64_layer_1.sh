@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool4layer2_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_gqa.out
-#SBATCH --gpus=5
+#SBATCH --job-name=1dpool64layer1_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_gqa.out
+#SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 
@@ -14,14 +14,14 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layer=2
-stride=4
+layer=1
+stride=64
 grouping=avgpool1d
 
-name=1dpool4layer2
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
+name=1dpool64layer1
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-1-grouping-avgpool1d
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 

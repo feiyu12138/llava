@@ -1,34 +1,35 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool4layer2_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_gqa.out
-#SBATCH --gpus=5
+#SBATCH --job-name=1dpool64_8layer2_16pivot1730_3460prog_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64_8layer2_16pivot1730_3460prog_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64_8layer2_16pivot1730_3460prog_gqa.out
+#SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
+#SBATCH --cpus-per-task=20
 
 module purge
 module load conda
 conda activate llava_git
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
-
-layer=2
-stride=4
-grouping=avgpool1d
-
-name=1dpool4layer2
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
-
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+
+
 SPLIT="llava_gqa_testdev_balanced"
-GQADIR="./playground/data/eval/gqa/data"
+GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
+
+unified_vpe=False
+stride=8
+layer=0
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool64_8layer2_16pivot1730_3460prog
+NAME=1dpool64_8layer2_16pivot1730_3460prog
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
@@ -39,10 +40,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --grouping $grouping \
-        --stride $stride \
-        --layer $layer &
+        --conv-mode vicuna_v1  &
 done
 
 wait
@@ -61,3 +59,5 @@ python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_
 
 cd $GQADIR
 python eval/eval.py --tier testdev_balanced
+
+sleep 2d
