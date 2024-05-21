@@ -26,7 +26,7 @@ deepspeed llava/train/train_mem.py \
     --num_query_token $NUM_QUERY_TOKEN \
     --freeze_qformer $FREEZEQF \
     --vision_tower eva_clip_g \
-    --mm_projector_type mlp2x_gelu \
+    --mm_projector_type $PROJECTOR_TYPE \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
