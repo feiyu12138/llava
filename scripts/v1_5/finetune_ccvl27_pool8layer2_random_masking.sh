@@ -56,6 +56,6 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    # > $LOG_PATH/ft-$name.out 2>$LOG_PATH/ft-$name.err
+    > $LOG_PATH/ft-$name.out 2>$LOG_PATH/ft-$name.err
 
 sleep 2d
