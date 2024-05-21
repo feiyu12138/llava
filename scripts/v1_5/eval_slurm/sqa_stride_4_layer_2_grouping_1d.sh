@@ -6,6 +6,7 @@
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --partition=main
+#SBATCH --cpus-per-task=8
 
 export CUDA_VISIBLE_DEVICES=0
 
@@ -19,9 +20,8 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 layer=2
 stride=4
 grouping=avgpool1d
-unified_vpe=False
 name=1dpool4layer2
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
 
 python -m llava.eval.model_vqa_science \
     --model-path $CKPT \
@@ -33,8 +33,7 @@ python -m llava.eval.model_vqa_science \
     --conv-mode vicuna_v1 \
     --layer $layer \
     --stride $stride \
-    --grouping $grouping \
-    --unified_vpe $unified_vpe
+    --grouping $grouping 
 
 python llava/eval/eval_science_qa.py \
     --base-dir $ROOT_DATA/eval_luoxin/eval/scienceqa \
