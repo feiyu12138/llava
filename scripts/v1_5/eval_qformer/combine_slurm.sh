@@ -10,7 +10,7 @@
 
 module purge
 module load conda
-conda activate llava_git
+conda activate llava_qformer
 
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
@@ -193,11 +193,11 @@ run_vizwiz() {
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
 run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+# run_mme 2 "${NAME}-mme"
+# run_mmvet 3 "${NAME}-mmvet"
+# run_pope 4 "${NAME}-pope"
+# run_sqa 5 "${NAME}-sqa"
+# run_textvqa 6 "${NAME}-textvqa"
+# run_vizwiz 7 "${NAME}-vizwiz"
 
 wait
