@@ -53,7 +53,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer16 \
+    --run_name pool8layer16_v2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
