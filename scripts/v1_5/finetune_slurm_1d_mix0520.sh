@@ -122,7 +122,7 @@ deepspeed llava/train/train_mem.py \
 
 layers=16,0
 strides=8,1
-pivots=5200
+pivots=6000
 grouping=avgpool1d
 progressive=True
 name=1dpool8layer16pivot5200
