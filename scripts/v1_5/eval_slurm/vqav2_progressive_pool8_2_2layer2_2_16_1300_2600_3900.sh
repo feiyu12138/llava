@@ -14,6 +14,8 @@ module purge
 module load conda
 conda activate llava_git
 
+# llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d
+
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
@@ -27,19 +29,19 @@ CHUNKS=${#GPULIST[@]}
 
 SPLIT="llava_vqav2_mscoco_test-dev2015"
 
-for IDX in $(seq 0 $((CHUNKS-1))); do
-    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path $CKPT \
-        --question-file $ROOT_DATA/eval_luoxin/eval/vqav2/$SPLIT.jsonl \
-        --image-folder $ROOT_DATA/eval_luoxin/eval/vqav2/test2015 \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
-        --num-chunks $CHUNKS \
-        --chunk-idx $IDX \
-        --temperature 0 \
-        --conv-mode vicuna_v1 &
-done
+# for IDX in $(seq 0 $((CHUNKS-1))); do
+#     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
+#         --model-path $CKPT \
+#         --question-file $ROOT_DATA/eval_luoxin/eval/vqav2/$SPLIT.jsonl \
+#         --image-folder $ROOT_DATA/eval_luoxin/eval/vqav2/test2015 \
+#         --answers-file $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl \
+#         --num-chunks $CHUNKS \
+#         --chunk-idx $IDX \
+#         --temperature 0 \
+#         --conv-mode vicuna_v1 &
+# done
 
-wait
+# wait
 
 output_file=$ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/merge.jsonl
 
@@ -51,5 +53,5 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME
+python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME --dir $ROOT_DATA/eval_luoxin/eval/vqav2
 
