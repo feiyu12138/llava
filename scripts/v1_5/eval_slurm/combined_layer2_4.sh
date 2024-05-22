@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8layer2_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_combined.out
+#SBATCH --job-name=1dpool4layer2_combine
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_combine.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_combined.out
 #SBATCH --gpus=4
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -16,9 +16,9 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
-NAME=1dpool8layer2
+NAME=1dpool4layer2
 layer=2
-stride=8
+stride=4
 grouping=avgpool1d
 # LOG_PREFIX=$NAME-textvqa
 # cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
