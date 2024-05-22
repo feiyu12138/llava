@@ -31,22 +31,22 @@ CHUNKS=${#GPULIST[@]}
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 
-for IDX in $(seq 0 $((CHUNKS-1))); do
-    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path $CKPT \
-        --question-file $ROOT_DATA/eval_luoxin/eval/gqa/$SPLIT.jsonl \
-        --image-folder $ROOT_DATA/eval_luoxin/eval/gqa/images \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
-        --num-chunks $CHUNKS \
-        --chunk-idx $IDX \
-        --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --grouping $grouping \
-        --stride $stride \
-        --layer $layer &
-done
+# for IDX in $(seq 0 $((CHUNKS-1))); do
+#     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
+#         --model-path $CKPT \
+#         --question-file $ROOT_DATA/eval_luoxin/eval/gqa/$SPLIT.jsonl \
+#         --image-folder $ROOT_DATA/eval_luoxin/eval/gqa/images \
+#         --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
+#         --num-chunks $CHUNKS \
+#         --chunk-idx $IDX \
+#         --temperature 0 \
+#         --conv-mode vicuna_v1 \
+#         --grouping $grouping \
+#         --stride $stride \
+#         --layer $layer &
+# done
 
-wait
+# wait
 
 output_file=$ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/merge.jsonl
 

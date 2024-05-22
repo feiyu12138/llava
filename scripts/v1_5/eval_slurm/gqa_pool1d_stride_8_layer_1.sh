@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8layer16_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer16_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer16_gqa.out
+#SBATCH --job-name=1dpool8layer1_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer1_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer1_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -12,14 +12,14 @@ module purge
 module load conda
 conda activate llava_git
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layer=16
+layer=1
 stride=8
 grouping=avgpool1d
 
-name=1dpool8layer16
+name=1dpool8layer1-next
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
@@ -55,7 +55,7 @@ output_file=$ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/merge.jsonl
 
 # Loop through the indices and concatenate each file.
 for IDX in $(seq 0 $((CHUNKS-1))); do
-    cat $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
+    cat $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
 python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
