@@ -1,18 +1,15 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0
-name=llava-v1.5-7b-kmeans-unified-vpe-halfpool
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+name=llava-v1.5-7b
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
-    --question-file ./playground/data/eval/MME/llava_mme.jsonl \
-    --image-folder ./playground/data/eval/MME/MME_Benchmark_release_version \
-    --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
+    --question-file $ROOT_DATA/eval_luoxin/eval/MME/llava_mme.jsonl \
+    --image-folder $ROOT_DATA/eval_luoxin/eval/MME/MME_Benchmark_release_version \
+    --answers-file $ROOT_DATA/eval_luoxin/eval/MME/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --grouping none \
-    --stride 8 \
-    --layer 2 \
-    --unified_vpe True \
-    --halfpool False \
     --viz \
     --savedir pictures/attn
 
