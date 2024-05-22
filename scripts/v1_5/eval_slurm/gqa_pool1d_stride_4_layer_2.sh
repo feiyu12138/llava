@@ -3,7 +3,7 @@
 #SBATCH --job-name=1dpool4layer2_gqa
 #SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_gqa.err
 #SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_gqa.out
-#SBATCH --gpus=5
+#SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 #SBATCH --cpus-per-task=60
@@ -19,7 +19,7 @@ layer=2
 stride=4
 grouping=avgpool1d
 
-name=1dpool4layer2
+name=1dpool4layer2-next
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
