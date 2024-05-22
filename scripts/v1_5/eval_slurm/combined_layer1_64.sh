@@ -129,6 +129,9 @@ run_pope() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
             --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
             --temperature 0 \
+            --grouping $grouping \
+            --stride $stride \
+            --layer $layer \
             --conv-mode vicuna_v1
 
         python llava/eval/eval_pope.py \
