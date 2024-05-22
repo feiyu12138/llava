@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer1_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combined.out
-#SBATCH --gpus=4
+#SBATCH --job-name=1dpool8layer2hk_retrain_combine
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2hk_retrain_combine.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2hk_retrain_combined.out
+#SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
 #SBATCH --partition=main
@@ -15,11 +15,12 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
-NAME=1dpool16layer1-True
-layer=1
-grouping=avgpool1d
-stride=16
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-2-grouping-detach_hard_k_means-unified_vpe-True-oript
+NAME=1dpool8layer2hk_retrain
+layer=2
+stride=8
+grouping=detach_hard_k_means
+unified_vpe=True
 # LOG_PREFIX=$NAME-textvqa
 # cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 run_mmbench_cn() {
@@ -37,6 +38,7 @@ run_mmbench_cn() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
@@ -63,6 +65,7 @@ run_mmbench() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
@@ -88,6 +91,7 @@ run_mme() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         cd $ROOT_DATA/eval_luoxin/eval/MME
@@ -111,6 +115,7 @@ run_mmvet() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mm-vet/results
@@ -133,7 +138,8 @@ run_pope() {
             --conv-mode vicuna_v1 \
             --grouping $grouping \
             --stride $stride \
-            --layer $layer
+            --layer $layer \
+            --unified_vpe $unified_vpe 
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
@@ -156,6 +162,7 @@ run_sqa() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         python llava/eval/eval_science_qa.py \
@@ -179,6 +186,7 @@ run_textvqa() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         python -m llava.eval.eval_textvqa \
@@ -200,6 +208,7 @@ run_vizwiz() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --unified_vpe $unified_vpe \
             --conv-mode vicuna_v1
 
         python scripts/convert_vizwiz_for_submission.py \
@@ -211,11 +220,11 @@ run_vizwiz() {
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
 run_mmbench 1  "${NAME}-mmbench" 
-# run_mme 2 "${NAME}-mme"
-# run_mmvet 3 "${NAME}-mmvet"
-run_pope 2 "${NAME}-pope"
-# run_sqa 5 "${NAME}-sqa"
-run_textvqa 3 "${NAME}-textvqa"
-# run_vizwiz 7 "${NAME}-vizwiz"
+run_mme 2 "${NAME}-mme"
+run_mmvet 3 "${NAME}-mmvet"
+run_pope 4 "${NAME}-pope"
+run_sqa 5 "${NAME}-sqa"
+run_textvqa 6 "${NAME}-textvqa"
+run_vizwiz 7 "${NAME}-vizwiz"
 
 wait
