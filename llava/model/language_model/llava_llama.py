@@ -1080,11 +1080,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 plt.ylabel('Query ID')
                 plt.xlabel('Visual Key ID')
                 # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
-                plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
-                plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
-                plt.tight_layout()
-                plt.savefig(f'{self.savedir}/attention_map_{idx}_visual_key.png',dpi=300)
-                plt.close()
+                # plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
+                # plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
+                # plt.tight_layout()
+                # plt.savefig(f'{self.savedir}/attention_map_{idx}_visual_key.png',dpi=300)
+                # plt.close()
             # state_std_layers = [std['state'].cpu() for std in self.std_layers]
             # query_std_layers = [std['query'].cpu() for std in self.std_layers]
             # key_std_layers = [std['key'].cpu() for std in self.std_layers]
