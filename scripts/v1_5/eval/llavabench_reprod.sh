@@ -1,6 +1,10 @@
 #!/bin/bash
+
+
 CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
 name=llava-v1.5-7b-reprod
+
+
 python -m llava.eval.model_vqa \
     --model-path $CKPT \
     --question-file ./playground/data/eval/llava-bench-in-the-wild/questions.jsonl \
