@@ -12,8 +12,8 @@ module purge
 module load conda
 conda activate llava_git
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 layer=16
 stride=8
@@ -29,7 +29,7 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 SPLIT="llava_gqa_testdev_balanced"
-GQADIR="./playground/data/eval/gqa/data"
+GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
