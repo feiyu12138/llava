@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer1_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combined.out
+#SBATCH --job-name=1dpool8layer2_combine
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_combine.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_combined.out
 #SBATCH --gpus=4
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -15,11 +15,12 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
-NAME=1dpool16layer1-True
-layer=1
-grouping=avgpool1d
-stride=16
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME=vcclayer2stride32fine2
+grouping=attn
+stride=32
+layer=2
+num_fine_blocks=2
 # LOG_PREFIX=$NAME-textvqa
 # cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 run_mmbench_cn() {
@@ -37,7 +38,9 @@ run_mmbench_cn() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
-            --conv-mode vicuna_v1
+            --conv-mode vicuna_v1 \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
 
@@ -63,6 +66,8 @@ run_mmbench() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
             --conv-mode vicuna_v1
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
@@ -88,6 +93,8 @@ run_mme() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
             --conv-mode vicuna_v1
 
         cd $ROOT_DATA/eval_luoxin/eval/MME
@@ -111,6 +118,8 @@ run_mmvet() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
             --conv-mode vicuna_v1
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mm-vet/results
@@ -133,7 +142,9 @@ run_pope() {
             --conv-mode vicuna_v1 \
             --grouping $grouping \
             --stride $stride \
-            --layer $layer
+            --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
@@ -156,6 +167,8 @@ run_sqa() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
             --conv-mode vicuna_v1
 
         python llava/eval/eval_science_qa.py \
@@ -179,6 +192,8 @@ run_textvqa() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
             --conv-mode vicuna_v1
 
         python -m llava.eval.eval_textvqa \
@@ -200,6 +215,8 @@ run_vizwiz() {
             --grouping $grouping \
             --stride $stride \
             --layer $layer \
+            --num-fine-blocks $num_fine_blocks \
+            --explore-prob 0.0 \
             --conv-mode vicuna_v1
 
         python scripts/convert_vizwiz_for_submission.py \

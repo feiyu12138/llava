@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer1_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combined.out
+#SBATCH --job-name=1dpool4layer2_combine
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_combine.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer2_combined.out
 #SBATCH --gpus=4
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -15,11 +15,11 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
-NAME=1dpool16layer1-True
-layer=1
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME=1dpool4layer2
+layer=2
+stride=4
 grouping=avgpool1d
-stride=16
 # LOG_PREFIX=$NAME-textvqa
 # cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 run_mmbench_cn() {
@@ -209,13 +209,13 @@ run_vizwiz() {
     " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
-run_mmbench_cn 0 "${NAME}-mmbench_cn" 
-run_mmbench 1  "${NAME}-mmbench" 
+# run_mmbench_cn 0 "${NAME}-mmbench_cn" 
+# run_mmbench 1  "${NAME}-mmbench" 
 # run_mme 2 "${NAME}-mme"
 # run_mmvet 3 "${NAME}-mmvet"
-run_pope 2 "${NAME}-pope"
-# run_sqa 5 "${NAME}-sqa"
-run_textvqa 3 "${NAME}-textvqa"
-# run_vizwiz 7 "${NAME}-vizwiz"
+run_pope 0 "${NAME}-pope"
+run_sqa 1 "${NAME}-sqa"
+run_textvqa 2 "${NAME}-textvqa"
+run_vizwiz 3 "${NAME}-vizwiz"
 
 wait
