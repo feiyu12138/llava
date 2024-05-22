@@ -11,8 +11,6 @@ python -m llava.eval.model_vqa_loader \
     --grouping none \
     --stride 8 \
     --layer 2 \
-    --unified_vpe True \
-    --halfpool False \
     --viz \
     --savedir pictures/attn
 
