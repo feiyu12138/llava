@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool64layer1_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_combined.out
-#SBATCH --gpus=8
+#SBATCH --job-name=1dpool64layer1_pope
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_pope.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_pope.out
+#SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
 #SBATCH --partition=main
@@ -130,17 +130,10 @@ run_pope() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
             --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
             --temperature 0 \
-<<<<<<< HEAD
-            --grouping $grouping \
-            --stride $stride \
-            --layer $layer \
-            --conv-mode vicuna_v1
-=======
             --conv-mode vicuna_v1 \
             --grouping $grouping \
             --stride $stride \
             --layer $layer
->>>>>>> refs/remotes/origin/multi
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
@@ -216,13 +209,13 @@ run_vizwiz() {
     " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
-run_mmbench_cn 0 "${NAME}-mmbench_cn" 
-run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+# run_mmbench_cn 0 "${NAME}-mmbench_cn" 
+# run_mmbench 1  "${NAME}-mmbench" 
+# run_mme 2 "${NAME}-mme"
+# run_mmvet 3 "${NAME}-mmvet"
+run_pope 0 "${NAME}-pope"
+# run_sqa 5 "${NAME}-sqa"
+# run_textvqa 6 "${NAME}-textvqa"
+# run_vizwiz 7 "${NAME}-vizwiz"
 
 wait
