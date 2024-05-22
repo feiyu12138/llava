@@ -20,7 +20,8 @@ NAME=1dpool64layer1
 layer=1
 grouping=avgpool1d
 stride=64
-
+# LOG_PREFIX=$NAME-textvqa
+# cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 run_mmbench_cn() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
@@ -129,7 +130,10 @@ run_pope() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
             --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1
+            --conv-mode vicuna_v1 \
+            --grouping $grouping \
+            --stride $stride \
+            --layer $layer
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
