@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool64layer1_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_combined.out
-#SBATCH --gpus=8
+#SBATCH --job-name=1dpool16layer1_combine
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combine.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combined.out
+#SBATCH --gpus=4
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
 #SBATCH --partition=main
@@ -15,8 +15,8 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-1-grouping-avgpool1d
-NAME=1dpool64layer1
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
+NAME=1dpool16layer1
 layer=1
 grouping=avgpool1d
 stride=64
@@ -130,17 +130,10 @@ run_pope() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
             --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
             --temperature 0 \
-<<<<<<< HEAD
-            --grouping $grouping \
-            --stride $stride \
-            --layer $layer \
-            --conv-mode vicuna_v1
-=======
             --conv-mode vicuna_v1 \
             --grouping $grouping \
             --stride $stride \
             --layer $layer
->>>>>>> refs/remotes/origin/multi
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
@@ -218,11 +211,11 @@ run_vizwiz() {
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
 run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+# run_mme 2 "${NAME}-mme"
+# run_mmvet 3 "${NAME}-mmvet"
+run_pope 2 "${NAME}-pope"
+# run_sqa 5 "${NAME}-sqa"
+run_textvqa 3 "${NAME}-textvqa"
+# run_vizwiz 7 "${NAME}-vizwiz"
 
 wait

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool64layer1_combine
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_combine.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_combined.out
+#SBATCH --job-name=1dpool8layer2rmasking_combine
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2rmasking_combine.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2rmasking_combined.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -15,11 +15,11 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-1-grouping-avgpool1d
-NAME=1dpool64layer1
-layer=1
-grouping=avgpool1d
-stride=64
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-finetune-1dpool8layer2rmasking
+NAME=1dpool8layer2rmasking
+layer=2
+stride=8
+grouping=block_random_drop
 # LOG_PREFIX=$NAME-textvqa
 # cat /datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 run_mmbench_cn() {
@@ -130,17 +130,10 @@ run_pope() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
             --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
             --temperature 0 \
-<<<<<<< HEAD
-            --grouping $grouping \
-            --stride $stride \
-            --layer $layer \
-            --conv-mode vicuna_v1
-=======
             --conv-mode vicuna_v1 \
             --grouping $grouping \
             --stride $stride \
             --layer $layer
->>>>>>> refs/remotes/origin/multi
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
