@@ -94,8 +94,16 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
+<<<<<<< HEAD
+    > /data/datasets/jchen293/logs/exp/llava/$name.log
+=======
     --unified_vpe $unified_vpe \
     --num_fine_blocks $num_fine_blocks \
+<<<<<<< HEAD
     > $LOG_PATH/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-num_fine-$num_fine_blocks-wpt.log
+=======
+    > $LOG_PATH/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-num_fine-$num_fine_blocks.log
+>>>>>>> e3b67c83568fdaf198ba7e7dda465d55e89f2a99
+>>>>>>> refs/remotes/origin/vcc
 
 sleep 2d
