@@ -1,8 +1,8 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-name=plot_curve
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+name=plot_curve__
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
     --question-file $ROOT_DATA/eval_luoxin/eval/MME/llava_mme.jsonl \
@@ -11,11 +11,6 @@ python -m llava.eval.model_vqa_loader \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --grouping none \
-<<<<<<< HEAD
-    --stride 8 \
-    --layer 2 \
-=======
->>>>>>> refs/remotes/origin/rec
     --viz \
     --savedir pictures/attn
 
