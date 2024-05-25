@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 #
 #SBATCH --job-name=ft_lora_reprod
 #SBATCH --error=/datasets/jchen293/logs/exp/llava/ft_lora_reprod.err
@@ -7,15 +6,21 @@
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+#SBATCH --cpus-per-task=80
+
+export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
+export WANDB_PROJECT='llava_team'
+export WANDB_ENTITY='jchen293'
+
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+
+name=ft_lora_reprod
 
 module purge
 module load conda
 conda activate llava_git
-
-
-export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
-export WANDB_NAME='ft_lora_reprod' 
-
 
 deepspeed llava/train/train_mem.py \
     --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
@@ -33,7 +38,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-lora-reprod \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-$name \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -52,4 +57,7 @@ deepspeed llava/train/train_mem.py \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb
+    --report_to wandb \
+    --run_name $name
+
+sleep 1d
