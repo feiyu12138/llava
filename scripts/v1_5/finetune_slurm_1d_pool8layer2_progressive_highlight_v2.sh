@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-#SBATCH --job-name=progressive8pt
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2progressivepool8pt.out
+#SBATCH --job-name=1dpool8layer2proghighlight_v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2proghighlight_v2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2proghighlight_v2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 #SBATCH --exclude=ccvl[14,33-38]
+#SBATCH --cpus-per-task=80
 
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
@@ -20,10 +21,6 @@ stride=8
 grouping=avgpool1d
 unified_vpe=False
 progressive=True
-
-module purge
-module load conda
-conda activate llava_git
 
 
 # deepspeed llava/train/train_mem.py \
@@ -70,7 +67,8 @@ deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
-    --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --data_path $ROOT_DATA/LLaVA-Tuning/json/llava_v1_5_mix665k_second_half.json \
+    --data_path_ext $ROOT_DATA/LLaVA-Tuning/json/llava_v1_5_mix665k_first_half.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-reprod/mm_projector.bin \
@@ -81,7 +79,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-finetune-test-stride-$stride-layer-$layer-grouping-$grouping-unified_vpe-$unified_vpe-progressive \
+    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-1dpool8layer2proghighlight_v2 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -101,13 +99,13 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool8layer21d_progressive \
+    --run_name 1dpool64layer2proghighlight_v2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
     --unified_vpe $unified_vpe \
     --progressive $progressive \
-   # 1> /datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive_test.out \
-   # 2> /datasets/jchen293/logs/exp/llava/$grouping-stride-$stride-layer-$layer-progressive_test.err
+    # 1> /data/datasets/jchen293/logs/exp/llava/1dpool64layer2proghighlight_v2.out \
+    # 2> /data/datasets/jchen293/logs/exp/llava/1dpool64layer2proghighlight_v2.err
 
 sleep 2d

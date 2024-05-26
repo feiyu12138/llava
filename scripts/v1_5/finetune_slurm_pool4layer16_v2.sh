@@ -1,34 +1,36 @@
 #!/bin/bash
-#!/bin/bash
 #
-#SBATCH --job-name=ft_lora_pool8layer16
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/ft_lora_pool8layer16.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/ft_lora_pool8layer16.out
+#SBATCH --job-name=pool4layer16-v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool4layer16-v2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool4layer16-v2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-
-module purge
-module load conda
-conda activate llava_git
+#SBATCH --exclude=ccvl[14,33-38]
+#SBATCH --cpus-per-task=80
 
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-layer=16
-stride=8
-grouping=avgpool1d
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
+module purge
+module load conda
+conda activate llava_git
+
+layer=16
+stride=4
+grouping=avgpool1d
 deepspeed llava/train/train_mem.py \
-    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version v1 \
-    --data_path /datasets/jchen293/data/llava_datasets/LLaVA-Tuning/llava_v1_5_mix665k.json \
-    --image_folder /datasets/jchen293/data/llava_datasets/LLaVA-Tuning \
+    --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
+    --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-pretrain-stride-8-layer-16-grouping-avgpool1d/mm_projector.bin \
+    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -36,7 +38,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir /datasets/jchen293/weights/llava/checkpoint/llava-v1.5-7b-lora-stride-$stride-layer-$layer-grouping-$grouping \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-v2 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -45,7 +47,7 @@ deepspeed llava/train/train_mem.py \
     --save_strategy "steps" \
     --save_steps 50000 \
     --save_total_limit 1 \
-    --learning_rate 2e-4 \
+    --learning_rate 2e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
@@ -55,4 +57,8 @@ deepspeed llava/train/train_mem.py \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb
+    --report_to wandb \
+    --run_name pool4layer16-v2 \
+    --stride $stride \
+    --layer $layer \
+    --grouping $grouping
