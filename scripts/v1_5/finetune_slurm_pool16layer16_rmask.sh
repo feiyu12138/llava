@@ -62,3 +62,5 @@ deepspeed llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
+
+sleep 5d
