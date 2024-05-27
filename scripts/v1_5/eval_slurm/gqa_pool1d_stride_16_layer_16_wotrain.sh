@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer8_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer8_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer8_gqa.out
+#SBATCH --job-name=1dpool16layer16rmasing_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer16wotrain_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer16wotrain_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=intern
@@ -15,12 +15,12 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layer=8
+layer=16
 stride=16
 grouping=avgpool1d
 
-name=1dpool16layer8
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-8-grouping-avgpool1d
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME=1dpool16layer16wotrain
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
@@ -36,7 +36,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --model-path $CKPT \
         --question-file $ROOT_DATA/eval_luoxin/eval/gqa/$SPLIT.jsonl \
         --image-folder $ROOT_DATA/eval_luoxin/eval/gqa/images \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
+        --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
@@ -48,14 +48,14 @@ done
 
 wait
 
-output_file=$ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/merge.jsonl
+output_file=$ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/merge.jsonl
 
 # Clear out the output file if it exists.
 > "$output_file"
 
 # Loop through the indices and concatenate each file.
 for IDX in $(seq 0 $((CHUNKS-1))); do
-    cat $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl >> "$output_file"
+    cat $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
 python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool4layer16_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer16_combined.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool4layer16_combined.out
+#SBATCH --job-name=1dpool16layer16rmasing_combined
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer16rmasing_combined.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer16rmasing_combined.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -15,12 +15,12 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d
-NAME=1dpool4layer16-new
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME=1dpool16layer16rmasing
 
 layer=16
-stride=4
-grouping=avgpool1d
+stride=16
+grouping=block_random_drop
 
 run_mmbench_cn() {
     local GPU_ID=$1

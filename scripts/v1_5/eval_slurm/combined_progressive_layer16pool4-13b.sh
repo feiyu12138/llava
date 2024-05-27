@@ -15,8 +15,8 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d
-NAME=1dpool4layer16-new
+CKPT=liuhaotian/llava-v1.5-13b
+NAME=1dpool4layer16-wotrain
 
 layer=16
 stride=4

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer0_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer0_combined.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer0_combined.out
+#SBATCH --job-name=1dpool16layer1_combined
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combined.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer1_combined.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
