@@ -1,0 +1,4 @@
+bash scripts/v1_5/eval/gqa_stride_4_layer_16_grouping_1d_13b.sh
+bash scripts/v1_5/eval/gqa_stride_64_layer_16_grouping_1d_13b.sh
+bash scripts/v1_5/eval/gqa_stride_16_layer_16_grouping_1d_13b.sh
+sleep 5d
