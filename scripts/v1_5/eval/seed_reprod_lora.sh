@@ -8,12 +8,12 @@ CHUNKS=${#GPULIST[@]}
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=liuhaotian/llava-v1.5-13b
-NAME=1dpool4layer16-13b
+NAME=lora_reprod
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-lora_reprod
 
 layer=16
 stride=4
-grouping=avgpool1d
+grouping=none
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

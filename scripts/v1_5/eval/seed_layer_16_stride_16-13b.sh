@@ -5,6 +5,9 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+
 CKPT=liuhaotian/llava-v1.5-13b
 NAME=1dpool16layer16-13b
 
@@ -17,7 +20,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --model-path $CKPT \
         --question-file $ROOT_DATA/eval_luoxin/eval/seed_bench/llava-seed-bench-img.jsonl \
         --image-folder $ROOT_DATA/eval_luoxin/eval/seed_bench \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$CKPT/${CHUNKS}_${IDX}.jsonl \
+        --answers-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/${CHUNKS}_${IDX}.jsonl \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \

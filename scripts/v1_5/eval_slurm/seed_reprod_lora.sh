@@ -1,23 +1,37 @@
 #!/bin/bash
+#
+#SBATCH --job-name=lora_reprod_seed
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/lora_reprod_seed.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/lora_reprod_seed.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=8
+#SBATCH --partition=intern
+
+module purge
+module load conda
+conda activate llava_git
+
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=liuhaotian/llava-v1.5-13b
-NAME=1dpool4layer16-13b
+NAME=lora_reprod
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-lora_reprod
 
 layer=16
 stride=4
-grouping=avgpool1d
+grouping=none
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
         --model-path $CKPT \
+        --model-base lmsys/vicuna-7b-v1.5 \
         --question-file $ROOT_DATA/eval_luoxin/eval/seed_bench/llava-seed-bench-img.jsonl \
         --image-folder $ROOT_DATA/eval_luoxin/eval/seed_bench \
         --answers-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/${CHUNKS}_${IDX}.jsonl \
