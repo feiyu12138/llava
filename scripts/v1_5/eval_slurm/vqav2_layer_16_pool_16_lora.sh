@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=lora_reprod_vqav2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/lora_reprod_vqav2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/lora_reprod_vqav2.out
+#SBATCH --job-name=1dlayer16pool16_lora_vqav2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1d_layer16_pool16_lora_vqav2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1d_layer16_pool16_lora_vqav2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=intern
@@ -18,8 +18,11 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 
-NAME=lora_reprod
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-lora_reprod
+NAME=1dpool16layer16_lora
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-16-layer-16-grouping-avgpool1d_lora
+stride=16
+layer=16
+grouping=avgpool1d
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -38,7 +41,10 @@ SPLIT="llava_vqav2_mscoco_test-dev2015"
 #         --num-chunks $CHUNKS \
 #         --chunk-idx $IDX \
 #         --temperature 0 \
-#         --conv-mode vicuna_v1 &
+#         --conv-mode vicuna_v1 \
+#         --layer $layer \
+#         --stride $stride \
+#         --grouping $grouping &
 # done
 
 # wait
@@ -53,5 +59,5 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME
+python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME --dir $ROOT_DATA/eval_luoxin/eval/vqav2
 
