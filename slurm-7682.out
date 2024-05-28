@@ -1,0 +1,42 @@
+Traceback (most recent call last):
+  File "/opt/slurm/software/conda/lib/python3.9/runpy.py", line 188, in _run_module_as_main
+    mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
+  File "/opt/slurm/software/conda/lib/python3.9/runpy.py", line 111, in _get_module_details
+    __import__(pkg_name)
+  File "/home/lye21/llava_git/llava/llava/__init__.py", line 1, in <module>
+    from .model import LlavaLlamaForCausalLM
+  File "/home/lye21/llava_git/llava/llava/model/__init__.py", line 2, in <module>
+    from .language_model.llava_llama import LlavaLlamaForCausalLM, LlavaConfig
+  File "/home/lye21/llava_git/llava/llava/model/language_model/llava_llama.py", line 19, in <module>
+    import torch.distributed as dist
+ModuleNotFoundError: No module named 'torch'
+Traceback (most recent call last):
+  File "/home/lye21/llava_git/llava/llava/eval/eval_gpt_review_bench.py", line 5, in <module>
+    import openai
+ModuleNotFoundError: No module named 'openai'
+1dpool16layer16_v2
+Traceback (most recent call last):
+  File "/home/lye21/llava_git/llava/llava/eval/summarize_gpt_review.py", line 42, in <module>
+    with open(os.path.join(args.dir, review_file) if args.dir is not None else review_file) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/datasets/jchen293/data/llava_datasets/eval_luoxin/eval/llava-bench-in-the-wild/reviews/1dpool16layer16_v2.jsonl'
+Traceback (most recent call last):
+  File "/opt/slurm/software/conda/lib/python3.9/runpy.py", line 188, in _run_module_as_main
+    mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
+  File "/opt/slurm/software/conda/lib/python3.9/runpy.py", line 111, in _get_module_details
+    __import__(pkg_name)
+  File "/home/lye21/llava_git/llava/llava/__init__.py", line 1, in <module>
+    from .model import LlavaLlamaForCausalLM
+  File "/home/lye21/llava_git/llava/llava/model/__init__.py", line 2, in <module>
+    from .language_model.llava_llama import LlavaLlamaForCausalLM, LlavaConfig
+  File "/home/lye21/llava_git/llava/llava/model/language_model/llava_llama.py", line 19, in <module>
+    import torch.distributed as dist
+ModuleNotFoundError: No module named 'torch'
+Traceback (most recent call last):
+  File "/home/lye21/llava_git/llava/llava/eval/eval_gpt_review_bench.py", line 5, in <module>
+    import openai
+ModuleNotFoundError: No module named 'openai'
+1dpool16layer16_v3
+Traceback (most recent call last):
+  File "/home/lye21/llava_git/llava/llava/eval/summarize_gpt_review.py", line 42, in <module>
+    with open(os.path.join(args.dir, review_file) if args.dir is not None else review_file) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/datasets/jchen293/data/llava_datasets/eval_luoxin/eval/llava-bench-in-the-wild/reviews/1dpool16layer16_v3.jsonl'
