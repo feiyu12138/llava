@@ -103,9 +103,7 @@ def eval_model(args):
                                    "metadata": {}}) + "\n")
         ans_file.flush()
     ans_file.close()
-    if args.time_on:
-        latency = torch.mean(torch.tensor(model.latency))
-        print(f"Average latency: {latency:.2f} s")
+    
         
 str2bool = lambda x: (str(x).lower() == 'true')
 if __name__ == "__main__":

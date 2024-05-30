@@ -231,13 +231,7 @@ def eval_model(args):
                                    "model_id": model_name,
                                    "metadata": {}}) + "\n")
         # ans_file.flush()
-        ADD += 1
-        if ADD == 100:
-            break
-    if args.time_on:
-        from ipdb import set_trace; set_trace()
-        latency = torch.mean(torch.tensor(model.latency)) * 1000
-        print(f"Average latency: {latency:.2f} ms")
+
     ans_file.close()
 str2bool = lambda x: (str(x).lower() == 'true')
 if __name__ == "__main__":
