@@ -16,6 +16,9 @@ from PIL import Image
 from llava.eval.assignment_viz import assignment_viz
 import math
 
+from deepspeed.profiling.flops_profiler import get_model_profile
+from deepspeed.accelerator import get_accelerator
+
 CHOICE_MAPPING = {
     'number': NUMBER_CHOICES,
     'color': COLOR_CHOICES,
@@ -186,7 +189,7 @@ def eval_model(args):
         print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
 
     data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config, args.icl_file,args.icl)
-
+    ADD = 0
     for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
         idx = line["question_id"]
         cur_prompt = line["text"]
@@ -228,6 +231,7 @@ def eval_model(args):
                                    "model_id": model_name,
                                    "metadata": {}}) + "\n")
         # ans_file.flush()
+
     ans_file.close()
 str2bool = lambda x: (str(x).lower() == 'true')
 if __name__ == "__main__":
@@ -256,6 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--citer", type=int, default=1)
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
+    parser.add_argument("--time_on",type=str2bool,default="false")
     args = parser.parse_args()
 
     eval_model(args)
