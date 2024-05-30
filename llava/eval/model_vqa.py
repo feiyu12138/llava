@@ -103,6 +103,10 @@ def eval_model(args):
                                    "metadata": {}}) + "\n")
         ans_file.flush()
     ans_file.close()
+    if args.time_on:
+        latency = torch.mean(torch.tensor(model.latency))
+        print(f"Average latency: {latency:.2f} s")
+        
 str2bool = lambda x: (str(x).lower() == 'true')
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -125,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument("--citer", type=int, default=1)
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
+    parser.add_argument("--time_on",type=str2bool,default="false")
     args = parser.parse_args()
 
     eval_model(args)
