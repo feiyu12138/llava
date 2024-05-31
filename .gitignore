@@ -50,3 +50,7 @@ playground
 !zero3_offload.json
 
 viz_assign
+
+pictures
+
+*.npy

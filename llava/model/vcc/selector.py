@@ -13,19 +13,9 @@ class Selector(nn.Module):
         # self.start_num_fine_blocks = int(576 / config.stride)
         # self.end_num_fine_blocks = config.num_fine_blocks
         self.num_fine_blocks = config.num_fine_blocks
-        self.selector_type = config.selector_type
-        self.explore_prob = config.explore_prob
+        self.selector_type = "last_token"
+        self.explore_prob = 0.0
         self.attention = attention
-<<<<<<< HEAD
-        self.step_count = 0
-    
-    def step(self):
-        self.step_count += 1
-        if self.step_count % 120 == 0:
-            self.num_fine_blocks = max(self.num_fine_blocks - 1, self.end_num_fine_blocks)
-=======
-        self.viz_assign = config.viz_assign
->>>>>>> refs/remotes/origin/vcc
 
     def extra_repr(self):
         repr = [
