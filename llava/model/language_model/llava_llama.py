@@ -729,7 +729,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.formatter = None
         self.selector = None
         self.unified_vpe = False
-        self.viz_assign = False
         self.assignment = None
         
 
