@@ -120,20 +120,20 @@ run_pope() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
-        python -m llava.eval.model_vqa_loader \
-            --model-path $CKPT \
-            --question-file $ROOT_DATA/eval_luoxin/eval/pope/llava_pope_test.jsonl \
-            --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
-            --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
-            --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --use-fast-v True \
-            --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
-            --fast-v-attention-rank $rank \
-            --fast-v-agg-layer $k \
+        # python -m llava.eval.model_vqa_loader \
+        #     --model-path $CKPT \
+        #     --question-file $ROOT_DATA/eval_luoxin/eval/pope/llava_pope_test.jsonl \
+        #     --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
+        #     --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
+        #     --temperature 0 \
+        #     --conv-mode vicuna_v1 \
+        #     --use-fast-v True \
+        #     --fast-v-sys-length 36 \
+        #     --fast-v-image-token-length 576 \
+        #     --fast-v-attention-rank $rank \
+        #     --fast-v-agg-layer $k \
 
-        python llava/eval/eval_pope.py \
+        python -m llava.eval.eval_pope \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
             --question-file $ROOT_DATA/eval_luoxin/eval/pope/llava_pope_test.jsonl \
             --result-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl
@@ -144,21 +144,21 @@ run_sqa() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
-        python -m llava.eval.model_vqa_science \
-            --model-path $CKPT \
-            --question-file $ROOT_DATA/eval_luoxin/eval/scienceqa/llava_test_CQM-A.json \
-            --image-folder $ROOT_DATA/eval_luoxin/eval/scienceqa/ScienceQA/test \
-            --answers-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME.jsonl \
-            --single-pred-prompt \
-            --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --use-fast-v True \
-            --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
-            --fast-v-attention-rank $rank \
-            --fast-v-agg-layer $k \
+        # python -m llava.eval.model_vqa_science \
+        #     --model-path $CKPT \
+        #     --question-file $ROOT_DATA/eval_luoxin/eval/scienceqa/llava_test_CQM-A.json \
+        #     --image-folder $ROOT_DATA/eval_luoxin/eval/scienceqa/ScienceQA/test \
+        #     --answers-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME.jsonl \
+        #     --single-pred-prompt \
+        #     --temperature 0 \
+        #     --conv-mode vicuna_v1 \
+        #     --use-fast-v True \
+        #     --fast-v-sys-length 36 \
+        #     --fast-v-image-token-length 576 \
+        #     --fast-v-attention-rank $rank \
+        #     --fast-v-agg-layer $k \
 
-        python llava/eval/eval_science_qa.py \
+        python -m llava.eval.eval_science_qa \
             --base-dir $ROOT_DATA/eval_luoxin/eval/scienceqa \
             --result-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME.jsonl \
             --output-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME-output.jsonl \
@@ -215,11 +215,11 @@ run_vizwiz() {
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
 run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+# run_mme 2 "${NAME}-mme"
+# run_mmvet 3 "${NAME}-mmvet"
+# run_pope 4 "${NAME}-pope"
+# run_sqa 5 "${NAME}-sqa"
+# run_textvqa 6 "${NAME}-textvqa"
+# run_vizwiz 7 "${NAME}-vizwiz"
 
 wait
