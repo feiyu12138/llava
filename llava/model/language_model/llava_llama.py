@@ -729,10 +729,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.formatter = None
         self.selector = None
         self.unified_vpe = False
-<<<<<<< HEAD
-=======
         self.viz_assign = False
->>>>>>> refs/remotes/origin/vcc
         self.assignment = None
         
 
