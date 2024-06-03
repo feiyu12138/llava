@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool16layer16-v2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer16-v2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer16-v2.out
+#SBATCH --job-name=pool64layer16-v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool64layer16-v2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool64layer16-v2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -21,7 +21,7 @@ module load conda
 conda activate llava_git
 
 layer=16
-stride=16
+stride=64
 grouping=avgpool1d
 
 deepspeed llava/train/train_mem.py \
@@ -58,7 +58,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_pool16layer16_v2 \
+    --run_name pt_pool64layer16_v2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
@@ -98,7 +98,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool16layer16_v2 \
+    --run_name pool64layer16_v2 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
@@ -138,7 +138,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_pool16layer16_v3 \
+    --run_name pt_pool64layer16_v3 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
@@ -178,7 +178,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool16layer16_v3 \
+    --run_name pool64layer16_v3 \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
