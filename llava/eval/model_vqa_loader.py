@@ -205,6 +205,10 @@ def eval_model(args):
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
                 use_cache=True)
+        # ADD += 1
+        # if ADD == 60:
+        #     from ipdb import set_trace; set_trace()
+            # print(torch.mean(model.latency))
         
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
         if isinstance(idx,str):

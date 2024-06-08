@@ -2,8 +2,8 @@
 CKPT="/home/jchen293/llava/checkpoints/llava-v1.5-7b-reprod"
 export CUDA_VISIBLE_DEVICES=7
 layer=1
-stride=4
-grouping=avgpool2d
+stride=16
+grouping=avgpool1d
 name=stride-$stride-layer-$layer-grouping-$grouping
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \

@@ -653,7 +653,16 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.step = 0
         self.pivot = 0
         self.pivotList = []
-    
+        self.OPT_DICT = {
+            "avgpool1d": self.visual_avg_pool1d,
+            "avgpool2d": self.visual_avg_pool2d,
+            "withdrawn": self.visual_withdrawn,
+            "detach_hard_k_means": self.apply_detach_soft_k_means,
+            "detach_soft_k_means": self.apply_detach_soft_k_means,
+            "hard_k_means": self.apply_hard_k_means,
+            "soft_k_means": self.apply_soft_k_means,
+            "block_random_drop": self.apply_block_random_drop
+        }
     def set_lists(self, strideList, pivotList, groupingLayerList):
         '''
         strides, pivots, layers
@@ -736,6 +745,14 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     def visual_avg_pool1d(self,visual_states, visual_positions):
         visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=self.stride, stride=self.stride).permute(0,2,1).contiguous()
         visual_positions = torch.nn.functional.avg_pool1d(visual_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride).squeeze(1).contiguous()
+        return visual_states, visual_positions
+    
+    def visual_withdrawn(self,visual_states, visual_positions):
+        visual_states = visual_states.permute(0,2,1).contiguous()
+        B,L,D = visual_states.shape
+        visual_positions = visual_positions.squeeze(1).contiguous()
+        visual_states = torch.zeros(B,0,D,device=visual_states.device).to(visual_states.dtype)
+        visual_positions = torch.zeros(B,0,device=visual_positions.device).to(visual_positions.dtype)
         return visual_states, visual_positions
     
     def visual_avg_pool2d(self,visual_states, visual_positions):
@@ -987,6 +1004,9 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'detach_hard_k_means':
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
+                    self.label_ids = compressed_position_ids
+                elif self.grouping == 'withdrawn':
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_withdrawn)
                     self.label_ids = compressed_position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
