@@ -1,32 +1,18 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8_2_2layer2_2_16pivot1300_2600_3900prog
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8_2_2layer2_2_16pivot1300_2600_3900prog.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8_2_2layer2_2_16pivot1300_2600_3900prog.out
-#SBATCH --gpus=8
-#SBATCH --nodes=1
-#SBATCH --partition=main
-#SBATCH --exclude=ccvl[14,33-38]
-#SBATCH --cpus-per-task=80
-
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-module purge
-module load conda
-conda activate llava_git
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
-
-layers=2,2,16,0
-strides=8,2,2,1
-pivots=1300,2600,3900
+layers=2,2,0
+strides=8,2,1
+pivots=1730,3460
 grouping=avgpool1d
-unified_vpe=False
 progressive=True
-name=1dpool8_2_2layer2_2_16pivot1300_2600_3900prog
+RUN_NAME=1dpool8_2layer2pivot1730_3460_v2
 
 
 deepspeed llava/train/train_mem.py \
@@ -44,7 +30,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-$name \
+    --output_dir  $ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$strides-layer-$layers-grouping-$grouping-progressive-v2 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
@@ -64,12 +50,12 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name $name \
+    --run_name $RUN_NAME \
     --strides $strides \
     --layers $layers \
     --pivots $pivots \
     --grouping $grouping \
-    --unified_vpe $unified_vpe \
     --progressive $progressive \
+    1> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$strides-layer-$layers-progressive-v2.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$grouping-stride-$strides-layer-$layers-progressive-v2.err
 
-sleep 2d
