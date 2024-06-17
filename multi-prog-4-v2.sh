@@ -1,0 +1,2 @@
+bash scripts/v1_5/eval/combined_ccvl29_layer2_16_16pool8_8_2prog_v2.sh
+bash scripts/v1_5/eval/gqa_stride_8_8_2layer_2_16_16grouping_1d_prog_v2.sh

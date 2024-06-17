@@ -1,0 +1,4 @@
+bash scripts/v1_5/eval/combined_ccvl29_layer16_pool8_v2.sh
+bash scripts/v1_5/eval/combined_ccvl29_layer16_pool8_v3.sh
+bash scripts/v1_5/eval/combined_ccvl29_layer16_pool16_v3.sh
+bash scripts/v1_5/eval/combined_ccvl29_layer16_pool64_v3.sh
