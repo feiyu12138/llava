@@ -1168,6 +1168,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self.cot_decoding = config.cot_decoding
         # Initialize weights and apply final processing
         self.post_init()
+        self.latency = []
 
     def get_model(self):
         return self.model
