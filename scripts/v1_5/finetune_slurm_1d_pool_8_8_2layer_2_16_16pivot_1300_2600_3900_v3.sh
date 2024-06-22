@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8_2layer2_2pivot1730_3460
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460.out
+#SBATCH --job-name=1dpool8_8_2layer2_16_16pivot1300_2600_3900prog_v3
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8_8_2layer2_16_16pivot1300_2600_3900prog_v3.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8_8_2layer2_16_16pivot1300_2600_3900prog_v3.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -16,19 +16,18 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,2,0
-strides=8,2,1
-pivots=1730,3460
-grouping=avgpool1d
-progressive=True
-name=1dpool8_2layer2_2pivot1730_3460
-
 module purge
 module load conda
 conda activate llava_git
 
-#llava-v1.5-7b-1dpool64layer2proghighlight_v2
-#llava-v1.5-7b-1dpool8layer2proghighlight_v2
+layers=2,16,16,0
+strides=8,8,2,1
+pivots=1300,2600,3900
+grouping=avgpool1d
+unified_vpe=False
+progressive=True
+name=1dpool8_8_2layer2_16_16pivot1300_2600_3900prog_v3
+
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -69,6 +68,9 @@ deepspeed llava/train/train_mem.py \
     --layers $layers \
     --pivots $pivots \
     --grouping $grouping \
+    --unified_vpe $unified_vpe \
     --progressive $progressive \
+    # 1> /data/datasets/jchen293/logs/exp/llava/$name.out \
+    # 2> /data/datasets/jchen293/logs/exp/llava/$name.err
 
 sleep 2d

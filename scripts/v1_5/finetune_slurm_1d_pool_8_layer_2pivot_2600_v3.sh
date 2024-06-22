@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8_2layer2_2pivot1730_3460
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460.out
+#SBATCH --job-name=1dpool8layer2pivot2600_v3
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8layer2pivot2600_v3.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8layer2pivot2600_v3.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -16,19 +16,18 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layers=2,2,0
-strides=8,2,1
-pivots=1730,3460
+layers=2,0
+strides=8,1
+pivots=2600
 grouping=avgpool1d
 progressive=True
-name=1dpool8_2layer2_2pivot1730_3460
+name=1dpool8layer2pivot2600_v3
 
 module purge
 module load conda
 conda activate llava_git
 
-#llava-v1.5-7b-1dpool64layer2proghighlight_v2
-#llava-v1.5-7b-1dpool8layer2proghighlight_v2
+
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -36,7 +35,7 @@ deepspeed llava/train/train_mem.py \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-reprod/mm_projector.bin \
+    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-8-layer-2-grouping-avgpool1d/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \

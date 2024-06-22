@@ -11,9 +11,9 @@
 export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export WANDB_PROJECT='llava'
 
-module purge
-module load conda
-conda activate llava_git
+# module purge
+# module load conda
+# conda activate llava_git
 
 layer=8
 stride=16
