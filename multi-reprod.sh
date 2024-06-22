@@ -1,0 +1,4 @@
+bash scripts/v1_5/finetune_ccvl29_1d_pool8layer2_progressive_v2.sh
+bash scripts/v1_5/finetune_ccvl29_1d_pool8layer2_16_progressive_v2.sh
+bash scripts/v1_5/finetune_ccvl29_1d_pool8_2layer2_progressive_v2.sh
+

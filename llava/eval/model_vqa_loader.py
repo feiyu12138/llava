@@ -186,7 +186,7 @@ def eval_model(args):
         print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
 
     data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config, args.icl_file,args.icl)
-
+    IDX = 1
     for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
         idx = line["question_id"]
         cur_prompt = line["text"]
@@ -204,6 +204,9 @@ def eval_model(args):
                 use_cache=True)
         
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        if IDX % 50 == 0:
+            latency = torch.mean(torch.tensor(model.latency)).item()
+            print(f" Latency: {latency:.5f}ms")
         if isinstance(idx,str):
             image_idx = os.path.splitext(idx)[0]
         elif isinstance(idx,int):
@@ -227,6 +230,7 @@ def eval_model(args):
                                    "answer_id": ans_id,
                                    "model_id": model_name,
                                    "metadata": {}}) + "\n")
+        IDX += 1
         # ans_file.flush()
     ans_file.close()
 str2bool = lambda x: (str(x).lower() == 'true')
