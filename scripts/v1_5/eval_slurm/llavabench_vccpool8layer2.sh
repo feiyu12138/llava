@@ -16,13 +16,13 @@ module load conda
 conda activate llava_git
 
 export CUDA_VISIBLE_DEVICES=0
-layer=16
-stride=32
+layer=2
+stride=16
 grouping=attn
-num_fine_blocks=1
+num_fine_blocks=3
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-$grouping-num_fine_block-$num_fine_blocks
-NAME=vccpool16layer2
+NAME=vccpool8layer2
 
 export OPENAI_API_KEY=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
 
