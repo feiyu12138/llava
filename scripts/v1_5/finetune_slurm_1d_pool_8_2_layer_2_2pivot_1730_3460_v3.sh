@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8_2layer2_2pivot1730_3460
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460.out
+#SBATCH --job-name=1dpool8_2layer2_2pivot1730_3460_v3
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460_v3.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool8_2layer2_2pivot1730_3460_v3.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -21,7 +21,7 @@ strides=8,2,1
 pivots=1730,3460
 grouping=avgpool1d
 progressive=True
-name=1dpool8_2layer2_2pivot1730_3460
+name=1dpool8_2layer2_2pivot1730_3460_v3
 
 module purge
 module load conda
