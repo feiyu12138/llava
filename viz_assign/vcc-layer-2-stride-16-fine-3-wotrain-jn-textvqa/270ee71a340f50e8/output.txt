@@ -1,3 +1,0 @@
-What brand is the bottle with red label?
-Reference OCR token: Retes, JIMBEA, BEAM, UCHET
-Answer the question using a single word or phrase.Jim Beam

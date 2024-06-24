@@ -1,3 +1,0 @@
-What brand of watch is that?
-Reference OCR token: N, u, g0
-Answer the question using a single word or phrase.Omega

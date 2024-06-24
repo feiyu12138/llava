@@ -1,9 +1,0 @@
-<image>
-Context: The passage below describes an experiment. Read the passage and then follow the instructions below.
-
-Jeremiah set up five pairs of platform bird feeders around his yard. He filled one feeder in each pair with sunflower seeds and the other feeder with flax seeds. For one week, Jeremiah watched cardinals visiting the feeders during the same hour each morning. During his observations, Jeremiah counted the number of visits by cardinals to feeders with sunflower seeds and the number of visits by cardinals to feeders with flax seeds.
-Figure: a cardinal visiting a platform feeder with sunflower seeds.
-Identify the question that Jeremiah's experiment can best answer.
-A. Do cardinals visit feeders containing sunflower seeds more often than feeders containing flax seeds?
-B. Do cardinals eat more seeds per visit from feeders containing sunflower seeds compared to feeders containing flax seeds?
-Answer with the option's letter from the given choices directly.A

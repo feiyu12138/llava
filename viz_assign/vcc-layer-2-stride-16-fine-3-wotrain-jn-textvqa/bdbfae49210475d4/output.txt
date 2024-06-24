@@ -1,3 +1,0 @@
-What is the largest measurement we can see on this ruler?
-Reference OCR token: 10, 20, 30, 40, 5, 2002, T282
-Answer the question using a single word or phrase.50

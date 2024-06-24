@@ -1,7 +1,0 @@
-<image>
-What is the capital of Connecticut?
-A. Hartford
-B. Annapolis
-C. New Haven
-D. Dover
-Answer with the option's letter from the given choices directly.A

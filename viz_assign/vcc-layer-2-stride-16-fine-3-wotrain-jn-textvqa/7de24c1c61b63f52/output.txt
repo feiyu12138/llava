@@ -1,3 +1,0 @@
-How many percent is shown on the poster?
-Reference OCR token: $E080, 9E96T9E-LIE, %, %, H, 00, &u!, +, NA, 810%, 10, BOX, 17, TICILMeSTER, 00F, 0A+9, JF, TH, 201281, ISTORASZ
-Answer the question using a single word or phrase.100

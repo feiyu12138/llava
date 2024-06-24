@@ -1,8 +1,0 @@
-<image>
-Context: Figure: Yasuni National Park.
-The Amazon rain forest in South America is the largest rain forest ecosystem in the world. Ecuador's Yasuni National Park, which is in the Amazon rain forest, has many different species of plants, birds, and mammals.
-Which statement describes the Yasuni National Park ecosystem?
-A. It has mostly small plants.
-B. It has many different types of organisms.
-C. It has soil that is rich in nutrients.
-Answer with the option's letter from the given choices directly.B

@@ -1,6 +1,0 @@
-<image>
-Context: Birds have feathers, two wings, and a beak. A robin is an example of a bird.
-Select the bird below.
-A. cane toad
-B. ostrich
-Answer with the option's letter from the given choices directly.B

@@ -1,7 +1,0 @@
-<image>
-What is the capital of Delaware?
-A. Montpelier
-B. Trenton
-C. Dover
-D. Georgetown
-Answer with the option's letter from the given choices directly.C

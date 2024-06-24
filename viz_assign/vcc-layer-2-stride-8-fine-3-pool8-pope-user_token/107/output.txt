@@ -1,2 +1,0 @@
-Is there a baseball bat in the image?
-Answer the question using a single word or phrase.Yes

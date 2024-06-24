@@ -1,3 +1,0 @@
-What number is on the player's jersey?
-Reference OCR token: 22
-Answer the question using a single word or phrase.22

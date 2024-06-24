@@ -1,3 +1,0 @@
-Are these bottles of pepsi?
-Reference OCR token: pepsi, pepsi, pepsi
-Answer the question using a single word or phrase.Yes

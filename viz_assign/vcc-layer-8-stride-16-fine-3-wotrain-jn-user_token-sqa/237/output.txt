@@ -1,6 +1,0 @@
-<image>
-Context: Two magnets are placed as shown.
-Will these magnets attract or repel each other?
-A. repel
-B. attract
-Answer with the option's letter from the given choices directly.B

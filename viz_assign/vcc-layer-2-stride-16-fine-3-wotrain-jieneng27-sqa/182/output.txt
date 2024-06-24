@@ -1,7 +1,0 @@
-<image>
-What is the capital of Mississippi?
-A. Detroit
-B. Jackson
-C. Biloxi
-D. Topeka
-Answer with the option's letter from the given choices directly.B

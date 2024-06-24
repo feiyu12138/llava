@@ -1,3 +1,0 @@
-How long has the drink on the right been aged?
-Reference OCR token: IGNET, N, MORANGIE, MORANGIE, MORANGIE, CHLANDS, ISLAY, OWMOR, OR, SINGL, MALT, WHISKY, SINGLE, MALT, HISKY, SCOTCH, WHITS, LASANTA, NON, CHILL-F, MATURED, RARE, SHERRY, CASKS, BatckK, Reliasen, CAKTYPE, STFILLBOURSON, BATCHNS, TOUE, CISTILLER, 55.6%ac, LONGHO, ATOL, BLAY, SCORLAND, AGED, 10
-Answer the question using a single word or phrase.10 years

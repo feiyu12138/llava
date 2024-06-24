@@ -1,6 +1,0 @@
-Read the text.
-Heat transfer can occur in different ways. Two common ways are through conduction and convection. Conduction occurs when molecules from one object collide with molecules from another object. Burning your hand by touching a hot car door on a sunny summer day is an example of conduction.
-Convection is another form of heat transfer. When a liquid or gas is heated, the heated matter rises upward, away from the heat source. Hot bubbles rising in a pot of water boiling on a stove is an example of convection.
-Which term matches the picture?
-A. conduction
-B. convectionB

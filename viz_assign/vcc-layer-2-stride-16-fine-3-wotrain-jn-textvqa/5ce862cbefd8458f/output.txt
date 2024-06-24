@@ -1,3 +1,0 @@
-What color are the letters on this sign?
-Reference OCR token: Deniy's, D
-Answer the question using a single word or phrase.Yellow

@@ -1,7 +1,0 @@
-<image>
-Context: Below is a food web from a tundra ecosystem in Nunavut, a territory in Northern Canada.
-A food web models how the matter eaten by organisms moves through an ecosystem. The arrows in a food web represent how matter moves between organisms in an ecosystem.
-Which of these organisms contains matter that was once part of the lichen?
-A. bilberry
-B. mushroom
-Answer with the option's letter from the given choices directly.B

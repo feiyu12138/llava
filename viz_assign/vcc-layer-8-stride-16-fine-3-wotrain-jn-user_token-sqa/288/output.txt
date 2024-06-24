@@ -1,7 +1,0 @@
-<image>
-Context: Select the best answer.
-Which property do these three objects have in common?
-A. fragile
-B. bouncy
-C. yellow
-Answer with the option's letter from the given choices directly.A

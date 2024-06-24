@@ -1,3 +1,0 @@
-What candy bar is down there on the bottom?
-Reference OCR token: [yellow, tail], Honey, Maid, ei-hon, BUBBLY, OTBUBBLY, amply, 1800, GASIE, PLAYING, JACKDANIEL'S, hange, Jennessee, Shmply, HONEY, Mnendte, HF, MEENT, 864185
-Answer the question using a single word or phrase.Jack daniels

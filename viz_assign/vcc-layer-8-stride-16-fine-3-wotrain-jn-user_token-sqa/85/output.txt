@@ -1,8 +1,0 @@
-<image>
-Context: Below is a food web from Little Rock Lake, a freshwater lake ecosystem in Wisconsin.
-A food web models how the matter eaten by organisms moves through an ecosystem. The arrows in a food web represent how matter moves between organisms in an ecosystem.
-Which of the following organisms is the primary consumer in this food web?
-A. copepod
-B. black crappie
-C. bacteria
-Answer with the option's letter from the given choices directly.A

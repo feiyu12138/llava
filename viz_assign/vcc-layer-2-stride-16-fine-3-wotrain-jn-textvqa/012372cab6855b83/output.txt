@@ -1,3 +1,0 @@
-What does the picture say the other ride is?
-Reference OCR token: MY, YOTHER, RIDE, YORMONE, O
-Answer the question using a single word or phrase.My other ride

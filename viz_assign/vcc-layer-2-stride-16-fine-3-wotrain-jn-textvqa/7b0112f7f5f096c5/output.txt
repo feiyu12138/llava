@@ -1,3 +1,0 @@
-What is the year on the calender?
-Reference OCR token: WARNING, SONOFPLIG, !WAT, 2WATE
-Answer the question using a single word or phrase.2010

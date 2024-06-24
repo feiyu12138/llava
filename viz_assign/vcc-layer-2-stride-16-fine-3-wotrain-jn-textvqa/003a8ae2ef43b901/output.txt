@@ -1,3 +1,0 @@
-What is the brand of this camera?
-Reference OCR token: DAKOTA, DIGITAL, Single-Use, Camera, Pire, digitat
-Answer the question using a single word or phrase.Dakota

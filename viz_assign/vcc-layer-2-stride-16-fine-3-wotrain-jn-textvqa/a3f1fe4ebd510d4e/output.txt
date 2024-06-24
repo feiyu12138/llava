@@ -1,3 +1,0 @@
-What does the screen say to do?
-Reference OCR token: Select, 0o-Back, Contique, MacBook
-Answer the question using a single word or phrase.Select

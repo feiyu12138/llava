@@ -1,7 +1,0 @@
-<image>
-Context: This organism is a pink-backed pelican. Its scientific name is Pelecanus rufescens.
-Select the organism in the same species as the pink-backed pelican.
-A. Balearica pavonina
-B. Tyto alba
-C. Pelecanus rufescens
-Answer with the option's letter from the given choices directly.C
