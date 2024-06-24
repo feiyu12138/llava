@@ -1,0 +1,12 @@
+<image>
+Context: This passage describes the fleece type trait in sheep:
+The fleece, or outer coat, of a sheep is often cut off and used to make yarn for fabrics and other textiles. Woolly fleeces, which have shorter hairs, are usually used for clothing and blankets. Hairy fleeces, which have longer hairs, are usually used for carpets.
+In a group of sheep, some individuals have a hairy fleece and others have a woolly fleece. In this group, the gene for the fleece type trait has two alleles. The allele for a hairy fleece (F) is dominant over the allele for a woolly fleece (f).
+This Punnett square shows a cross between two sheep.
+What is the expected ratio of offspring with a woolly fleece to offspring with a hairy fleece? Choose the most likely ratio.
+A. 0:4
+B. 4:0
+C. 2:2
+D. 1:3
+E. 3:1
+Answer with the option's letter from the given choices directly.E

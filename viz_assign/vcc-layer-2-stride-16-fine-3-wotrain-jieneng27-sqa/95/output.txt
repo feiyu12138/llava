@@ -1,0 +1,7 @@
+<image>
+Which of these states is farthest north?
+A. Maine
+B. South Carolina
+C. Kansas
+D. Delaware
+Answer with the option's letter from the given choices directly.A

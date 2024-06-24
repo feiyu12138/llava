@@ -1,0 +1,3 @@
+How much for a can of skoal?
+Reference OCR token: 452, SKOAL, 382, PRVTIcE, 1, BUD, 2/635, LIGHT, 185, Collo, All, 2-Lite, $349, $499, o$1.99, RE.SAVEMORE,
+Answer the question using a single word or phrase.3.99

@@ -1,0 +1,6 @@
+<image>
+Look at the models of molecules below. Select the elementary substance.
+A. carbon tetrachloride
+B. acetaldehyde
+C. bromine
+Answer with the option's letter from the given choices directly.A

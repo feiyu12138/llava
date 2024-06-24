@@ -1,0 +1,7 @@
+<image>
+Context: This organism is Rafflesia arnoldii. It is a member of the plant kingdom.
+Rafflesia arnoldii has the largest flowers in the world. A single flower can be three feet wide! R. arnoldii is commonly called a corpse flower because the flower smells like rotting meat.
+Is Rafflesia arnoldii made up of many cells?
+A. yes
+B. no
+Answer with the option's letter from the given choices directly.B

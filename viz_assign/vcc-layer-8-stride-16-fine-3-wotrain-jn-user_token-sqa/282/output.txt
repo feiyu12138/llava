@@ -1,0 +1,7 @@
+<image>
+Which ocean is highlighted?
+A. the Indian Ocean
+B. the Atlantic Ocean
+C. the Pacific Ocean
+D. the Southern Ocean
+Answer with the option's letter from the given choices directly.B

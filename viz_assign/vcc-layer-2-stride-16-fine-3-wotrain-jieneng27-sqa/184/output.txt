@@ -1,0 +1,6 @@
+<image>
+Context: Select the better answer.
+Which property matches this object?
+A. stretchy
+B. blue
+Answer with the option's letter from the given choices directly.A

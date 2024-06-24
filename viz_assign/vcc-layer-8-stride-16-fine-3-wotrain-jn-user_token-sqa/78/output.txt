@@ -1,0 +1,7 @@
+<image>
+Context: Use the data to answer the question below.
+Is the following statement about our solar system true or false?
+The largest planet is made mainly of ice.
+A. true
+B. false
+Answer with the option's letter from the given choices directly.A

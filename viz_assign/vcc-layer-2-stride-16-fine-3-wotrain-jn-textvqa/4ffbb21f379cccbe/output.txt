@@ -1,0 +1,3 @@
+Who was the photographer?
+Reference OCR token: LAGOUDE, Gleamlight/PhilippeMolitor, Philippe
+Answer the question using a single word or phrase.Philippe molitor

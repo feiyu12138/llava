@@ -1,0 +1,7 @@
+<image>
+What is the name of the colony shown?
+A. Maryland
+B. New Hampshire
+C. Rhode Island
+D. Vermont
+Answer with the option's letter from the given choices directly.B

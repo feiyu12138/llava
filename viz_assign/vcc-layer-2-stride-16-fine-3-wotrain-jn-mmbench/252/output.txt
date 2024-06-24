@@ -1,0 +1,9 @@
+People can use the engineering-design process to develop solutions to problems. One step in the process is testing if a potential solution meets the requirements of the design.
+The passage below describes how the engineering-design process was used to test a solution to a problem. Read the passage. Then answer the question below.
+
+Laura and Isabella were making batches of concrete for a construction project. To make the concrete, they mixed together dry cement powder, gravel, and water. Then, they checked if each batch was firm enough using a test called a slump test.
+They poured some of the fresh concrete into an upside-down metal cone. They left the concrete in the metal cone for 30 seconds. Then, they lifted the cone to see if the concrete stayed in a cone shape or if it collapsed. If the concrete in a batch collapsed, they would know the batch should not be used.
+Figure: preparing a concrete slump test.
+Which of the following could Laura and Isabella's test show?
+A. if the concrete from each batch took the same amount of time to dry
+B. if a new batch of concrete was firm enough to useB

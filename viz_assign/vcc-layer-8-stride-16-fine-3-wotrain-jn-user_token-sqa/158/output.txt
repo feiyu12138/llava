@@ -1,0 +1,5 @@
+<image>
+Which material is this path made of?
+A. plastic
+B. brick
+Answer with the option's letter from the given choices directly.B

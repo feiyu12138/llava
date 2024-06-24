@@ -1,0 +1,3 @@
+Are these switches on or off?
+Reference OCR token: OFF, OFF, OFF
+Answer the question using a single word or phrase.Off

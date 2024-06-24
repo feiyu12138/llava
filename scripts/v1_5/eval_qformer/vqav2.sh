@@ -1,4 +1,5 @@
 #!/bin/bash
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -11,7 +12,6 @@ ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=llava-v1.5-7b-finetune-qformer
-SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 HASQF=True
 
@@ -40,5 +40,5 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $CKPT
+python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $CKPT --dir $ROOT_DATA/eval_luoxin/eval/vqav2
 

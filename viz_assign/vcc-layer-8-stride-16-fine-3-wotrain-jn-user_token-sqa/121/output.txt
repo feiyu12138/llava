@@ -1,0 +1,7 @@
+<image>
+What is the capital of Colorado?
+A. Boulder
+B. Phoenix
+C. Colorado Springs
+D. Denver
+Answer with the option's letter from the given choices directly.D

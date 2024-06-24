@@ -1,0 +1,10 @@
+I am getting two margherita pizza and one calzone. How much should I pay in total?To calculate the total cost of your order, you need to consider the prices of the two margherita pizzas and the calzone. Since you haven't provided the exact prices of these items, I cannot give you an exact total. However, I can help you estimate the cost based on the given information.
+
+Assuming each margherita pizza costs $10 and the calzone costs $12, the total cost would be:
+
+2 margherita pizzas x $10 = $20
+1 calzone x $12 = $12
+
+Total cost = $20 + $12 = $32
+
+Please note that this is just an estimation, and the actual cost may vary depending on the prices of the pizzas and calzone at the restaurant.

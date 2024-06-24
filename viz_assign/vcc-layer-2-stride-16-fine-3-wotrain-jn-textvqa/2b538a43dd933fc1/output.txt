@@ -1,0 +1,3 @@
+What kind of beer is this?
+Reference OCR token: NINK, NK, BOWING, CC, STON, SUE, ED, Sublimely, SELF, ELF-RICHEE, swAaVd, KGy, ALE
+Answer the question using a single word or phrase.Sublimely Self-Richeous

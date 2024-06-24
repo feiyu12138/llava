@@ -1,0 +1,2 @@
+Is there a bear in the image?
+Answer the question using a single word or phrase.Yes

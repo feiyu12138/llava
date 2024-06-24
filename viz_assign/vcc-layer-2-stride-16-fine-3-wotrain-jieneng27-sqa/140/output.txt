@@ -1,0 +1,7 @@
+<image>
+Which continent is highlighted?
+A. Africa
+B. North America
+C. South America
+D. Asia
+Answer with the option's letter from the given choices directly.D

@@ -1,0 +1,7 @@
+<image>
+Context: Arctic wolves live in the Canadian Arctic and Greenland. The is adapted to be camouflaged in the snow.
+Figure: Arctic wolf.
+Which animal is also adapted to be camouflaged in the snow?
+A. short-tailed weasel
+B. common hawk-cuckoo
+Answer with the option's letter from the given choices directly.A

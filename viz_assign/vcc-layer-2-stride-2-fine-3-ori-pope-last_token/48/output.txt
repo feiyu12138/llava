@@ -1,0 +1,2 @@
+Is there a bottle in the image?
+Answer the question using a single word or phrase.No

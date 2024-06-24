@@ -1,0 +1,7 @@
+<image>
+Context: This organism is a Goliath heron. Its scientific name is Ardea goliath.
+Select the organism in the same genus as the Goliath heron.
+A. Falco sparverius
+B. Ardea herodias
+C. Tigrisoma mexicanum
+Answer with the option's letter from the given choices directly.B

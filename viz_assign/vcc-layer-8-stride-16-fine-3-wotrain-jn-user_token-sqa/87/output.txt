@@ -1,0 +1,7 @@
+<image>
+Context: Figure: Daintree rain forest.
+The Daintree rain forest is a tropical rain forest ecosystem in northeastern Australia.
+Which better describes the Daintree rain forest ecosystem?
+A. It has year-round rain. It also has soil that is poor in nutrients.
+B. It has cold winters. It also has many different types of organisms.
+Answer with the option's letter from the given choices directly.A
