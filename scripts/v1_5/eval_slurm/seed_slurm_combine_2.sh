@@ -6,7 +6,7 @@
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
-#SBATCH --partition=intern
+#SBATCH --partition=main
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 module purge
@@ -37,10 +37,7 @@ run_seed(){
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --layer $layer \
-        --stride $stride \
-        --grouping $grouping &
+        --conv-mode vicuna_v1 &
     done
 
     wait
@@ -64,41 +61,41 @@ run_seed(){
 
 }
 
-NAME1=1dlayer2pool64
+NAME1=1dpool8_8_2layer2_16_16pivot1300_2600_3900_v2
 layer1=2
-stride1=64
+stride1=8
 grouping1=avgpool1d
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900_v2
 
-NAME2=1dlayer2pool16
+NAME2=1dpool8_2layer2_2pivot1730_3460
 layer2=2
 stride2=16
 grouping2=avgpool1d
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-2-grouping-avgpool1d
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_2layer2_2pivot1730_3460
 
-NAME3=1dlayer2pool4
+NAME3=1dpool8layer2_16pivot1730_3460
 layer3=2
 stride3=4
 grouping3=avgpool1d
-CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
+CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8layer2_16pivot1730_3460
 
-NAME4=1dlayer16pool4_wotrain
+NAME4=1dpool8_2_2layer2_2_16pivot1300_2600_3900prog
 layer4=16
 stride4=4
 grouping4=avgpool1d
-CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_2_2layer2_2_16pivot1300_2600_3900prog
 
-# NAME5=1dlayer1pool16
-# layer5=1
-# stride5=16
-# grouping5=avgpool1d
-# CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
+NAME5=1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
+layer5=1
+stride5=16
+grouping5=avgpool1d
+CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
 
-# NAME6=1dlayer16pool16_wotrain
+# NAME6=1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
 # layer6=16
 # stride6=16
 # grouping6=avgpool1d
-# CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+# CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
 
 # NAME7=rmasklayer16pool16_wotrain
 # layer7=16
@@ -143,9 +140,9 @@ CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 # CKPT13=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d-v4
 
 run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
-run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
-run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
-run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
+# run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
+# run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
+# run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
 # run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5
 # run_seed $NAME6 $layer6 $stride6 $grouping6 $CKPT6
 # run_seed $NAME7 $layer7 $stride7 $grouping7 $CKPT7
