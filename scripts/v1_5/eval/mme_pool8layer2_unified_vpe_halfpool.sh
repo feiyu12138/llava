@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=5
+export CUDA_VISIBLE_DEVICES=0
 name=llava-v1.5-7b-pool1d-unified-vpe
 python -m llava.eval.model_vqa_loader \
     --model-path liuhaotian/llava-v1.5-7b \
@@ -10,10 +10,7 @@ python -m llava.eval.model_vqa_loader \
     --conv-mode vicuna_v1 \
     --grouping avgpool1d \
     --stride 8 \
-    --layer 2 \
-    --unified_vpe True \
-    # --halfpool True
-    # --viz
+    --layer 2 
 
 
 cd ./playground/data/eval/MME

@@ -11,17 +11,10 @@
 # module purge
 # module load conda
 # conda activate llava_git
-export CUDA_VISIBLE_DEVICES=0,1,2
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
-NAME=1dpool16layer16-13b
-
-layer=16
-stride=16
-grouping=avgpool1d
 
 export OPENAI_API_KEY=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
 
@@ -62,26 +55,54 @@ run_llavaw(){
     " > "/data/datasets/jchen293/logs/exp/llava_eval/${NAME}-llavaw.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${NAME}-llavaw.err" &
 }
 
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
-NAME1=1dpool64layer2
-layer1=2
-stride1=64
-grouping1=avgpool1d
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME1=rmask16layer16_wortrain
+layer1=16
+stride1=16
+grouping1=block_random_drop
 
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-2-grouping-avgpool1d
-NAME2=1dpool16layer2
-layer2=2
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME2=dhkpool16layer16_wotrain
+layer2=16
 stride2=16
-grouping2=avgpool1d
+grouping2=detach_hard_k_means
 
-CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
-NAME3=1dpool4layer2
-layer3=2
-stride3=4
+CKPT3=liuhaotian/llava-v1.5-13b
+NAME3=1dpool16layer16_13b
+layer3=16
+stride3=16
 grouping3=avgpool1d
 
-run_llavaw 0 $NAME1 $CKPT1 $layer1 $stride1 $grouping1
+CKPT4=liuhaotian/llava-v1.5-13b
+NAME4=1dpool64layer16_13b
+layer4=16
+stride4=64
+grouping4=avgpool1d
+
+CKPT5=liuhaotian/llava-v1.5-13b
+NAME5=1dpool4layer16_13b
+layer5=16
+stride5=4
+grouping5=avgpool1d
+
+CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-16-grouping-detach_hard_k_means
+NAME6=dhkpool16layer16
+layer6=16
+stride6=16
+grouping6=detach_hard_k_means
+
+CKPT7=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-16-grouping-block_random_drop
+NAME7=rmask16layer16
+layer7=16
+stride7=16
+grouping7=block_random_drop
+
+# run_llavaw 0 $NAME1 $CKPT1 $layer1 $stride1 $grouping1
 run_llavaw 1 $NAME2 $CKPT2 $layer2 $stride2 $grouping2
-run_llavaw 2 $NAME3 $CKPT3 $layer3 $stride3 $grouping3
+# run_llavaw 2 $NAME3 $CKPT3 $layer3 $stride3 $grouping3
+# run_llavaw 3 $NAME4 $CKPT4 $layer4 $stride4 $grouping4
+# run_llavaw 4 $NAME5 $CKPT5 $layer5 $stride5 $grouping5
+run_llavaw 5 $NAME6 $CKPT6 $layer6 $stride6 $grouping6
+# run_llavaw 6 $NAME7 $CKPT7 $layer7 $stride7 $grouping7
 
 wait
