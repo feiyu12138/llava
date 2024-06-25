@@ -9,7 +9,7 @@ ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-1-grouping-avgpool1d
-NAME=1dpool64layer1
+NAME=1dlayer2pool64-v2
 
 layer=1
 stride=64

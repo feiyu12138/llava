@@ -38,20 +38,7 @@ run_pope() {
     local rank=$5
     local k=$6
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
-        python -m llava.eval.model_vqa_loader \
-            --model-path $CKPT \
-            --question-file $ROOT_DATA/eval_luoxin/eval/pope/llava_pope_test.jsonl \
-            --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
-            --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
-            --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --use-fast-v True \
-            --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
-            --fast-v-attention-rank $rank \
-            --fast-v-agg-layer $k 
-
-        python llava/eval/eval_pope.py \
+        python -m llava.eval.eval_pope \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
             --question-file $ROOT_DATA/eval_luoxin/eval/pope/llava_pope_test.jsonl \
             --result-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl
@@ -160,20 +147,6 @@ run_llavabench(){
     local k=$6
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
     export OPENAI_API_KEY=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
-    python -m llava.eval.model_vqa \
-        --model-path $CKPT \
-        --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
-        --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
-        --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --use-fast-v True \
-        --fast-v-sys-length 36 \
-        --fast-v-image-token-length 576 \
-        --fast-v-attention-rank $rank \
-        --fast-v-agg-layer $k 
-
-    mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
 
     python llava/eval/eval_gpt_review_bench.py \
         --question $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
@@ -196,7 +169,7 @@ CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-fastv-rank-72-k-2
 # run_textvqa 2 $NAME1-textvqa $NAME1 $CKPT1 72 2
 run_pope 3 $NAME1-pope $NAME1 $CKPT1 72 2
 # run_vizwiz 4 $NAME1-vizwiz $NAME1 $CKPT1 72 2
-run_llavabench 5 $NAME1-llavabench $NAME1 $CKPT1 72 2
+# run_llavabench 5 $NAME1-llavabench $NAME1 $CKPT1 72 2
 
 NAME2=fastv-rank-72-k-2-infer
 CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-reprod
@@ -205,7 +178,7 @@ CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 # run_textvqa 2 $NAME2-textvqa $NAME2 $CKPT2 72 2
 run_pope 3 $NAME2-pope $NAME2 $CKPT2 72 2
 # run_vizwiz 4 $NAME2-vizwiz $NAME2 $CKPT2 72 2
-run_llavabench 5 $NAME2-llavabench $NAME2 $CKPT2 72 2
+# run_llavabench 5 $NAME2-llavabench $NAME2 $CKPT2 72 2
 
 wait
 

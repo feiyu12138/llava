@@ -12,6 +12,7 @@ run_llavabench(){
     local CKPT=$5
     local GPU_ID=$6
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
+    export OPENAI_API_KEY=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
     python -m llava.eval.model_vqa \
         --model-path $CKPT \
         --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
@@ -35,37 +36,41 @@ run_llavabench(){
         --output \
             $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl
 
-    python llava/eval/summarize_gpt_review.py -f $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl > $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.txt
+    python llava/eval/summarize_gpt_review.py -f $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl > $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/review_result/$NAME.txt
     "  &
 }
-NAME1=1dpool16layer1-v2
-CKPT1="$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d"
-layer1=1
-stride1=16
-grouping1=avgpool1d
 
-NAME2=1dpool64layer1
-CKPT2="$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-1-grouping-avgpool1d"
-layer2=1
-stride2=64
+NAME2=1dpool8layer16-v1-v2
 grouping2=avgpool1d
+layer2=16
+stride2=8
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d
 
-NAME3=reprod-v3
-CKPT3="$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v2"
+NAME3=1dpool8layer16-v2-v2
+grouping3=avgpool1d
 layer3=16
-stride3=16
-grouping3=none
+stride3=8
+CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d-v2
 
-NAME4=1dpool64layer16-v3
-CKPT4="$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-16-grouping-avgpool1d-v3"
-layer4=16
-stride4=64
+NAME4=1dpool8layer16-v3-v2
 grouping4=avgpool1d
+layer4=16
+stride4=8
+CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d-v3
 
-run_llavabench $layer1 $stride1 $grouping1 $NAME1 $CKPT1 0
-# run_llavabench $layer2 $stride2 $grouping2 $NAME2 $CKPT2 1
-# run_llavabench $layer3 $stride3 $grouping3 $NAME3 $CKPT3 2
-# run_llavabench $layer4 $stride4 $grouping4 $NAME4 $CKPT4 3
+NAME5=1dpool64layer2-v2
+grouping5=avgpool1d
+layer5=2
+stride5=64
+CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-16-grouping-avgpool1d-v2
+
+# run_llavabench $layer1 $stride1 $grouping1 $NAME1 $CKPT1 0
+run_llavabench $layer2 $stride2 $grouping2 $NAME2 $CKPT2 1
+run_llavabench $layer3 $stride3 $grouping3 $NAME3 $CKPT3 2
+run_llavabench $layer4 $stride4 $grouping4 $NAME4 $CKPT4 3
+# run_llavabench $layer5 $stride5 $grouping5 $NAME5 $CKPT5 4
 
 wait
+
+
 
