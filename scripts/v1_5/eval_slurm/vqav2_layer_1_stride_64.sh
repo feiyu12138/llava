@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool8layer2_16pivot1730_3460_vqav2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_16pivot1730_3460_vqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer2_16pivot1730_3460_vqa.out
+#SBATCH --job-name=vqav2_1dpool64layer1
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_vqav2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool64layer1_vqav2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH --cpus-per-task=60
+#SBATCH --cpus-per-task=48
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
@@ -17,8 +17,12 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8layer2_16pivot1730_3460
-NAME=1dpool8layer2_16pivot1730_3460
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-1-grouping-avgpool1d
+NAME=1dpool64layer1
+
+layer=1
+stride=64
+grouping=avgpool1d
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -36,20 +40,23 @@ SPLIT="llava_vqav2_mscoco_test-dev2015"
 #         --num-chunks $CHUNKS \
 #         --chunk-idx $IDX \
 #         --temperature 0 \
-#         --conv-mode vicuna_v1 &
+#         --conv-mode vicuna_v1 \
+#         --layer $layer \
+#         --stride $stride \
+#         --grouping $grouping &
 # done
 
 # wait
 
-output_file=$ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/merge.jsonl
+# output_file=$ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/merge.jsonl
 
-# Clear out the output file if it exists.
+# # Clear out the output file if it exists.
 # > "$output_file"
 
-# Loop through the indices and concatenate each file.
+# # Loop through the indices and concatenate each file.
 # for IDX in $(seq 0 $((CHUNKS-1))); do
 #     cat $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 # done
 
-python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME
+python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME --dir $ROOT_DATA/eval_luoxin/eval/vqav2
 
