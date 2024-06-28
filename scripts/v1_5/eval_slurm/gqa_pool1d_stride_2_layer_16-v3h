@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=lora_reprod_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/lora_reprod_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/lora_reprod_gqa.out
+#SBATCH --job-name=1dpool2layer16_gqa-v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool2layer16_gqa-v2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool2layer16_gqa-v2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=intern
-#SBATCH --cpus-per-task=60
+#SBATCH --cpus-per-task=20
 
 module purge
 module load conda
@@ -15,12 +15,12 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-layer=2
-stride=4
-grouping=none
+layer=16
+stride=2
+grouping=avgpool1d
 
-name=lora_reprod
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-lora_reprod
+name=1dpool2layer16-v2
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-16-grouping-avgpool1d-v2
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
@@ -29,12 +29,11 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 SPLIT="llava_gqa_testdev_balanced"
-GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
+GQADIR="./playground/data/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
         --model-path $CKPT \
-        --model-base lmsys/vicuna-7b-v1.5 \
         --question-file $ROOT_DATA/eval_luoxin/eval/gqa/$SPLIT.jsonl \
         --image-folder $ROOT_DATA/eval_luoxin/eval/gqa/images \
         --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$name/${CHUNKS}_${IDX}.jsonl \
@@ -62,4 +61,4 @@ done
 python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
 
 cd $GQADIR
-python eval/eval.py --tier testdev_balanced
+python eval/eval.py --tier testdev_balanced > result/$name.txt

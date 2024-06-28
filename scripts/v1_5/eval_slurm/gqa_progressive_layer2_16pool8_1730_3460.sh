@@ -33,7 +33,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --model-path $CKPT \
         --question-file $ROOT_DATA/eval_luoxin/eval/gqa/$SPLIT.jsonl \
         --image-folder $ROOT_DATA/eval_luoxin/eval/gqa/images \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl \
+        --answers-file $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
@@ -42,19 +42,19 @@ done
 
 wait
 
-output_file=$ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$CKPT/merge.jsonl
+output_file=$ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/merge.jsonl
 
 # Clear out the output file if it exists.
 > "$output_file"
 
 # Loop through the indices and concatenate each file.
 for IDX in $(seq 0 $((CHUNKS-1))); do
-    cat $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
+    cat $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
 python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
 
 cd $GQADIR
-python eval/eval.py --tier testdev_balanced
+python eval/eval.py --tier testdev_balanced > $ROOT_DATA/eval_luoxin/eval/gqa/answers/$SPLIT/$NAME.txt
 
 sleep 2d
