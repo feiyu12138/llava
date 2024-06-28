@@ -35,18 +35,18 @@ run_llavaw(){
 
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
 
-    python -m llava.eval.model_vqa \
-        --model-path $CKPT \
-        --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
-        --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
-        --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --layer $layer \
-        --stride $stride \
-        --grouping $grouping
+    # python -m llava.eval.model_vqa \
+    #     --model-path $CKPT \
+    #     --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
+    #     --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
+    #     --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
+    #     --temperature 0 \
+    #     --conv-mode vicuna_v1 \
+    #     --layer $layer \
+    #     --stride $stride \
+    #     --grouping $grouping
 
-    mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
+    # mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
 
     python llava/eval/eval_gpt_review_bench.py \
         --question $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
@@ -62,17 +62,17 @@ run_llavaw(){
     " > "/data/datasets/jchen293/logs/exp/llava_eval/${NAME}-llavaw.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${NAME}-llavaw.err" &
 }
 
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
-NAME1=1dpool64layer2
-layer1=2
-stride1=64
+NAME1=1dpool16layer2-v3
 grouping1=avgpool1d
+layer1=16
+stride1=2
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-16-grouping-avgpool1d-v3
 
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-2-grouping-avgpool1d
-NAME2=1dpool16layer2
-layer2=2
-stride2=16
+NAME2=1dpool2layer2-v3
 grouping2=avgpool1d
+layer2=2
+stride2=2
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-2-grouping-avgpool1d-v3
 
 CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
 NAME3=1dpool4layer2
@@ -82,6 +82,6 @@ grouping3=avgpool1d
 
 run_llavaw 0 $NAME1 $CKPT1 $layer1 $stride1 $grouping1
 run_llavaw 1 $NAME2 $CKPT2 $layer2 $stride2 $grouping2
-run_llavaw 2 $NAME3 $CKPT3 $layer3 $stride3 $grouping3
+# run_llavaw 2 $NAME3 $CKPT3 $layer3 $stride3 $grouping3
 
 wait

@@ -4,12 +4,8 @@ export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
-
-module purge
-module load conda
-conda activate llava_git
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 layer=16
 stride=2

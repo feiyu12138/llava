@@ -5,12 +5,12 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-0-grouping-avgpool1d
-NAME=1dstride-8,8,1-layer-2,16,0-grouping-avgpool1d-progressive-v3
+NAME=1dpool2layer2-v3
 
 layer=0
 stride=16
