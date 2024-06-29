@@ -1,2 +1,0 @@
-/var/lib/slurm/slurmd/job07061/slurm_script: line 18: /data/datasets/jchen293/logs/exp/llava/avgpool1d-stride-8-layer-0-progressive.out: No such file or directory
-slurmstepd-ccvl33: error: *** JOB 7061 ON ccvl33 CANCELLED AT 2024-05-17T16:18:22 ***

@@ -31,21 +31,9 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM, unpad_image
-from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX
+from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX,VISUAL_LENGTH
 
-from transformers.generation.beam_search import BeamScorer
-from transformers.generation.logits_process import LogitsProcessorList
-from transformers.generation.stopping_criteria import StoppingCriteriaList,validate_stopping_criteria
 from transformers.generation.utils import GenerateBeamDecoderOnlyOutput,GenerateBeamEncoderDecoderOutput
-from llava.model.language_model.attention_viz import generate_attention_map, calc_qkvs_std
-
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from llava.model.vcc.coarser import Coarser
-from llava.model.vcc.finer import Finer
-from llava.model.vcc.selector import Selector
-from llava.model.vcc.formatter import Formatter
 
 GenerateBeamOutput = Union[GenerateBeamDecoderOnlyOutput, GenerateBeamEncoderDecoderOutput]
 
@@ -58,9 +46,8 @@ from transformers.modeling_attn_mask_utils import (
 )
 from transformers.cache_utils import Cache, DynamicCache
 from transformers.utils import logging
-from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv,rotate_half
+from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2, repeat_kv,rotate_half
 from llava.constants import MAPPINGX, MAPPINGY
-from llava.model.multimodal_projector.visual_plugin import Abstractor
 from llava.mm_utils import get_anyres_image_grid_shape
 
 logger = logging.get_logger(__name__)
@@ -100,10 +87,8 @@ def apply_rotary_pos_emb_for_msa(q, k, cos, sin, position_ids, source_position_i
 
 def adjust_attention_mask(attention_mask, q_len, kv_seq_len):
     if len(attention_mask.shape) == 2:
-        batch_size, seq_length = attention_mask.shape
         new_attention_mask = attention_mask[:,:q_len]
     else:
-        batch_size, _, seq_length, _ = attention_mask.shape
         new_attention_mask = attention_mask[:, :, :q_len, :kv_seq_len]
     return new_attention_mask
 
@@ -131,113 +116,16 @@ def flatten_image_features(image_features,x_ids,y_ids,position_ids):
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
     def __init__(self, 
-                 grouping=None, 
-                 cot_decoding=None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.grouping = grouping
-        self.cot_decoding = cot_decoding
-        
-class MyFlashAttention2(LlamaFlashAttention2):
-    def forward(
-        self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.LongTensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[Cache] = None,
-        output_attentions: bool = False,
-        use_cache: bool = False,
-        **kwargs,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
-        # LlamaFlashAttention2 attention does not support output_attentions
-        if "padding_mask" in kwargs:
-            warnings.warn(
-                "Passing `padding_mask` is deprecated and will be removed in v4.37. Please make sure use `attention_mask` instead.`"
-            )
-
-            # overwrite attention_mask with padding_mask
-            attention_mask = kwargs.pop("padding_mask")
-        output_attentions = False
-
-        bsz, q_len, _ = hidden_states.size()
-
-        query_states = self.q_proj(hidden_states)
-        key_states = self.k_proj(hidden_states)
-        value_states = self.v_proj(hidden_states)
-
-        # Flash attention requires the input to have the shape
-        # batch_size x seq_length x head_dim x hidden_dim
-        # therefore we just need to keep the original shape
-        query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-        key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-        value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-
-        kv_seq_len = key_states.shape[-2]
-        if past_key_value is not None:
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
-        cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
-
-        if past_key_value is not None:
-            cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
-            key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-
-        # TODO: These transpose are quite inefficient but Flash Attention requires the layout [batch_size, sequence_length, num_heads, head_dim]. We would need to refactor the KV cache
-        # to be able to avoid many of these transpose/reshape/view.
-        query_states = query_states.transpose(1, 2)
-        key_states = key_states.transpose(1, 2)
-        value_states = value_states.transpose(1, 2)
-
-        dropout_rate = self.attention_dropout if self.training else 0.0
-
-        # In PEFT, usually we cast the layer norms in float32 for training stability reasons
-        # therefore the input hidden states gets silently casted in float32. Hence, we need
-        # cast them back in the correct dtype just to be sure everything works as expected.
-        # This might slowdown training & inference so it is recommended to not cast the LayerNorms
-        # in fp32. (LlamaRMSNorm handles it correctly)
-
-        input_dtype = query_states.dtype
-        if input_dtype == torch.float32:
-            if torch.is_autocast_enabled():
-                target_dtype = torch.get_autocast_gpu_dtype()
-            # Handle the case where the model is quantized
-            elif hasattr(self.config, "_pre_quantization_dtype"):
-                target_dtype = self.config._pre_quantization_dtype
-            else:
-                target_dtype = self.q_proj.weight.dtype
-
-            logger.warning_once(
-                f"The input hidden states seems to be silently casted in float32, this might be related to"
-                f" the fact you have upcasted embedding or layer norm layers in float32. We will cast back the input in"
-                f" {target_dtype}."
-            )
-
-            query_states = query_states.to(target_dtype)
-            key_states = key_states.to(target_dtype)
-            value_states = value_states.to(target_dtype)
-
-        attn_output = self._flash_attention_forward(
-            query_states, key_states, value_states, attention_mask, q_len, dropout=dropout_rate
-        )
-
-        attn_output = attn_output.reshape(bsz, q_len, self.hidden_size).contiguous()
-        attn_output = self.o_proj(attn_output)
-
-        if not output_attentions:
-            attn_weights = None
-
-        return attn_output, attn_weights, past_key_value
     
 class AdaptiveFlashAttention2(LlamaFlashAttention2):
-    def __init__(self, viz, *args, **kwargs):
+    def __init__(self,  *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.viz = viz
-        self.attn_map = []
         
     def forward(
         self,
         hidden_states: torch.Tensor,
-        source_states: torch.Tensor = None,
         attention_mask: Optional[torch.LongTensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
         source_position_ids: Optional[torch.LongTensor] = None,
@@ -256,15 +144,12 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
             attention_mask = kwargs.pop("padding_mask")
         output_attentions = False
         bsz, q_len, _ = hidden_states.size()
-        if source_states is not None:
-            kv_len = source_states.size(1)
-        else:
-            kv_len = q_len
-            source_states = hidden_states
+
+        kv_len = q_len
 
         query_states = self.q_proj(hidden_states)
-        key_states = self.k_proj(source_states)
-        value_states = self.v_proj(source_states)
+        key_states = self.k_proj(hidden_states)
+        value_states = self.v_proj(hidden_states)
 
         # Flash attention requires the input to have the shape
         # batch_size x seq_length x head_dim x hidden_dim
@@ -277,7 +162,7 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
         if past_key_value is not None:
             kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
-        query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids,source_position_ids)
+        query_states, key_states = apply_rotary_pos_emb_for_msa(query_states, key_states, cos, sin, position_ids, source_position_ids)
         if past_key_value is not None:
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
@@ -328,108 +213,19 @@ class AdaptiveFlashAttention2(LlamaFlashAttention2):
 
         return attn_output, attn_weights, past_key_value
     
-class MyLlamaSdpaAttention(LlamaSdpaAttention):
-    """
-    Llama attention module using torch.nn.functional.scaled_dot_product_attention. This module inherits from
-    `LlamaAttention` as the weights of the module stays untouched. The only changes are on the forward pass to adapt to
-    SDPA API.
-    """
-
-    # Adapted from LlamaAttention.forward
-    def forward(
-        self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[Cache] = None,
-        output_attentions: bool = False,
-        use_cache: bool = False,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
-        if output_attentions:
-            # TODO: Improve this warning with e.g. `model.config.attn_implementation = "manual"` once this is implemented.
-            logger.warning_once(
-                "LlamaModel is using LlamaSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, "
-                'but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.'
-            )
-            return super().forward(
-                hidden_states=hidden_states,
-                attention_mask=attention_mask,
-                position_ids=position_ids,
-                past_key_value=past_key_value,
-                output_attentions=output_attentions,
-                use_cache=use_cache,
-            )
-
-        bsz, q_len, _ = hidden_states.size()
-
-        query_states = self.q_proj(hidden_states)
-        key_states = self.k_proj(hidden_states)
-        value_states = self.v_proj(hidden_states)
-
-        query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-        key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-        value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-
-        kv_seq_len = key_states.shape[-2]
-        if past_key_value is not None:
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
-        cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max()+1)
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
-        if past_key_value is not None:
-            cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
-            key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-
-        key_states = repeat_kv(key_states, self.num_key_value_groups)
-        value_states = repeat_kv(value_states, self.num_key_value_groups)
-        if attention_mask is not None:
-            if attention_mask.size() != (bsz, 1, q_len, kv_seq_len):
-                raise ValueError(
-                    f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
-                )
-
-        # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
-        # Reference: https://github.com/pytorch/pytorch/issues/112577.
-        if query_states.device.type == "cuda" and attention_mask is not None:
-            query_states = query_states.contiguous()
-            key_states = key_states.contiguous()
-            value_states = value_states.contiguous()
-
-        attn_output = torch.nn.functional.scaled_dot_product_attention(
-            query_states,
-            key_states,
-            value_states,
-            attn_mask=attention_mask,
-            dropout_p=self.attention_dropout if self.training else 0.0,
-            # The q_len > 1 is necessary to match with AttentionMaskConverter.to_causal_4d that does not create a causal mask in case q_len == 1.
-            is_causal=self.is_causal and attention_mask is None and q_len > 1,
-        )
-
-        attn_output = attn_output.transpose(1, 2).contiguous()
-        attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
-
-        attn_output = self.o_proj(attn_output)
-
-        return attn_output, None, past_key_value
-    
 class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
     """
     Llama attention module using torch.nn.functional.scaled_dot_product_attention. This module inherits from
     `LlamaAttention` as the weights of the module stays untouched. The only changes are on the forward pass to adapt to
     SDPA API.
     """
-    def __init__(self, config: LlamaConfig, layer_idx: Optional[int] = None, viz: bool = False):
+    def __init__(self, config: LlamaConfig, layer_idx: Optional[int] = None):
         super().__init__(config, layer_idx)
-        self.viz = viz
-        self.attn_map = None
-        self.std = {}
-        self.text_std = {}
-        self.user_std = {}
         self.images_idx = None
     # Adapted from LlamaAttention.forward
     def forward(
         self,
         hidden_states: torch.Tensor,
-        source_states: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
         source_position_ids: Optional[torch.LongTensor] = None,
@@ -452,15 +248,12 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 use_cache=use_cache,
             )
         bsz, q_len, _ = hidden_states.size()
-        if source_states is not None:
-            kv_len = source_states.size(1)
-        else:
-            kv_len = q_len
-            source_states = hidden_states
+
+        kv_len = q_len
 
         query_states = self.q_proj(hidden_states)
-        key_states = self.k_proj(source_states)
-        value_states = self.v_proj(source_states)
+        key_states = self.k_proj(hidden_states)
+        value_states = self.v_proj(hidden_states)
         query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
         key_states = key_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
         value_states = value_states.view(bsz, kv_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
@@ -481,26 +274,6 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
                 raise ValueError(
                     f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
                 )
-        if self.viz:
-            self.attn_map = generate_attention_map(query_states, key_states)
-            # self.std.update(
-            #     calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
-            #                   key_states[:,:,self.images_idx:self.images_idx+576], 
-            #                   value_states[:,:,self.images_idx:self.images_idx+576], 
-            #                   hidden_states[:,self.images_idx:self.images_idx+576])
-            # )
-            # self.text_std.update(
-            #     calc_qkvs_std(query_states[:,:,0:self.images_idx],
-            #                     key_states[:,:,0:self.images_idx],
-            #                     value_states[:,:,0:self.images_idx],
-            #                     hidden_states[:,0:self.images_idx])
-            # )
-            # self.user_std.update(
-            #     calc_qkvs_std(query_states[:,:,self.images_idx+576:],
-            #                   key_states[:,:,self.images_idx+576:],
-            #                   value_states[:,:,self.images_idx+576:],
-            #                     hidden_states[:,self.images_idx+576:])
-            # )
         # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
         # Reference: https://github.com/pytorch/pytorch/issues/112577.
         if query_states.device.type == "cuda" and attention_mask is not None:
@@ -525,30 +298,20 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         return attn_output, None, past_key_value
 
 MY_LLAMA_ATTENTION_CLASSES = {
-    "ada_flash_attention_2": MyFlashAttention2,
     "flash_attention_2": AdaptiveFlashAttention2,
     "sdpa": AdaptiveLlamaSdpaAttention,
-    "adaptive_sdpa": MyLlamaSdpaAttention,
 }  
-class MyLlamaDecoderLayer(LlamaDecoderLayer):
-    def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
-        super().__init__(config, layer_idx)
-        # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
-        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
         
         
 class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
     def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
-        # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
-        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
+        self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
     def forward(
         self,
         hidden_states: torch.Tensor,
-        compressed_hidden_states: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
-        compressed_position_ids: Optional[torch.LongTensor] = None,
         past_key_value: Optional[Tuple[torch.Tensor]] = None,
         output_attentions: Optional[bool] = False,
         use_cache: Optional[bool] = False,
@@ -572,31 +335,15 @@ class AdaptiveLlamaDecoderLayer(LlamaDecoderLayer):
             warnings.warn(
                 "Passing `padding_mask` is deprecated and will be removed in v4.37. Please make sure use `attention_mask` instead.`"
             )
-        if compressed_hidden_states is not None and compressed_position_ids is None:
-            raise ValueError("compressed_position_ids must be provided when compressed_hidden_states is provided")
-        if compressed_hidden_states is None and compressed_position_ids is not None:
-            raise ValueError("compressed_hidden_states must be provided when compressed_position_ids is provided")
-        if compressed_hidden_states is not None:
-            target_states = compressed_hidden_states
-            target_position_ids = compressed_position_ids
-            source_states = hidden_states
-            source_position_ids = position_ids
-        else:
-            target_states = hidden_states
-            target_position_ids = position_ids
-            source_states = None
-            source_position_ids = None
+        target_states = hidden_states
+        target_position_ids = position_ids
         residual = target_states
         target_states = self.input_layernorm(target_states)
-        if source_states is not None:
-            source_states = self.input_layernorm(source_states)
         # Self Attention
         target_states, self_attn_weights, present_key_value = self.self_attn(
             hidden_states=target_states,
-            source_states=source_states,
             attention_mask=attention_mask,
             position_ids=target_position_ids,
-            source_position_ids=source_position_ids,
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
@@ -630,30 +377,29 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         self.images_idx = None
         self.grouping = None
         self.groupingLayer = None
-        self.groupingLayerList = []
         self.stride = None
         self.strideList = []
+        self.pivotList = []
+        self.groupingLayerList = []
         self.layers = nn.ModuleList(
             [AdaptiveLlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
         self.label_ids = None
-        self.Abstractor = None
         self.hidden_size = config.hidden_size
-        self.halfpool = False
-        self.viz = False
-        self.attention_maps = []
-        self.std_layers = []
-        self.text_std_layers = []
-        self.user_std_layers = []
-        self.unified_vpe = False
-        self.citer=1
-        self.viz_assign = False
-        self.assignment = None
         self.progressive = False
         self.step = 0
         self.pivot = 0
-        self.pivotList = []
-    
+        
+    def post_config(self,args):
+        self.grouping = args.grouping
+        if hasattr(args, "strides") and hasattr(args, "pivots") and hasattr(args, "layers"):
+            self.set_lists(args.strides, args.pivots, args.layers)
+        elif hasattr(args, "stride") and hasattr(args, "layer"):
+            self.stride = args.stride
+            self.groupingLayer = args.layer
+        if hasattr(args,"progressive"):
+            self.progressive = args.progressive
+            
     def set_lists(self, strideList, pivotList, groupingLayerList):
         '''
         strides, pivots, layers
@@ -673,18 +419,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             self.pivot = self.pivotList.pop(0) if len(self.pivotList) > 0 else 10000
             print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
         self.step += 1
-
-    def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
-        self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
-                                       num_pre_layers=num_pre_layers, 
-                                       num_post_layers=num_post_layers, 
-                                       pool_stride=stride,
-                                       rel_pos_spatial=rel_pos_spatial,
-                                       grouping=self.grouping,
-                                       kernel_size=kernel_size)
-
-    def get_Abstractor(self):
-        return self.Abstractor
     
     def visual_operating(self, hidden_states, position_ids, operator):
         if self.images_idx is not None:
@@ -695,11 +429,11 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             # cat hidden states with position ids
             new_hidden_states = []
             new_position_ids = []
-            FLAG = False
+            OPERATED = False
             for image_idx in self.images_idx:
                 if image_idx[0].shape[0] == 0:
                     continue
-                FLAG = True
+                OPERATED = True
                 states_segment = []
                 position_segment = []
                 for vi in range(image_idx[0].shape[0]):
@@ -707,23 +441,23 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         states_segment.append(hidden_states[i:i+1,0: image_idx[vi]])
                         position_segment.append(position_ids[i:i+1,0: image_idx[vi]])
                     else:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
-                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + VISUAL_LENGTH: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + VISUAL_LENGTH: image_idx[vi]])
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + VISUAL_LENGTH].permute(0,2,1)
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + VISUAL_LENGTH].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + VISUAL_LENGTH: ])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi] + VISUAL_LENGTH: ])
                 states_segment = torch.cat(states_segment, dim=1)
                 position_segment = torch.cat(position_segment, dim=1)
                 new_hidden_states.append(states_segment) 
                 new_position_ids.append(position_segment)
                 i += 1
             # filling the position ids so that the model can use them
-            if FLAG:
+            if OPERATED:
                 hidden_states = torch.cat(new_hidden_states, dim=0)
                 new_position_ids = torch.cat(new_position_ids, dim=0).to(position_ids.device).to(position_ids.dtype)
             else:
@@ -737,140 +471,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         visual_states = torch.nn.functional.avg_pool1d(visual_states, kernel_size=self.stride, stride=self.stride).permute(0,2,1).contiguous()
         visual_positions = torch.nn.functional.avg_pool1d(visual_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride).squeeze(1).contiguous()
         return visual_states, visual_positions
-    
-    def visual_avg_pool2d(self,visual_states, visual_positions):
-        visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
-        visual_states = torch.nn.functional.avg_pool2d(visual_states, kernel_size=self.stride, stride=self.stride)
-        visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-        visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-        visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
-        return visual_states, visual_positions
-    
-    def apply_Abstractor(self, visual_states, visual_positions):
-        visual_states, visual_x_positions, visual_y_positions = unflatten_image_features(visual_states, visual_positions)
-        visual_states = self.Abstractor(visual_states)
-        visual_x_positions = torch.nn.functional.avg_pool2d(visual_x_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-        visual_y_positions = torch.nn.functional.avg_pool2d(visual_y_positions.to(torch.float16), kernel_size=self.stride, stride=self.stride)
-        visual_states, visual_positions = flatten_image_features(visual_states, visual_x_positions, visual_y_positions,visual_positions)
-        return visual_states, visual_positions
-    
-    def apply_random_drop(self,tokens, position_ids):
-        K = tokens.size(2) // self.stride
-        position_ids = position_ids.squeeze(1)
-        # Randomly keep K tokens
-        keep_ids = torch.randperm(tokens.size(2))[:K]    
-        tokens = tokens[:,:,keep_ids]
-        position_ids = position_ids[:,keep_ids]
-        
-        return tokens.permute(0,2,1).contiguous(), position_ids.contiguous()
-    
-    def apply_soft_k_means(self, tokens,positions,iterations=1):
-        if self.citer != 1:
-            iterations = self.citer
-        start_ids = positions.min()
-        centroids = tokens[:,:,::self.stride]
-        for _ in range(iterations):
-            distances = torch.sum(torch.abs((tokens.unsqueeze(3) - centroids.unsqueeze(2))), dim=1)
-            weights = torch.softmax(-distances, dim=2)
-            weights = weights / (weights.sum(1) + 1e-6)
-            centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
-        centroids = centroids.permute(0,2,1)
-        if self.viz_assign:
-            self.assignment = weights
-        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
-        return centroids,positions
-    
-    def apply_hard_k_means(self, tokens, positions, iterations=1, tau=1.0):
-        if self.citer != 1:
-            iterations = self.citer
-        start_ids = positions.min()
-        centroids = tokens[:, :, ::self.stride]  # initial centroids
-        for _ in range(iterations):
-            # Compute pairwise absolute differences and sum along feature dimension
-            distances = torch.sum(torch.abs(tokens.unsqueeze(3) - centroids.unsqueeze(2)), dim=1)
-            
-            # Use Gumbel softmax for differentiable 'hard' assignment
-            weights = torch.nn.functional.gumbel_softmax(-distances, tau=tau, dim=2, hard=True)
-            weights = weights / (weights.sum(1) + 1e-6)
-            
-            # Update centroids: equivalent to weighted average where weights are one-hot encoded
-            centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
-        if self.viz_assign:
-            self.assignment = weights
-        centroids = centroids.permute(0, 2, 1)
-        positions = torch.zeros(centroids.shape[0], centroids.shape[1], device=positions.device).long() + start_ids
-        
-        return centroids, positions
-        
-    
-    def apply_detach_soft_k_means(self, tokens,positions,iterations=1):
-        if self.citer != 1:
-            iterations = self.citer
-        start_ids = positions.min()
-        detach_tokens = tokens.detach()
-        detach_centroids = detach_tokens[:,:,::self.stride]
-        with torch.no_grad():
-            for i in range(iterations):
-                distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
-                weights = torch.softmax(-distances, dim=2)
-                weights = weights / (weights.sum(1) + 1e-6)
-                detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, weights)
-                del distances
-                if i<iterations-1:
-                    del weights
-        centroids = torch.einsum('bcl,blq->bcq', tokens, weights)
-        centroids = centroids.permute(0,2,1)
-        if self.viz_assign:
-            self.assignment = weights
-        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
-        del detach_tokens
-        del detach_centroids
-        del weights
-        return centroids,positions
-    
-    def apply_detach_hard_k_means(self, tokens,positions,iterations=1):
-        if self.citer != 1:
-            iterations = self.citer
-        start_ids = positions.min()
-        detach_tokens = tokens.detach()
-        detach_centroids = detach_tokens[:,:,::self.stride]
-        with torch.no_grad():
-            for i in range(iterations):
-                distances = torch.sum(torch.abs((detach_tokens.unsqueeze(3) - detach_centroids.unsqueeze(2))), dim=1)
-                weights = torch.argmax(-distances, dim=2)
-                one_hot_weights = F.one_hot(weights, num_classes=distances.size(2)).to(detach_tokens.dtype)
-                one_hot_weights = one_hot_weights / (one_hot_weights.sum(1) + 1e-6)
-                detach_centroids = torch.einsum('bcl,blq->bcq', detach_tokens, one_hot_weights)
-                del distances
-                if i<iterations-1:
-                    del weights
-                    del one_hot_weights
-        centroids = torch.einsum('bcl,blq->bcq', tokens, one_hot_weights).permute(0,2,1)
-        if self.viz_assign:
-            self.assignment = one_hot_weights
-        positions = torch.zeros(centroids.shape[0],centroids.shape[1],device=positions.device).long() + start_ids
-        del detach_tokens
-        del detach_centroids
-        del weights
-        return centroids,positions
-
-    def apply_PCA(self,tokens,positions):
-        # apply PCA on the third dimension of the tokens
-        
-        return tokens,positions
-    
-    def apply_block_random_drop(self, tokens, position_ids):
-        K = tokens.size(2) // self.stride
-        # Randomly keep K continuous tokens
-        start_ids = torch.randint(0,tokens.size(2)-K+1,(1,))
-        tokens = tokens[:,:,start_ids:start_ids+K]
-        position_ids = position_ids[:,:,start_ids:start_ids+K].squeeze(1)
-        
-        return tokens.permute(0,2,1).contiguous(), position_ids
-    
-    def apply_position_average(self, visual_states, visual_positions):
-        visual_positions = torch.mean(visual_positions.float(), dim=2).long().repeat(1, 1, visual_states.size(2)).squeeze(1)
-        return visual_states.permute(0,2,1), visual_positions
     
     def forward(
         self,
@@ -953,71 +553,28 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         next_decoder_cache = None
         layer_idx = 0
         for decoder_layer in self.layers:
-            if self.viz and self.images_idx is not None:
-                decoder_layer.self_attn.viz = True
-                decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
-            if self.unified_vpe and layer_idx == 0:
-                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
             if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
-                    self.label_ids = compressed_position_ids
-                elif self.grouping == 'avgpool2d':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
-                    self.label_ids = compressed_position_ids
-                elif self.grouping.find('abstractor') != -1:
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
+                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = position_ids
-                elif self.grouping == 'random_drop':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
-                    self.label_ids = position_ids
-                elif self.grouping == 'block_random_drop':
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_block_random_drop)
-                    self.label_ids = position_ids
-                elif self.grouping == 'soft_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_soft_k_means)
-                    self.label_ids = compressed_position_ids
-                elif self.grouping == 'hard_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_hard_k_means)
-                    self.label_ids = compressed_position_ids
-                elif self.grouping == 'detach_soft_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_soft_k_means)
-                    self.label_ids = compressed_position_ids
-                elif self.grouping == 'detach_hard_k_means':
-                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_detach_hard_k_means)
-                    self.label_ids = compressed_position_ids
                 else:
                     raise ValueError(f"Grouping {self.grouping} is not supported")
                 if attention_mask is not None:
-                    q_len = hidden_states.size(1) if compressed_hidden_states is None else compressed_hidden_states.size(1)
+                    q_len = hidden_states.size(1)
                     if past_key_values is not None:
                         kv_seq_len = q_len + past_key_values.get_usable_length(q_len, layer_idx)
                     else:
                         kv_seq_len = q_len
                     attention_mask = adjust_attention_mask(attention_mask,q_len,kv_seq_len)
-            elif (layer_idx == 0 and self.unified_vpe):
-                hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
-                compressed_hidden_states = None
-                compressed_position_ids = None
-            else:
-                compressed_hidden_states = None
-                compressed_position_ids = None
-            
-            if not self.halfpool and compressed_hidden_states is not None:
-                hidden_states = compressed_hidden_states
-                position_ids = compressed_position_ids
-                compressed_hidden_states = None
-                compressed_position_ids = None
+                
             if self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
                     hidden_states,
-                    compressed_hidden_states,
                     attention_mask,
                     position_ids,
-                    compressed_position_ids,
                     past_key_values,
                     output_attentions,
                     use_cache,
@@ -1025,10 +582,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             else:
                 layer_outputs = decoder_layer(
                     hidden_states,
-                    compressed_hidden_states=compressed_hidden_states,
                     attention_mask=attention_mask,
                     position_ids=position_ids,
-                    compressed_position_ids=compressed_position_ids,
                     past_key_value=past_key_values,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
@@ -1040,102 +595,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
 
             if output_attentions:
                 all_self_attns += (layer_outputs[1],)
-            if compressed_position_ids is not None:
-                position_ids = compressed_position_ids
-                compressed_position_ids = None
 
             layer_idx += 1
-            if self.viz:
-                assert decoder_layer.self_attn.attn_map is not None, "Attention map is not generated. Please set viz=True in the attn layer"
-                self.attention_maps.append(decoder_layer.self_attn.attn_map)
-                self.std_layers.append(decoder_layer.self_attn.std)
-                self.text_std_layers.append(decoder_layer.self_attn.text_std)
-                self.user_std_layers.append(decoder_layer.self_attn.user_std)
-        
-        if self.viz and self.images_idx is not None:
-            top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
-            width_height_init = [576,576]
-            for idx, map in enumerate(self.attention_maps):
-                width_height = width_height_init if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
-                map = map.squeeze(0).cpu().detach().numpy()
-                
-                plt.figure()
-                plt.imshow(map,cmap='coolwarm',interpolation='none')
-                plt.colorbar()
-                rect = patches.Rectangle((top_left[0], 0), width_height[0], map.shape[0],
-                         linewidth=1, edgecolor='r', facecolor='none')
-                plt.gca().add_patch(rect)
-                plt.ylabel('Query ID')
-                plt.xlabel('Key ID')
-                plt.tight_layout()
-                plt.savefig(f'{self.savedir}/attention_map_{idx}.png',dpi=300)
-                # x label is query id
-                # y label is key id
-                plt.close()
-                plt.figure()
-                visual_map = map[:,top_left[0]:top_left[0]+width_height[0]]
-                visual_attention_max = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].max()
-                visual_attention_min = map[top_left[1]:top_left[1]+width_height[1],top_left[0]:top_left[0]+width_height[0]].min()
-                visual_map = (visual_map - visual_attention_min) / (visual_attention_max - visual_attention_min)
-                plt.ylabel('Query ID')
-                plt.xlabel('Visual Key ID')
-                # set x range to be the same as the visual key range: [top_left[0],top_left[0]+width_height[0]](just for visualization purpose)
-                plt.xticks(np.arange(0, width_height[0],50), np.arange(top_left[0], top_left[0]+width_height[0],50))
-                plt.imshow(visual_map,cmap='coolwarm',interpolation='none')
-                plt.tight_layout()
-                plt.savefig(f'{self.savedir}/attention_map_{idx}_visual_key.png',dpi=300)
-                plt.close()
-            # state_std_layers = [std['state'].cpu() for std in self.std_layers]
-            # query_std_layers = [std['query'].cpu() for std in self.std_layers]
-            # key_std_layers = [std['key'].cpu() for std in self.std_layers]
-            # value_std_layers = [std['value'].cpu() for std in self.std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS, segment length = 4')
-            # plt.plot(state_std_layers,label='state std')
-            # plt.plot(query_std_layers,label='query std')
-            # plt.plot(key_std_layers,label='key std')
-            # plt.plot(value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('tempt/visual_std_layers.png',dpi=300)
-            # plt.close()
-            # text_state_std_layers = [std['state'].cpu() for std in self.text_std_layers]
-            # text_query_std_layers = [std['query'].cpu() for std in self.text_std_layers]
-            # text_key_std_layers = [std['key'].cpu() for std in self.text_std_layers]
-            # text_value_std_layers = [std['value'].cpu() for std in self.text_std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS(system), segment length = 4')
-            # plt.plot(text_state_std_layers,label='state std')
-            # plt.plot(text_query_std_layers,label='query std')
-            # plt.plot(text_key_std_layers,label='key std')
-            # plt.plot(text_value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('tempt/system_std_layers.png',dpi=300)
-            # plt.close()
-            # user_state_std_layers = [std['state'].cpu() for std in self.user_std_layers]
-            # user_query_std_layers = [std['query'].cpu() for std in self.user_std_layers]
-            # user_key_std_layers = [std['key'].cpu() for std in self.user_std_layers]
-            # user_value_std_layers = [std['value'].cpu() for std in self.user_std_layers]
-            # plt.figure()
-            # plt.title('Standard Deviation of QKVS(user), segment length = 4')
-            # plt.plot(user_state_std_layers,label='state std')
-            # plt.plot(user_query_std_layers,label='query std')
-            # plt.plot(user_key_std_layers,label='key std')
-            # plt.plot(user_value_std_layers,label='value std')
-            # plt.xlabel('Layer')
-            # plt.ylabel('Standard Deviation')
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('tempt/user_std_layers.png',dpi=300)
-            # plt.close()
-            from ipdb import set_trace; set_trace()
-        self.attention_maps = []
-
         hidden_states = self.norm(hidden_states)
 
         # add hidden states from the last decoder layer
@@ -1164,11 +625,12 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         self.images_idx = None
-        self.model.grouping = config.grouping
-        self.cot_decoding = config.cot_decoding
         # Initialize weights and apply final processing
         self.post_init()
         self.latency = []
+        
+    def post_config(self,config):
+        self.get_model().post_config(config)
 
     def get_model(self):
         return self.model
@@ -1187,7 +649,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         images: Optional[torch.FloatTensor] = None,
         image_sizes: Optional[List[List[int]]] = None,
         return_dict: Optional[bool] = None,
-        sample_ids = None, # added by jieneng
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         if inputs_embeds is None:
             (
@@ -1397,14 +858,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if self.model.groupingLayer == -1:
             if self.model.grouping == 'avgpool1d':
                 image_features = torch.nn.functional.avg_pool1d(image_features.permute(0,2,1), kernel_size=self.model.stride, stride=self.model.stride).permute(0,2,1).contiguous()
-            elif self.model.grouping == 'avgpool2d':
-                B,Q,C = image_features.shape
-                image_features,p_ids1,p_ids2 = unflatten_image_features(image_features.permute(0,2,1), torch.zeros(B,Q).to(dtype=torch.int))
-                p_ids1 = torch.nn.functional.avg_pool2d(p_ids1, kernel_size=self.model.stride, stride=self.model.stride)
-                p_ids2 = torch.nn.functional.avg_pool2d(p_ids2, kernel_size=self.model.stride, stride=self.model.stride)
-                image_features = torch.nn.functional.avg_pool2d(image_features, kernel_size=self.model.stride, stride=self.model.stride)
-                
-                image_features,_ = flatten_image_features(image_features,  p_ids1, p_ids2,torch.zeros(B,Q))
         _labels = labels
         _position_ids = position_ids
         _attention_mask = attention_mask

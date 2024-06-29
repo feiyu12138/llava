@@ -37,22 +37,22 @@ run_llavabench(){
             $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl
 
     python llava/eval/summarize_gpt_review.py -f $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl > $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/review_result/$NAME.txt
-    "  &
+    "  
 }
 
-NAME2=1dpool8layer16-v1-v2
+NAME2=1dpool8layer16-v1-v2_
 grouping2=avgpool1d
 layer2=16
 stride2=8
 CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d
 
-NAME3=1dpool8layer16-v2-v2
+NAME3=1dpool8layer16-v2-v2_
 grouping3=avgpool1d
 layer3=16
 stride3=8
 CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d-v2
 
-NAME4=1dpool8layer16-v3-v2
+NAME4=1dpool8layer16-v3-v2_
 grouping4=avgpool1d
 layer4=16
 stride4=8

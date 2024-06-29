@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=0 python model_vqa.py --model-path ./checkpoints/llava-v1.5-7b --question-file  ../../playground/data/coco2014_val_qa_eval/qa90_questions.jsonl --image-folder  /data/luoxin/data/llava/coco2014_val/val2014 --answers-file  ../../playground/data/coco2014_val_qa_eval/qa90_answer.jsonl

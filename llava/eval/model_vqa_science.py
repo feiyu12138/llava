@@ -33,13 +33,7 @@ def eval_model(args):
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-    model.model.groupingLayer = args.layer
-    model.model.stride = args.stride
-    model.model.grouping = args.grouping
-    model.model.halfpool = args.halfpool
-    model.model.unified_vpe = args.unified_vpe
-    model.model.citer = args.citer
-    model.model.viz_assign = args.viz_assign
+    model.post_config(args)
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -129,10 +123,5 @@ if __name__ == "__main__":
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default="none")
-    parser.add_argument("--halfpool",type=str2bool,default="false")
-    parser.add_argument("--unified_vpe",type=str2bool,default="false")
-    parser.add_argument("--citer", type=int, default=1)
-    parser.add_argument("--viz_assign",type=str2bool,default="false")
-    parser.add_argument("--savedir",type=str,default="viz")
     args = parser.parse_args()
     eval_model(args)

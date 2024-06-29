@@ -22,6 +22,7 @@ CHOICE_MAPPING = {
     'yesno': YES_NO_CHOICES,
     'size': SIZE_CHOICES
 }
+CALC_LATENCY=False
 
 def find_index_by_key(list_of_dicts, key, query):
     for index, dictionary in enumerate(list_of_dicts):
@@ -166,15 +167,7 @@ def eval_model(args):
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-    model.model.stride = args.stride
-    model.model.groupingLayer = args.layer
-    model.model.grouping = args.grouping
-    model.model.halfpool = args.halfpool
-    model.model.unified_vpe = args.unified_vpe
-    model.model.viz = args.viz
-    model.model.citer = args.citer
-    model.model.viz_assign = args.viz_assign
-    model.model.savedir = args.savedir
+    model.post_config(args)
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -204,24 +197,10 @@ def eval_model(args):
                 use_cache=True)
         
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-        if IDX % 50 == 0:
-            latency = torch.mean(torch.tensor(model.latency)).item()
-            print(f" Latency: {latency:.5f}ms")
-        if isinstance(idx,str):
-            image_idx = os.path.splitext(idx)[0]
-        elif isinstance(idx,int):
-            image_idx = str(idx)
-        if args.viz_assign:
-            from ipdb import set_trace; set_trace()
-            image_ = Image.open(os.path.join(args.image_folder, line["image"])).convert('RGB')
-            if not os.path.exists(f'{args.savedir}/{image_idx}'):
-                os.makedirs(f'{args.savedir}/{image_idx}')
-            assign_viz = assignment_viz(image_,model.model.assignment)
-            for i, img in enumerate(assign_viz):
-                img.save(f'{args.savedir}/{image_idx}/{i}.png')  
-            with open(f'{args.savedir}/{image_idx}/output.txt','w') as f:
-                f.write(cur_prompt)
-                f.write(outputs)
+        # if IDX % 50 == 0 and CALC_LATENCY:
+        #     latency = torch.mean(torch.tensor(model.latency)).item()
+        #     print(f" Latency: {latency:.5f}ms")
+
 
         ans_id = shortuuid.uuid()
         ans_file.write(json.dumps({"question_id": idx,
@@ -249,17 +228,11 @@ if __name__ == "__main__":
     parser.add_argument("--num_beams", type=int, default=1)
     parser.add_argument("--max_new_tokens", type=int, default=128)
     parser.add_argument("--layer", type=int, default=16)
-    parser.add_argument("--stride", type=int, default=2)
+    parser.add_argument("--stride", type=int, default=16)
     parser.add_argument("--grouping", type=str, default='none')
     parser.add_argument("--halfpool", type=str2bool, default='false')
     parser.add_argument("--icl", action="store_true")
-    parser.add_argument("--icl-file", type=str, default="none")
     parser.add_argument("--cot-decoding", action="store_true")
-    parser.add_argument("--viz", action="store_true")
-    parser.add_argument("--unified_vpe", type=str2bool, default=False)
-    parser.add_argument("--citer", type=int, default=1)
-    parser.add_argument("--viz_assign",type=str2bool,default="false")
-    parser.add_argument("--savedir",type=str,default="viz")
     args = parser.parse_args()
 
     eval_model(args)

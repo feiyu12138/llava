@@ -27,7 +27,7 @@ import torch
 import transformers
 import tokenizers
 
-from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.constants import IGNORE_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from torch.utils.data import Dataset
 from llava.train.llava_trainer import LLaVATrainer
 
@@ -880,24 +880,11 @@ def train(attn_implementation=None):
         )
         
     model.config.use_cache = False
-    model.model.grouping = model_args.grouping
-    # model.model.stride = model_args.stride
-    model.model.halfpool = model_args.halfpool
-    model.model.unified_vpe = model_args.unified_vpe
-    # model.model.groupingLayer = model_args.layer
-    model.model.citer = model_args.citer
-    model.model.progressive = model_args.progressive
-    # model.model.pivot = model_args.pivot
     str2list = lambda x: list(map(int, x.split(",")))
-    model.model.set_lists(strideList=str2list(model_args.strides), groupingLayerList=str2list(model_args.layers), pivotList=str2list(model_args.pivots))
-    
-    if model.model.grouping.find('abstractor') != -1:
-        model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
-                                       num_post_layers=model_args.num_post_layers,
-                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,
-                                       rel_pos_spatial= model_args.abstractor_rel_pos_spatial)
-    if model_args.pretrain_abstractor:
-        load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
+    model.args.strides = str2list(model_args.strides)
+    model.args.layers = str2list(model_args.layers)
+    model.args.pivots = str2list(model_args.pivots)
+    model.post_config(model_args)
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
@@ -987,9 +974,6 @@ def train(attn_implementation=None):
             model.requires_grad_(False)
             for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = True
-            if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
-                for p in model.get_model().get_Abstractor().parameters():
-                    p.requires_grad = True
 
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
         if training_args.freeze_mm_mlp_adapter:
@@ -998,8 +982,6 @@ def train(attn_implementation=None):
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
-            if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
-                model.get_model().get_Abstractor().to(dtype=compute_dtype, device=training_args.device)
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         model.config.mm_projector_lr = training_args.mm_projector_lr
