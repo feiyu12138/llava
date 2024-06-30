@@ -232,6 +232,7 @@ if __name__ == "__main__":
     parser.add_argument("--grouping", type=str, default='none')
     parser.add_argument("--halfpool", type=str2bool, default='false')
     parser.add_argument("--icl", action="store_true")
+    parser.add_argument("--icl-file", type=str, default="none")
     parser.add_argument("--cot-decoding", action="store_true")
     args = parser.parse_args()
 
