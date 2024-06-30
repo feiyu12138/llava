@@ -1,2 +1,0 @@
-ccvl35.ccvl.jhu.edu slots=8
-ccvl36.ccvl.jhu.edu slots=8
