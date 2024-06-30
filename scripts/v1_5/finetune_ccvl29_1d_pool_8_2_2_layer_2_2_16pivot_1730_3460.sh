@@ -22,10 +22,10 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 layers=2,2,16
 strides=8,2,2
-pivots=1300,2600,3900
+pivots=1730,3460
 grouping=avgpool1d
 progressive=True
-name=1dpool8_2_2layer2_2_16pivot1300_2600_3900_v2_test
+name=1dpool8_2_2layer2_2_16pivot1730_3460
 
 
 deepspeed llava/train/train_mem.py \
@@ -69,7 +69,7 @@ deepspeed llava/train/train_mem.py \
     --pivots $pivots \
     --grouping $grouping \
     --progressive $progressive \
-    # > /data/datasets/jchen293/logs/exp/llava/$name.out \
-    # 2> /data/datasets/jchen293/logs/exp/llava/$name.err
+    > /data/datasets/jchen293/logs/exp/llava/$name.out \
+    2> /data/datasets/jchen293/logs/exp/llava/$name.err
 
 sleep 2d

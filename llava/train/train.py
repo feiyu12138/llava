@@ -881,9 +881,9 @@ def train(attn_implementation=None):
         
     model.config.use_cache = False
     str2list = lambda x: list(map(int, x.split(",")))
-    model.args.strides = str2list(model_args.strides)
-    model.args.layers = str2list(model_args.layers)
-    model.args.pivots = str2list(model_args.pivots)
+    model_args.strides = str2list(model_args.strides)
+    model_args.layers = str2list(model_args.layers)
+    model_args.pivots = str2list(model_args.pivots)
     model.post_config(model_args)
 
     if model_args.freeze_backbone:

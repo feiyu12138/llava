@@ -66,8 +66,8 @@ CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-16-grouping-avgpool1d-v2
 
 # run_llavabench $layer1 $stride1 $grouping1 $NAME1 $CKPT1 0
 run_llavabench $layer2 $stride2 $grouping2 $NAME2 $CKPT2 1
-run_llavabench $layer3 $stride3 $grouping3 $NAME3 $CKPT3 2
-run_llavabench $layer4 $stride4 $grouping4 $NAME4 $CKPT4 3
+run_llavabench $layer3 $stride3 $grouping3 $NAME3 $CKPT3 3
+run_llavabench $layer4 $stride4 $grouping4 $NAME4 $CKPT4 5
 # run_llavabench $layer5 $stride5 $grouping5 $NAME5 $CKPT5 4
 
 wait
