@@ -34,7 +34,7 @@ run_mmbench() {
     " #> "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err"
 }
 
-NAME=light-compression-mmb
+NAME=light-compression
 grouping=avgpool1d
 layer=16
 stride=8

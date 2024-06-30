@@ -44,7 +44,7 @@ run_seed(){
         --result-upload-file $ROOT_DATA/eval/seed_bench/answers_upload/$NAME.jsonl
 }
 
-NAME=light-compression-seed
+NAME=light-compression
 grouping=avgpool1d
 layer=16
 stride=8

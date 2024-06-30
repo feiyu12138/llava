@@ -52,7 +52,7 @@ run_gqa(){
     cd $LLAVA_HOME
 }
 
-NAME=light-compression-gqa
+NAME=light-compression
 grouping=avgpool1d
 layer=16
 stride=8

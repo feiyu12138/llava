@@ -30,7 +30,7 @@ run_mmvet() {
     " #> "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err" &
 }
 
-NAME=light-compression-mmvet
+NAME=light-compression
 grouping=avgpool1d
 layer=16
 stride=8

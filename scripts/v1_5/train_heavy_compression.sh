@@ -11,7 +11,7 @@ STRIDES=8,1
 PIVOTS=10000 #never used
 GROUPING=avgpool1d
 PROGRESSIVE=True
-NAME=heavy_compression
+NAME=heavy-compression
 
 # pretrain
 deepspeed llava/train/train_mem.py \

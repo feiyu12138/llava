@@ -52,7 +52,7 @@ run_gqa(){
     cd $LLAVA_HOME
 }
 
-NAME=reproduce-gqa
+NAME=reproduce
 grouping=none
 layer=0
 stride=1

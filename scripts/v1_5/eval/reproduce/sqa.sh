@@ -32,7 +32,7 @@ run_sqa() {
     " #> "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err" &
 }
 
-NAME=reproduce-sqa
+NAME=reproduce
 grouping=none
 layer=0
 stride=1

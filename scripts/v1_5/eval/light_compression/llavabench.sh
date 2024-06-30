@@ -40,7 +40,7 @@ run_llavabench(){
     "  
 }
 
-NAME=light-compression-llavabench
+NAME=light-compression
 grouping=avgpool1d
 layer=16
 stride=8

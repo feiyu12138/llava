@@ -44,7 +44,7 @@ run_seed(){
         --result-upload-file $ROOT_DATA/eval/seed_bench/answers_upload/$NAME.jsonl
 }
 
-NAME=reproduce-mmvet
+NAME=reproduce
 grouping=none
 layer=0
 stride=1

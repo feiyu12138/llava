@@ -30,7 +30,7 @@ run_pope() {
     " > "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err" &
 }
 
-NAME=reproduce-pope
+NAME=reproduce
 grouping=none
 layer=0
 stride=1

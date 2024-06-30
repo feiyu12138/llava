@@ -40,7 +40,7 @@ run_llavabench(){
     "  
 }
 
-NAME=reproduce-llavabench
+NAME=reproduce
 grouping=none
 layer=0
 stride=1

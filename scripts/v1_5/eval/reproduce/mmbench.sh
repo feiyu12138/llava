@@ -34,7 +34,7 @@ run_mmbench() {
     " #> "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err"
 }
 
-NAME=reproduce--mmb
+NAME=reproduce
 grouping=none
 layer=0
 stride=1
