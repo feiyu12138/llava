@@ -2,7 +2,7 @@
 #
 ROOT_DATA=''
 ROOT_WEIGHT=''
-ROOT_LOG=''_eval
+ROOT_LOG=""
 run_mmbench_cn() {
     local GPU_ID=$1
     local LOG_PREFIX=$2

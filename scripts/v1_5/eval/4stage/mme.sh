@@ -4,7 +4,7 @@
 
 ROOT_DATA=''
 ROOT_WEIGHT=''
-ROOT_LOG=''_eval
+ROOT_LOG=""
 
 run_mme() {
     local GPU_ID=$1

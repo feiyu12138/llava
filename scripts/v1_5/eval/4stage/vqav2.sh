@@ -2,7 +2,7 @@
 #
 ROOT_DATA=''
 ROOT_WEIGHT=''
-ROOT_LOG=''_eval
+ROOT_LOG=""
 SPLIT="llava_vqav2_mscoco_test-dev2015"
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"

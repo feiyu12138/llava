@@ -2,7 +2,7 @@
 # export WANDB_PROJECT=''
 # export WANDB_ENTITY=''
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_DATA=''
 ROOT_WEIGHT=''
 ROOT_LOG=''
 

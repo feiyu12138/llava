@@ -2,7 +2,7 @@
 #
 ROOT_DATA=''
 ROOT_WEIGHT=''
-ROOT_LOG=''_eval
+ROOT_LOG=""
 
 run_seed(){
     local CKPT=$1
