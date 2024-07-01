@@ -34,6 +34,7 @@ cd ../..
 
 ## Efficient Training
 1. Following original repo of LLaVA, download training data for both pretrain and finetune.
+2. fill the necessary Path Variables: **ROOT_DATA**, **ROOT_WEIGHT**, **ROOT_LOG**(optional)
 2. start training using scripts under scripts/v1_5/. We provide four examples: 4stage, heavy_compression, light_compression, reproduce:
 ```Shell
 NAME=reproduce
@@ -45,7 +46,7 @@ bash scripts/v1_5/train-$NAME.sh
 ## Evalution
 Running scripts under scripts/v1_5/eval/$NAME, where NAME is the name of checkpoint's name. We provide four example: 4stage, heavy_compression, light_compression, reproduce.
 
-For all scripts we provided, please first fill up necessary path variables: ROOT_DATA, ROOT_WEIGHT, ROOT_LOG(optional)
+For all scripts we provided, please first fill up necessary path variables: **ROOT_DATA**, **ROOT_WEIGHT**, **ROOT_LOG**(optional)
 
 ### VQAv2
 
