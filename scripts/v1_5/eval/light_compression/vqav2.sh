@@ -1,8 +1,15 @@
 #!/bin/bash
 #
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets/eval_luoxin
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-ROOT_LOG=/data/datasets/jchen293/logs/exp/llava_eval
+ROOT_DATA=''
+ROOT_WEIGHT=''
+ROOT_LOG=''_eval
+SPLIT="llava_vqav2_mscoco_test-dev2015"
+
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
+IFS=',' read -ra GPULIST <<< "$gpu_list"
+
+CHUNKS=${#GPULIST[@]}
 
 run_vqav2(){
     local CKPT=$1

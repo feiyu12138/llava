@@ -2,9 +2,9 @@
 #
 
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets/eval_luoxin
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-ROOT_LOG=/data/datasets/jchen293/logs/exp/llava_eval
+ROOT_DATA=''
+ROOT_WEIGHT=''
+ROOT_LOG=''_eval
 
 run_mme() {
     local GPU_ID=$1

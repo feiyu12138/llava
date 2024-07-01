@@ -82,20 +82,6 @@ def eval_model(args):
                 use_cache=True,
             )
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-        if isinstance(idx,str):
-            image_idx = os.path.splitext(idx)[0]
-        elif isinstance(idx,int):
-            image_idx = str(idx)
-        if args.viz_assign and images is not None:
-            from ipdb import set_trace; set_trace()
-            if not os.path.exists(f'{args.savedir}/{image_idx}'):
-                os.makedirs(f'{args.savedir}/{image_idx}')
-            assign_viz = assignment_viz(image,model.model.assignment)
-            for i, img in enumerate(assign_viz):
-                img.save(f'{args.savedir}/{image_idx}/{i}.png')
-            with open(f'{args.savedir}/{image_idx}/output.txt','w') as f:
-                f.write(cur_prompt)
-                f.write(outputs)
         ans_id = shortuuid.uuid()
         ans_file.write(json.dumps({"question_id": idx,
                                    "prompt": cur_prompt,

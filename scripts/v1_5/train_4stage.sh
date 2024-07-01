@@ -2,9 +2,9 @@
 # export WANDB_PROJECT=''
 # export WANDB_ENTITY=''
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-ROOT_LOG=/data/datasets/jchen293/logs/exp/llava
+ROOT_DATA=''
+ROOT_WEIGHT=''
+ROOT_LOG=''
 
 LAYERS=2,2,16,0
 STRIDES=8,2,2,1

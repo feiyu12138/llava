@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets/eval_luoxin
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-ROOT_LOG=/data/datasets/jchen293/logs/exp/llava_eval
+ROOT_DATA=''
+ROOT_WEIGHT=''
+ROOT_LOG=''_eval
 
 run_vizwiz() {
     local GPU_ID=$1
@@ -27,7 +27,7 @@ run_vizwiz() {
             --annotation-file $ROOT_DATA/eval/vizwiz/llava_test.jsonl \
             --result-file $ROOT_DATA/eval/vizwiz/answers/$NAME.jsonl \
             --result-upload-file $ROOT_DATA/eval/vizwiz/answers_upload/$NAME.json
-    " > "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err" &
+    " #> "$ROOT_LOG/${LOG_PREFIX}.out" 2> "$ROOT_LOG/${LOG_PREFIX}.err" &
 }
 
 NAME=heavy-compression

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 LLAVA_HOME=$(pwd)
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets/eval_luoxin
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=''
+ROOT_WEIGHT=''
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval/gqa/data"
 
