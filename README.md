@@ -7,7 +7,7 @@ The folder includes the implementation of LLaVolta for Efficient Large Language 
 </p>
 
 ## Install
-*Note: code is developed based on Ubuntu 20.04/22.04.*
+*Note: code is developed based on Ubuntu 20.04/22.04. CUDA=12.1*
 Our code is developed based on LLaVA, the installation is very similar to original repo of LLaVA:
 1. Clone this repository and navigate to LLaVA folder
 ```bash
