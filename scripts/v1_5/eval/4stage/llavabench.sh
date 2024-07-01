@@ -2,7 +2,7 @@
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 ROOT_DATA=''
 ROOT_WEIGHT=''
-export OPENAI_API_KEY=''''
+export OPENAI_API_KEY=''
 
 run_llavabench(){
     local GPU_ID=$1
