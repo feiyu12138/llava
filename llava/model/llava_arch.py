@@ -26,6 +26,7 @@ from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH
 from llava.mm_utils import get_anyres_image_grid_shape
 
 
+
 class LlavaMetaModel:
 
     def __init__(self, config):
@@ -33,6 +34,7 @@ class LlavaMetaModel:
 
         if hasattr(config, "mm_vision_tower"):
             self.vision_tower = build_vision_tower(config, delay_load=True)
+            # self.vision_tower.vision_model.encoder.layers[-1].self_attn.forward = types.MethodType(csa_forward, self.vision_tower.vision_model.encoder.layers[-1].self_attn)
             self.mm_projector = build_vision_projector(config)
 
             if 'unpad' in getattr(config, 'mm_patch_merge_type', ''):
@@ -367,3 +369,5 @@ class LlavaMetaForCausalLM(ABC):
                     p.requires_grad = False
                 for p in self.get_output_embeddings().parameters():
                     p.requires_grad = False
+                    
+

@@ -20,7 +20,8 @@ layer=16
 stride=4
 grouping=avgpool1d
 name=1dpool4layer2_eval
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reproduce
+csa=True
 
 python -m llava.eval.model_vqa_loader \
     --model-path $CKPT \
@@ -32,7 +33,7 @@ python -m llava.eval.model_vqa_loader \
     --stride $stride \
     --layer $layer \
     --grouping $grouping \
-    --time_on True
+    --csa $csa
 
 cd $ROOT_DATA/eval_luoxin/eval/MME
 

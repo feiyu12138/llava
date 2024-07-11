@@ -77,6 +77,7 @@ class ModelArguments:
     citer: Optional[int] = field(default=1)
     progressive: Optional[bool] = field(default=False)
     pivot: Optional[int] = field(default=2600)
+    csa: Optional[bool] = field(default=False)
 
 
 @dataclass
@@ -889,6 +890,8 @@ def train(attn_implementation=None):
     model.model.progressive = model_args.progressive
     model.model.pivot = model_args.pivot
     
+    
+    
     if model.model.grouping.find('abstractor'):
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
@@ -969,7 +972,10 @@ def train(attn_implementation=None):
             fsdp=training_args.fsdp
         )
         
+            
         vision_tower = model.get_vision_tower()
+        if model_args.csa:
+            vision_tower.replace_forward()
         vision_tower.to(dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device=training_args.device)
 
         data_args.image_processor = vision_tower.image_processor

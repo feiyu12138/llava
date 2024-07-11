@@ -65,7 +65,8 @@ def eval_model(args):
     model.model.unified_vpe = args.unified_vpe
     model.model.citer = args.citer
     model.model.viz_assign = args.viz_assign
-
+    if args.csa:
+            model.get_vision_tower().replace_forward()
     questions = pd.read_table(os.path.expanduser(args.question_file))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -186,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument("--citer", type=int, default=1)
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
+    parser.add_argument("--csa",type=str2bool,default="false")
     args = parser.parse_args()
 
     eval_model(args)
