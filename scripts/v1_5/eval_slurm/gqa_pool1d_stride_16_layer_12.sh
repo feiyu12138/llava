@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool16layer8_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer8_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer8_gqa.out
+#SBATCH --job-name=1dpool16layer12_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer12_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer12_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -15,8 +15,8 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-NAME=1dpool16layer8
-layer=8
+NAME=1dpool16layer12
+layer=12
 stride=16
 grouping=avgpool1d
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-$stride-layer-$layer-grouping-avgpool1d
