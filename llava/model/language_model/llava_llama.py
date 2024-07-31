@@ -1471,6 +1471,12 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         return None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels, images_idx
     
+    def encode_images(self, images):
+        
+        image_features = self.get_model().get_vision_tower()(images)
+        image_features = self.get_model().mm_projector(image_features)
+        return image_features
+    
 
 AutoConfig.register("llava_llama", LlavaConfig)
 AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM)
