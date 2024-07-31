@@ -11,11 +11,7 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 name=pool1d-progressive
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
-grouping=none
-stride=8
-layer=2
-unified_vpe=False
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-avgpool1d-unified_vpe-$unified_vpe-progressive
+ckpt=/data/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
@@ -45,3 +41,5 @@ python scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_
 
 cd $GQADIR
 python eval/eval.py --tier testdev_balanced
+
+sleep 5d

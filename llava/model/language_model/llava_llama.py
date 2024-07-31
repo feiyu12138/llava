@@ -60,7 +60,6 @@ from transformers.cache_utils import Cache, DynamicCache
 from transformers.utils import logging
 from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv,rotate_half
 from llava.constants import MAPPINGX, MAPPINGY
-from llava.model.multimodal_projector.visual_plugin import Abstractor
 from llava.mm_utils import get_anyres_image_grid_shape
 
 logger = logging.get_logger(__name__)

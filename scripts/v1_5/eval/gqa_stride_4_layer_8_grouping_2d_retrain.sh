@@ -22,10 +22,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --stride $stride \
-        --layer $layer \
-        --grouping $grouping &
+        --conv-mode vicuna_v1 &
 done
 
 wait
