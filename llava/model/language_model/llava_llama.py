@@ -31,7 +31,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM, unpad_image
-from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX
+from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX,IMAGE_SIZE
 
 from transformers.generation.beam_search import BeamScorer
 from transformers.generation.logits_process import LogitsProcessorList
@@ -532,6 +532,7 @@ MY_LLAMA_ATTENTION_CLASSES = {
 class MyLlamaDecoderLayer(LlamaDecoderLayer):
     def __init__(self, config: LlamaConfig, layer_idx: int, viz: bool = False):
         super().__init__(config, layer_idx)
+        
         # self.self_attn = MyLlamaSdpaAttention(config=config, layer_idx=layer_idx)
         self.self_attn = MY_LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx, viz=viz)
         
@@ -1471,11 +1472,37 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         return None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels, images_idx
     
-    def encode_images(self, images):
-        
-        image_features = self.get_model().get_vision_tower()(images)
-        image_features = self.get_model().mm_projector(image_features)
+    def encode_images(self, images): # image: B,3,336,336
+        B,C,H,W = images.shape
+        if H == IMAGE_SIZE and W == IMAGE_SIZE: # trivial case
+            image_features = self.get_model().get_vision_tower()(images)
+            image_features = self.get_model().mm_projector(image_features)
+        else:
+            count = torch.zeros(images.shape).to(images.device)
+            image_features = torch.zeros(images.shape).to(images.device)
+            step_size_h = H - IMAGE_SIZE
+            step_size_w = W - IMAGE_SIZE
+            for i in range(0,2):
+                for j in range(0,2):
+                    image_features[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w] \
+                    += self.get_model().get_vision_tower()(images[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w])
+                    count[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w] += 1
+            image_features = image_features / count
+            
         return image_features
+
+    def extract_patches_and_count(images,step_size_h,step_size_w):
+        '''
+        image size: B,C,H,W
+        '''
+        
+        patches = []
+        count = torch.zeros(images.shape).to(images.device)
+        for i in range(0,2):
+            for j in range(0,2):
+                patches.append(images[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w])
+                count[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w] += 1
+        return patches,count
     
 
 AutoConfig.register("llava_llama", LlavaConfig)
