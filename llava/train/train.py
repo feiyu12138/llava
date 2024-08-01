@@ -65,7 +65,7 @@ class ModelArguments:
     mm_use_im_patch_token: bool = field(default=True)
     mm_patch_merge_type: Optional[str] = field(default='flat')
     mm_vision_select_feature: Optional[str] = field(default="patch")
-    layer: Optional[int] =field(default=16)
+    layer: Optional[str] =field(default='33')
     stride : Optional[int]= field(default=2)
     abstractor_kernel_size: Optional[int] = field(default=3)
     grouping: Optional[str] = field(default="none")
@@ -878,13 +878,13 @@ def train(attn_implementation=None):
             torch_dtype=(torch.bfloat16 if training_args.bf16 else None),
             **bnb_model_from_pretrained_args
         )
-        
+    str2list = lambda x: x.split(',') if x else []
     model.config.use_cache = False
     model.model.grouping = model_args.grouping
     model.model.stride = model_args.stride
     model.model.halfpool = model_args.halfpool
     model.model.unified_vpe = model_args.unified_vpe
-    model.model.groupingLayer = model_args.layer
+    model.model.groupingLayer = str2list(model_args.layer)
     model.model.citer = model_args.citer
     model.model.progressive = model_args.progressive
     model.model.pivot = model_args.pivot
