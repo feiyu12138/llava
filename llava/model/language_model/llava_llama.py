@@ -712,7 +712,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + self.visual_length].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + self.visual_length].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
-                    self.visual_length = visual_states.shape[2]
+                    self.visual_length = visual_states.shape[1]
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
@@ -924,7 +924,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 past_key_values_length, seq_length + past_key_values_length, dtype=torch.long, device=device
             )
             position_ids = position_ids.unsqueeze(0)
-
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
         if self._use_flash_attention_2:
@@ -1053,7 +1052,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 self.std_layers.append(decoder_layer.self_attn.std)
                 self.text_std_layers.append(decoder_layer.self_attn.text_std)
                 self.user_std_layers.append(decoder_layer.self_attn.user_std)
-        
         if self.viz and self.images_idx is not None:
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
             width_height_init = [self.visual_length,self.visual_length]

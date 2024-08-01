@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
@@ -11,10 +11,11 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 name=pool1d-progressive
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
-grouping=avgpool1d
-stride=2
-layer=4,12,24
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v2
+grouping=none
+stride=8
+layer=2
+unified_vpe=False
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-avgpool1d-unified_vpe-$unified_vpe-progressive
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

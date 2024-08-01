@@ -234,6 +234,7 @@ def eval_model(args):
 
     ans_file.close()
 str2bool = lambda x: (str(x).lower() == 'true')
+str2list = lambda x: [int(item) for item in x.split(',')]
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
@@ -248,7 +249,7 @@ if __name__ == "__main__":
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
     parser.add_argument("--max_new_tokens", type=int, default=128)
-    parser.add_argument("--layer", type=int, default=16)
+    parser.add_argument("--layer", type=str2list, default='33')
     parser.add_argument("--stride", type=int, default=2)
     parser.add_argument("--grouping", type=str, default='none')
     parser.add_argument("--halfpool", type=str2bool, default='false')
