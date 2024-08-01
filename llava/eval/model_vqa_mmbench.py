@@ -112,7 +112,8 @@ def eval_model(args):
             prompt = conv.get_prompt()
 
             input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
-
+            image_processor.size = {'shortest_edge': 448}
+            image_processor.crop_size = {'height': 448, 'width': 448}
             image_tensor = process_images([image], image_processor, model.config)[0]
 
             with torch.inference_mode():

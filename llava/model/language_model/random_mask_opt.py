@@ -18,7 +18,7 @@ def random_drop_block(tokens, position_ids, stride):
     return tokens, position_ids
 
 if __name__ == '__main__':
-    tokens = torch.randn(1,4096,576)
-    position_ids = torch.arange(576).unsqueeze(0)
+    tokens = torch.randn(1,4096,VISUAL_LENGTH)
+    position_ids = torch.arange(VISUAL_LENGTH).unsqueeze(0)
     tokens, position_ids = random_drop_block(tokens, position_ids, stride=4)
     print(tokens.size(), position_ids)

@@ -4,7 +4,7 @@ export CUDA_VISIBLE_DEVICES=1
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-grouping=none
+grouping=avgpool1d
 stride=8
 layer=2
 unified_vpe=False
@@ -19,7 +19,10 @@ python -m llava.eval.model_vqa_mmbench \
     --answers-file $ROOT_DATA/eval_luoxin/eval/mmbench/answers/$SPLIT/$name.jsonl \
     --single-pred-prompt \
     --temperature 0 \
-    --conv-mode vicuna_v1
+    --conv-mode vicuna_v1 \
+    --stride $stride \
+    --layer $layer \
+    --grouping $grouping \
 
 mkdir -p playground/data/eval/mmbench/answers_upload/$SPLIT
 

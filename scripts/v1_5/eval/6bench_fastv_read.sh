@@ -20,7 +20,7 @@ run_textvqa() {
             --conv-mode vicuna_v1 \
             --use-fast-v True \
             --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
+            --fast-v-image-token-length VISUAL_LENGTH \
             --fast-v-attention-rank $rank \
             --fast-v-agg-layer $k 
 
@@ -62,7 +62,7 @@ run_vizwiz() {
             --conv-mode vicuna_v1 \
             --use-fast-v True \
             --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
+            --fast-v-image-token-length VISUAL_LENGTH \
             --fast-v-attention-rank $rank \
             --fast-v-agg-layer $k 
 
@@ -92,7 +92,7 @@ run_mmbench_cn() {
             --conv-mode vicuna_v1 \
             --use-fast-v True \
             --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
+            --fast-v-image-token-length VISUAL_LENGTH \
             --fast-v-attention-rank $rank \
             --fast-v-agg-layer $k 
 
@@ -124,7 +124,7 @@ run_mmbench() {
             --conv-mode vicuna_v1 \
             --use-fast-v True \
             --fast-v-sys-length 36 \
-            --fast-v-image-token-length 576 \
+            --fast-v-image-token-length VISUAL_LENGTH \
             --fast-v-attention-rank $rank \
             --fast-v-agg-layer $k 
 

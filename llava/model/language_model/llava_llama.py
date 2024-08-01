@@ -31,7 +31,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM, unpad_image
-from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX,IMAGE_SIZE
+from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX,IMAGE_SIZE,VISUAL_LENGTH
 
 from transformers.generation.beam_search import BeamScorer
 from transformers.generation.logits_process import LogitsProcessorList
@@ -707,16 +707,16 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         states_segment.append(hidden_states[i:i+1,0: image_idx[vi]])
                         position_segment.append(position_ids[i:i+1,0: image_idx[vi]])
                     else:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
-                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + VISUAL_LENGTH: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + VISUAL_LENGTH: image_idx[vi]])
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + VISUAL_LENGTH].permute(0,2,1)
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + VISUAL_LENGTH].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + VISUAL_LENGTH: ])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi] + VISUAL_LENGTH: ])
                 states_segment = torch.cat(states_segment, dim=1)
                 position_segment = torch.cat(position_segment, dim=1)
                 new_hidden_states.append(states_segment) 
@@ -1054,7 +1054,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         if self.viz and self.images_idx is not None:
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
-            width_height_init = [576,576]
+            width_height_init = [VISUAL_LENGTH,VISUAL_LENGTH]
             for idx, map in enumerate(self.attention_maps):
                 width_height = width_height_init if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
                 map = map.squeeze(0).cpu().detach().numpy()
@@ -1281,7 +1281,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self, input_ids, position_ids, attention_mask, past_key_values, labels,
         images, image_sizes=None
     ):
-        
         vision_tower = self.get_vision_tower()
         if vision_tower is None or images is None or input_ids.shape[1] == 1:
             return input_ids, position_ids, attention_mask, past_key_values, None, labels,None
@@ -1412,7 +1411,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                     cur_new_labels.append(torch.full((cur_image_features.shape[0],), IGNORE_INDEX, device=cur_labels.device, dtype=cur_labels.dtype))
 
             cur_new_input_embeds = [x.to(self.device) for x in cur_new_input_embeds]
-
             cur_new_input_embeds = torch.cat(cur_new_input_embeds)
             cur_new_labels = torch.cat(cur_new_labels)
 
@@ -1476,19 +1474,26 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         B,C,H,W = images.shape
         if H == IMAGE_SIZE and W == IMAGE_SIZE: # trivial case
             image_features = self.get_model().get_vision_tower()(images)
-            image_features = self.get_model().mm_projector(image_features)
         else:
-            count = torch.zeros(images.shape).to(images.device)
-            image_features = torch.zeros(images.shape).to(images.device)
+            feature_H = int(H / 14)
+            feature_W = int(W / 14)
+            feature_H_ = int(IMAGE_SIZE / 14)
+            feature_W_ = int(IMAGE_SIZE / 14)
+            DIM = 1024
+            count = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=torch.float16).to(images.device)
+            image_features = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=torch.float16).to(images.device)
             step_size_h = H - IMAGE_SIZE
             step_size_w = W - IMAGE_SIZE
+            feat_step_size_h = int(feature_H - feature_H_)
+            feat_step_size_w = int(feature_W - feature_W_)
             for i in range(0,2):
                 for j in range(0,2):
-                    image_features[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w] \
-                    += self.get_model().get_vision_tower()(images[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w])
-                    count[:,:,i*step_size_h:(i+1)*step_size_h,j*step_size_w:(j+1)*step_size_w] += 1
+                    image_features[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] \
+                    += self.get_model().get_vision_tower()(images[:,:,i*step_size_h:i*step_size_h+IMAGE_SIZE,j*step_size_w:j*step_size_w+IMAGE_SIZE]).view(images.shape[0],feature_H_,feature_W_,DIM)
+                    count[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] += 1
             image_features = image_features / count
-            
+            image_features = image_features.view(images.shape[0],feature_H*feature_W,DIM)
+        image_features = self.get_model().mm_projector(image_features)
         return image_features
 
     def extract_patches_and_count(images,step_size_h,step_size_w):

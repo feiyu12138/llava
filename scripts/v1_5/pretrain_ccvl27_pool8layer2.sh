@@ -2,8 +2,8 @@
 # export WANDB_API_KEY='70c34ec6ff006f3a8b19234dd103f67feed8083b'
 export NCCL_P2P_DISABLE=1
 layer=2
-stride=8
-grouping=avgpool1d
+stride=4
+grouping=avgpool2d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
