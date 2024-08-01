@@ -12,6 +12,8 @@ DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 IMAGE_PLACEHOLDER = "<image-placeholder>"
 
+VISUAL_LENGTH= 576
+
 import itertools
 import torch
 # create a look up mapping table for the image tokens 576 -> 24 x 24
