@@ -674,14 +674,14 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
         self.step += 1
 
-    def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
-        self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
-                                       num_pre_layers=num_pre_layers, 
-                                       num_post_layers=num_post_layers, 
-                                       pool_stride=stride,
-                                       rel_pos_spatial=rel_pos_spatial,
-                                       grouping=self.grouping,
-                                       kernel_size=kernel_size)
+    # def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
+    #     self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
+    #                                    num_pre_layers=num_pre_layers, 
+    #                                    num_post_layers=num_post_layers, 
+    #                                    pool_stride=stride,
+    #                                    rel_pos_spatial=rel_pos_spatial,
+    #                                    grouping=self.grouping,
+    #                                    kernel_size=kernel_size)
 
     def get_Abstractor(self):
         return self.Abstractor
@@ -1475,13 +1475,17 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if H == IMAGE_SIZE and W == IMAGE_SIZE: # trivial case
             image_features = self.get_model().get_vision_tower()(images)
         else:
+            cur_model = self.get_model().mm_projector[0]
+            for name, param in cur_model.named_parameters():
+                dtype = param.dtype
+                break
             feature_H = int(H / 14)
             feature_W = int(W / 14)
             feature_H_ = int(IMAGE_SIZE / 14)
             feature_W_ = int(IMAGE_SIZE / 14)
             DIM = 1024
-            count = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=torch.float16).to(images.device)
-            image_features = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=torch.float16).to(images.device)
+            count = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
+            image_features = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
             step_size_h = H - IMAGE_SIZE
             step_size_w = W - IMAGE_SIZE
             feat_step_size_h = int(feature_H - feature_H_)
