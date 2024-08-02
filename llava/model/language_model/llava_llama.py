@@ -61,6 +61,7 @@ from transformers.utils import logging
 from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv,rotate_half
 from llava.constants import MAPPINGX, MAPPINGY
 from llava.mm_utils import get_anyres_image_grid_shape
+from torchvision.transforms import functional as F
 
 logger = logging.get_logger(__name__)
 DEBUG=True
@@ -1475,6 +1476,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if H == IMAGE_SIZE and W == IMAGE_SIZE: # trivial case
             image_features = self.get_model().get_vision_tower()(images)
         else:
+            global_image = F.resize(images, (IMAGE_SIZE, IMAGE_SIZE))
             cur_model = self.get_model().mm_projector[0]
             for name, param in cur_model.named_parameters():
                 dtype = param.dtype
@@ -1484,21 +1486,18 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             feature_H_ = int(IMAGE_SIZE / 14)
             feature_W_ = int(IMAGE_SIZE / 14)
             DIM = 1024
-            count = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
-            image_features = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
-            step_size_h = H - IMAGE_SIZE
-            step_size_w = W - IMAGE_SIZE
-            feat_step_size_h = int(feature_H - feature_H_)
-            feat_step_size_w = int(feature_W - feature_W_)
-            for i in range(0,2):
-                for j in range(0,2):
-                    image_features[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] \
-                    += self.get_model().get_vision_tower()(images[:,:,i*step_size_h:i*step_size_h+IMAGE_SIZE,j*step_size_w:j*step_size_w+IMAGE_SIZE]).view(images.shape[0],feature_H_,feature_W_,DIM)
-                    count[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] += 1
-            image_features = image_features / count
-            image_features = image_features.view(images.shape[0],feature_H*feature_W,DIM)
+            images = self.fold_images(images)
+            images = torch.cat([images,global_image],dim=0)
+            image_features = self.get_model().get_vision_tower()(images)
+            image_features = image_features.reshape(B,feature_H*feature_W+feature_H_*feature_W_,DIM)
         image_features = self.get_model().mm_projector(image_features)
         return image_features
+    
+    def fold_images(self,images):
+        B,C,H,W = images.shape
+        images = images.view(B,C,2,H//2,2,W//2)
+        images = images.permute(0, 2, 4, 1, 3, 5).contiguous().view(4*B,C,H//2,W//2)
+        return images
 
     def extract_patches_and_count(images,step_size_h,step_size_w):
         '''
