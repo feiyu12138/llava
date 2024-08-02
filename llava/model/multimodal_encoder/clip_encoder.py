@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
+from transformers.models.clip.modeling_clip import CLIPVisionEmbeddings
 
 
 class CLIPVisionTower(nn.Module):
@@ -28,6 +30,7 @@ class CLIPVisionTower(nn.Module):
 
         self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
         self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        self.vision_tower.vision_model.embeddings.forward = custom_embedding_forward.__get__(self.vision_tower.vision_model.embeddings, CLIPVisionEmbeddings)
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True
@@ -41,6 +44,7 @@ class CLIPVisionTower(nn.Module):
         else:
             raise ValueError(f'Unexpected select feature: {self.select_feature}')
         return image_features
+    
 
     @torch.no_grad()
     def forward(self, images):
@@ -86,3 +90,17 @@ class CLIPVisionTower(nn.Module):
     @property
     def num_patches(self):
         return (self.config.image_size // self.config.patch_size) ** 2
+
+
+def custom_embedding_forward(self, pixel_values: torch.FloatTensor) -> torch.Tensor:
+    batch_size = pixel_values.shape[0]
+    target_dtype = self.patch_embedding.weight.dtype
+    patch_embeds = self.patch_embedding(pixel_values.to(dtype=target_dtype))  # shape = [*, width, grid, grid]
+    patch_embeds = patch_embeds.flatten(2).transpose(1, 2)
+    class_embeds = self.class_embedding.expand(batch_size, 1, -1)
+    embeddings = torch.cat([class_embeds, patch_embeds], dim=1)
+    posembed = self.position_embedding(self.position_ids)
+    if posembed.shape[1] != embeddings.shape[1]:
+        posembed = F.interpolate(posembed.transpose(1, 2), size=embeddings.shape[1], mode='linear').transpose(1, 2)
+    embeddings = embeddings + posembed
+    return embeddings

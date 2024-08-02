@@ -944,7 +944,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             attention_mask = _prepare_4d_causal_attention_mask(
                 attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
             )
-
         # embed positions
         hidden_states = inputs_embeds
         # decoder layers
@@ -1120,7 +1119,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         self.cot_decoding = config.cot_decoding
         # Initialize weights and apply final processing
         self.post_init()
-        self.latency = []
 
     def get_model(self):
         return self.model
@@ -1470,35 +1468,35 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         return None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels, images_idx
     
-    def encode_images(self, images): # image: B,3,336,336
-        B,C,H,W = images.shape
-        if H == IMAGE_SIZE and W == IMAGE_SIZE: # trivial case
-            image_features = self.get_model().get_vision_tower()(images)
-        else:
-            cur_model = self.get_model().mm_projector[0]
-            for name, param in cur_model.named_parameters():
-                dtype = param.dtype
-                break
-            feature_H = int(H / 14)
-            feature_W = int(W / 14)
-            feature_H_ = int(IMAGE_SIZE / 14)
-            feature_W_ = int(IMAGE_SIZE / 14)
-            DIM = 1024
-            count = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
-            image_features = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
-            step_size_h = H - IMAGE_SIZE
-            step_size_w = W - IMAGE_SIZE
-            feat_step_size_h = int(feature_H - feature_H_)
-            feat_step_size_w = int(feature_W - feature_W_)
-            for i in range(0,2):
-                for j in range(0,2):
-                    image_features[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] \
-                    += self.get_model().get_vision_tower()(images[:,:,i*step_size_h:i*step_size_h+IMAGE_SIZE,j*step_size_w:j*step_size_w+IMAGE_SIZE]).view(images.shape[0],feature_H_,feature_W_,DIM)
-                    count[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] += 1
-            image_features = image_features / count
-            image_features = image_features.view(images.shape[0],feature_H*feature_W,DIM)
-        image_features = self.get_model().mm_projector(image_features)
-        return image_features
+    # def encode_images(self, images): # image: B,3,336,336
+    #     B,C,H,W = images.shape
+    #     if H == IMAGE_SIZE and W == IMAGE_SIZE: # trivial case
+    #         image_features = self.get_model().get_vision_tower()(images)
+    #     else:
+    #         cur_model = self.get_model().mm_projector[0]
+    #         for name, param in cur_model.named_parameters():
+    #             dtype = param.dtype
+    #             break
+    #         feature_H = int(H / 14)
+    #         feature_W = int(W / 14)
+    #         feature_H_ = int(IMAGE_SIZE / 14)
+    #         feature_W_ = int(IMAGE_SIZE / 14)
+    #         DIM = 1024
+    #         count = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
+    #         image_features = torch.zeros((images.shape[0],feature_H,feature_W,DIM),dtype=dtype).to(images.device)
+    #         step_size_h = H - IMAGE_SIZE
+    #         step_size_w = W - IMAGE_SIZE
+    #         feat_step_size_h = int(feature_H - feature_H_)
+    #         feat_step_size_w = int(feature_W - feature_W_)
+    #         for i in range(0,2):
+    #             for j in range(0,2):
+    #                 image_features[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] \
+    #                 += self.get_model().get_vision_tower()(images[:,:,i*step_size_h:i*step_size_h+IMAGE_SIZE,j*step_size_w:j*step_size_w+IMAGE_SIZE]).view(images.shape[0],feature_H_,feature_W_,DIM)
+    #                 count[:,i*feat_step_size_h:i*feat_step_size_h+feature_H_,j*feat_step_size_w:j*feat_step_size_w+feature_W_,:] += 1
+    #         image_features = image_features / count
+    #         image_features = image_features.view(images.shape[0],feature_H*feature_W,DIM)
+    #     image_features = self.get_model().mm_projector(image_features)
+    #     return image_features
 
     def extract_patches_and_count(images,step_size_h,step_size_w):
         '''

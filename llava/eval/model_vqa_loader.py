@@ -166,6 +166,8 @@ def eval_model(args):
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
+    image_processor.size = {'shortest_edge': 448}
+    image_processor.crop_size = {'height': 448, 'width': 448}
     model.model.stride = args.stride
     model.model.groupingLayer = args.layer
     model.model.grouping = args.grouping
@@ -204,9 +206,6 @@ def eval_model(args):
                 use_cache=True)
         
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-        if IDX % 50 == 0:
-            latency = torch.mean(torch.tensor(model.latency)).item()
-            print(f" Latency: {latency:.5f}ms")
         if isinstance(idx,str):
             image_idx = os.path.splitext(idx)[0]
         elif isinstance(idx,int):
