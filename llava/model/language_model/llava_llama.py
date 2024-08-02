@@ -60,7 +60,6 @@ from transformers.cache_utils import Cache, DynamicCache
 from transformers.utils import logging
 from transformers.models.llama.modeling_llama import LlamaSdpaAttention, LlamaDecoderLayer,LlamaFlashAttention2,apply_rotary_pos_emb, repeat_kv,rotate_half
 from llava.constants import MAPPINGX, MAPPINGY
-from llava.model.multimodal_projector.visual_plugin import Abstractor
 from llava.mm_utils import get_anyres_image_grid_shape
 
 logger = logging.get_logger(__name__)
@@ -674,14 +673,14 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
         self.step += 1
 
-    def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
-        self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
-                                       num_pre_layers=num_pre_layers, 
-                                       num_post_layers=num_post_layers, 
-                                       pool_stride=stride,
-                                       rel_pos_spatial=rel_pos_spatial,
-                                       grouping=self.grouping,
-                                       kernel_size=kernel_size)
+    # def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):
+    #     self.Abstractor = Abstractor(hidden_dim=self.hidden_size, 
+    #                                    num_pre_layers=num_pre_layers, 
+    #                                    num_post_layers=num_post_layers, 
+    #                                    pool_stride=stride,
+    #                                    rel_pos_spatial=rel_pos_spatial,
+    #                                    grouping=self.grouping,
+    #                                    kernel_size=kernel_size)
 
     def get_Abstractor(self):
         return self.Abstractor

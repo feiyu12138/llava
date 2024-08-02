@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=combined_seed
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/combined_seed.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/combined_seed.out
+#SBATCH --job-name=layer2_stride_2_seed-v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/layer2_stride_2_seed-v2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/layer2_stride_2_seed-v2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -64,61 +64,61 @@ run_seed(){
 
 }
 
-NAME1=1dlayer8pool16
-layer1=8
-stride1=16
+NAME1=1dlayer2pool2-v3
+layer1=2
+stride1=2
 grouping1=avgpool1d
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-8-grouping-avgpool1d
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-2-grouping-avgpool1d-v3
 
-NAME2=1dlayer16pool16
+NAME2=1dlayer16pool2-v3
 layer2=16
-stride2=16
+stride2=2
 grouping2=avgpool1d
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-16-grouping-avgpool1d
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-16-grouping-avgpool1d-v3
 
-NAME3=1dlayer16pool64
-layer3=16
-stride3=64
-grouping3=avgpool1d
-CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-16-grouping-avgpool1d
+# NAME3=1dlayer16pool64
+# layer3=16
+# stride3=64
+# grouping3=avgpool1d
+# CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-16-grouping-avgpool1d
 
-NAME4=1dlayer16pool4
-layer4=16
-stride4=4
-grouping4=avgpool1d
-CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d
+# NAME4=1dlayer16pool4
+# layer4=16
+# stride4=4
+# grouping4=avgpool1d
+# CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d
 
-NAME5=1dlayer1pool16
-layer5=1
-stride5=16
-grouping5=avgpool1d
-CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
+# NAME5=1dlayer1pool16
+# layer5=1
+# stride5=16
+# grouping5=avgpool1d
+# CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
 
-NAME6=1dlayer16pool16_wotrain
-layer6=16
-stride6=16
-grouping6=avgpool1d
-CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+# NAME6=1dlayer16pool16_wotrain
+# layer6=16
+# stride6=16
+# grouping6=avgpool1d
+# CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 
-NAME7=rmasklayer16pool16_wotrain
-layer7=16
-stride7=16
-grouping7=block_random_drop
-CKPT7=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+# NAME7=rmasklayer16pool16_wotrain
+# layer7=16
+# stride7=16
+# grouping7=block_random_drop
+# CKPT7=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 
-NAME8=dhklayer16pool16_wotrain
-layer8=16
-stride8=16
-grouping8=detach_hard_k_means
-CKPT8=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+# NAME8=dhklayer16pool16_wotrain
+# layer8=16
+# stride8=16
+# grouping8=detach_hard_k_means
+# CKPT8=$ROOT_WEIGHT/llava-v1.5-7b-reprod
 
 run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
-run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
-run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
-run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
-run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5
-run_seed $NAME6 $layer6 $stride6 $grouping6 $CKPT6
-run_seed $NAME7 $layer7 $stride7 $grouping7 $CKPT7
+# run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
+# run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
+# run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
+# run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5
+# run_seed $NAME6 $layer6 $stride6 $grouping6 $CKPT6
+# run_seed $NAME7 $layer7 $stride7 $grouping7 $CKPT7
 
 
 

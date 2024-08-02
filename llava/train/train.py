@@ -889,13 +889,13 @@ def train(attn_implementation=None):
     model.model.progressive = model_args.progressive
     model.model.pivot = model_args.pivot
     
-    if model.model.grouping.find('abstractor'):
-        model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
-                                       num_post_layers=model_args.num_post_layers,
-                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,
-                                       rel_pos_spatial= model_args.abstractor_rel_pos_spatial)
-    if model_args.pretrain_abstractor:
-        load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
+    # if model.model.grouping.find('abstractor'):
+    #     model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
+    #                                    num_post_layers=model_args.num_post_layers,
+    #                                    stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,
+    #                                    rel_pos_spatial= model_args.abstractor_rel_pos_spatial)
+    # if model_args.pretrain_abstractor:
+    #     load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
 
     if model_args.freeze_backbone:
         model.model.requires_grad_(False)
@@ -985,9 +985,9 @@ def train(attn_implementation=None):
             model.requires_grad_(False)
             for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = True
-            if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
-                for p in model.get_model().get_Abstractor().parameters():
-                    p.requires_grad = True
+            # if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
+            #     for p in model.get_model().get_Abstractor().parameters():
+            #         p.requires_grad = True
 
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
         if training_args.freeze_mm_mlp_adapter:
@@ -996,8 +996,8 @@ def train(attn_implementation=None):
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
-            if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
-                model.get_model().get_Abstractor().to(dtype=compute_dtype, device=training_args.device)
+            # if training_args.tune_abstractor and model_args.grouping.find('abstractor')!=-1:
+            #     model.get_model().get_Abstractor().to(dtype=compute_dtype, device=training_args.device)
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
         model.config.mm_projector_lr = training_args.mm_projector_lr
