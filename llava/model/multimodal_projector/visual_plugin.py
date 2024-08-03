@@ -143,6 +143,11 @@ class Abstractor(nn.Module):
             norm = LayerNorm2d(hidden_dim)
             act = nn.GELU()
             self.net = nn.Sequential(depthwise, norm, act)
+        elif self.type == 'Convabstractor':
+            conv2d = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=kernel_size, stride=pool_stride, bias=False)
+            norm = LayerNorm2d(hidden_dim)
+            act = nn.GELU()
+            self.net = nn.Sequential(conv2d, norm, act)
         elif self.type == 'DWKSabstractor':
             depthwise = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=pool_stride, stride=pool_stride, padding=0, groups=hidden_dim, bias=False)
             norm = LayerNorm2d(hidden_dim)
@@ -168,7 +173,7 @@ class Abstractor(nn.Module):
         if self.is_gate:
             x = self.net(x) * self.gate.tanh() + self.pooler(x)
         else:
-            x = self.net(x) + self.pooler(x)
+            x = self.net(x) #+ self.pooler(x)
         return x
 
 class MultiScaleAttention(nn.Module):
