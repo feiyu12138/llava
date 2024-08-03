@@ -7,6 +7,9 @@ export WANDB_ENTITY='jchen293'
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 ROOT_LOG=/data/datasets/jchen293/logs/exp/llava
+grouping=avgpool1d
+layer=2
+stride=2
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -42,6 +45,9 @@ deepspeed llava/train/train_mem.py \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name interp-pt \
+    --grouping $grouping \
+    --layer $layer \
+    --stride $stride \
     > $ROOT_LOG/interp-pt.log 2> $ROOT_LOG/interp-pt.err
 
 deepspeed llava/train/train_mem.py \
@@ -80,4 +86,7 @@ deepspeed llava/train/train_mem.py \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name interp \
+    --grouping $grouping \
+    --layer $layer \
+    --stride $stride \
     > $ROOT_LOG/interp.log 2> $ROOT_LOG/interp.err

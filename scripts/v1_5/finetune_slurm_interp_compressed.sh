@@ -1,12 +1,28 @@
 #!/bin/bash
+#
+#SBATCH --job-name=interp_compressed
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/interp.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/interp.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --partition=main
+#SBATCH --exclude=ccvl[14,33-38]
+#SBATCH --cpus-per-task=80
 
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
-ROOT_LOG=/data/datasets/jchen293/logs/exp/llava
+module purge
+module load conda
+conda activate llava_git
+
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
+ROOT_LOG=/datasets/jchen293/logs/exp/llava
+grouping=avgpool1d
+layer=2
+stride=2
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -42,7 +58,9 @@ deepspeed llava/train/train_mem.py \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name interp-pt \
-    > $ROOT_LOG/interp-pt.log 2> $ROOT_LOG/interp-pt.err
+    --grouping $grouping \
+    --layer $layer \
+    --stride $stride \
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -80,4 +98,8 @@ deepspeed llava/train/train_mem.py \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name interp \
-    > $ROOT_LOG/interp.log 2> $ROOT_LOG/interp.err
+    --grouping $grouping \
+    --layer $layer \
+    --stride $stride \
+
+sleep 2d
