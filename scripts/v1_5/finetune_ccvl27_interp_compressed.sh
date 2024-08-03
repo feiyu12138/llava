@@ -8,7 +8,7 @@ ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 ROOT_LOG=/data/datasets/jchen293/logs/exp/llava
 grouping=avgpool1d
-layer=2
+layer=4
 stride=2
 
 deepspeed llava/train/train_mem.py \
