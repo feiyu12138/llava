@@ -50,7 +50,7 @@ deepspeed  llava/train/train_mem.py \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
-    
+
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -59,8 +59,6 @@ deepspeed llava/train/train_mem.py \
     --data_path $ROOT_DATA/LLaVA-Tuning/llava_v1_5_mix665k.json \
     --image_folder $ROOT_DATA/LLaVA-Tuning \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping/mm_project_and_Abstractor.bin \
-    --pretrain_abstractor True \
     --tune_abstractor True \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
@@ -71,7 +69,7 @@ deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir $ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$stride-grouping-$grouping \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
