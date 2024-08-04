@@ -9,8 +9,8 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 LOG_PATH=/data/datasets/jchen293/logs/exp/llava
 layer=2
 stride=4
-grouping=Convabstractor
-name=cabs_4_l_2
+grouping=cabstractor
+name=c_abs_4_l_2
 
 deepspeed  llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
@@ -33,7 +33,7 @@ deepspeed  llava/train/train_mem.py \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 24000 \
+    --save_steps 1 \
     --save_total_limit 1 \
     --learning_rate 1e-3 \
     --weight_decay 0. \
@@ -77,7 +77,7 @@ deepspeed llava/train/train_mem.py \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 50000 \
-    --save_total_limit 24000 \
+    --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
