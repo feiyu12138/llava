@@ -15,6 +15,7 @@ from matplotlib import pyplot as plt
 from PIL import Image
 from llava.eval.assignment_viz import assignment_viz
 import math
+from llava.train.train import load_abstractor
 
 CHOICE_MAPPING = {
     'number': NUMBER_CHOICES,
@@ -175,6 +176,13 @@ def eval_model(args):
     model.model.citer = args.citer
     model.model.viz_assign = args.viz_assign
     model.model.savedir = args.savedir
+    if model.model.grouping.find('abstractor') != -1:
+        model.model.create_Abstractor(num_pre_layers=args.num_pre_layers, 
+                                       num_post_layers=args.num_post_layers,
+                                       stride=model.model.stride,kernel_size=args.abstractor_kernel_size,
+                                       rel_pos_spatial= args.abstractor_rel_pos_spatial)
+        load_abstractor(model, args.model_path)
+        model.model.abstractor.to('cuda')
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
