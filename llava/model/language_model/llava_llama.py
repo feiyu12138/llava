@@ -971,8 +971,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool2d)
                     self.label_ids = compressed_position_ids
                 elif self.grouping.find('abstractor') != -1:
-                    hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
-                    self.label_ids = position_ids
+                    compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.apply_Abstractor)
+                    self.label_ids = compressed_position_ids
                 elif self.grouping == 'random_drop':
                     hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_random_drop)
                     self.label_ids = position_ids

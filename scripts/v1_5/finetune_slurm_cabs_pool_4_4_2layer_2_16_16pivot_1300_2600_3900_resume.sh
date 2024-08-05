@@ -20,9 +20,9 @@ module purge
 module load conda
 conda activate llava_git
 
-layers=2,16,16,0
-strides=4,4,2,1
-pivots=1300,2600,3900
+layers=16,16
+strides=2,1
+pivots=900
 grouping=cabstractor
 progressive=True
 name=cabspool4_4_2layer2_16_16pivot1300_2600_3900prog
@@ -49,7 +49,7 @@ deepspeed llava/train/train_mem.py \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 50000 \
+    --save_steps 1500 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
