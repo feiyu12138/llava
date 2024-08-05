@@ -11,6 +11,7 @@ from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from llava.eval.assignment_viz import assignment_viz
+from llava.train.train import load_abstractor
 
 from PIL import Image
 import math
@@ -40,6 +41,15 @@ def eval_model(args):
     model.model.unified_vpe = args.unified_vpe
     model.model.citer = args.citer
     model.model.viz_assign = args.viz_assign
+    if model.model.grouping.find('abstractor') != -1:
+        model.model.create_Abstractor(num_pre_layers=args.num_pre_layers, 
+                                       num_post_layers=args.num_post_layers,
+                                       stride=model.model.stride,kernel_size=args.abstractor_kernel_size,
+                                       rel_pos_spatial= args.abstractor_rel_pos_spatial)
+        abstractor_path = os.path.join(model_path, 'model-00003-of-00003.safetensors')
+        load_abstractor(model, abstractor_path)
+        model.model.Abstractor.to('cuda').half()
+        
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -134,5 +144,9 @@ if __name__ == "__main__":
     parser.add_argument("--citer", type=int, default=1)
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
+    parser.add_argument("--num_pre_layers",type=int,default=3)
+    parser.add_argument("--num_post_layers",type=int,default=3)
+    parser.add_argument("--abstractor_kernel_size",type=int,default=3)
+    parser.add_argument("--abstractor_rel_pos_spatial",type=str2bool,default=False)
     args = parser.parse_args()
     eval_model(args)
