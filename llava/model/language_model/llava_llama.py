@@ -674,6 +674,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
             if self.grouping.find('abstractor') != -1:
                 self.get_Abstractor().update_sampler(self.stride)
+                print("Abstractor stride updated:", self.stride)
         self.step += 1
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):

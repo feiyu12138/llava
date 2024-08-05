@@ -894,7 +894,7 @@ def train(attn_implementation=None):
     if model.model.grouping.find('abstractor') != -1:
         model.model.create_Abstractor(num_pre_layers=model_args.num_pre_layers, 
                                        num_post_layers=model_args.num_post_layers,
-                                       stride=model_args.stride,kernel_size=model_args.abstractor_kernel_size,
+                                       stride=model.model.stride,kernel_size=model_args.abstractor_kernel_size,
                                        rel_pos_spatial= model_args.abstractor_rel_pos_spatial)
     if model_args.pretrain_abstractor:
         load_abstractor(model, model_args.pretrain_mm_mlp_adapter)
