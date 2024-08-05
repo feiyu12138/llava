@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from functools import partial
 from timm.models.regnet import RegStage
-from timm.layers import LayerNorm2d
+from timm.models.layers import LayerNorm2d
 from transformers.models.deformable_detr.modeling_deformable_detr import (
     DeformableDetrDecoder,
     DeformableDetrDecoderLayer,
