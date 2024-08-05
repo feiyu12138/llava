@@ -268,6 +268,11 @@ if __name__ == "__main__":
     parser.add_argument("--citer", type=int, default=1)
     parser.add_argument("--viz_assign",type=str2bool,default="false")
     parser.add_argument("--savedir",type=str,default="viz")
+    parser.add_argument("--num_pre_layers",type=int,default=3)
+    parser.add_argument("--num_post_layers",type=int,default=3)
+    parser.add_argument("--abstractor_kernel_size",type=int,default=3)
+    parser.add_argument("--abstractor_rel_pos_spatial",type=str2bool,default=False)
+    
     args = parser.parse_args()
 
     eval_model(args)
