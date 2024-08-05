@@ -181,8 +181,9 @@ def eval_model(args):
                                        num_post_layers=args.num_post_layers,
                                        stride=model.model.stride,kernel_size=args.abstractor_kernel_size,
                                        rel_pos_spatial= args.abstractor_rel_pos_spatial)
-        load_abstractor(model, args.model_path)
-        model.model.abstractor.to('cuda')
+        abstractor_path = os.path.join(model_path, 'model-00003-of-00003.safetensors')
+        load_abstractor(model, abstractor_path)
+        model.model.Abstractor.to('cuda').half()
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)

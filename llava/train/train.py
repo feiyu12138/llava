@@ -27,6 +27,8 @@ import torch
 import transformers
 import tokenizers
 
+from safetensors import safe_open
+
 from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from torch.utils.data import Dataset
 from llava.train.llava_trainer import LLaVATrainer
@@ -819,7 +821,13 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                 data_collator=data_collator)
 
 def load_abstractor(model, pretrain_mm_mlp_adapter):
-    weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
+    if 'bin' in pretrain_mm_mlp_adapter:
+        weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
+    elif 'safetensors' in pretrain_mm_mlp_adapter:
+        weights = {}
+        with safe_open(pretrain_mm_mlp_adapter,  framework="pt") as f:
+            for k in f.keys():
+                weights[k] = f.get_tensor(k).half()
     def get_w(weights, keyword):
             return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
     model.get_model().get_Abstractor().load_state_dict(get_w(weights, 'Abstractor'))
