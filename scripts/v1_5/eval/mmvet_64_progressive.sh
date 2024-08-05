@@ -6,7 +6,7 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 name=pool1d-64-progressive
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
-grouping=none
+grouping=avgpool1d
 stride=64
 layer=2
 unified_vpe=False
@@ -19,6 +19,9 @@ python -m llava.eval.model_vqa \
     --answers-file $ROOT_DATA/eval_luoxin/eval/mm-vet/answers/$name.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
+    --grouping $grouping \
+    --layer $layer \
+    --stride $stride
 
 mkdir -p $ROOT_DATA/eval_luoxin/eval/mm-vet/results
 
