@@ -8,8 +8,8 @@ ROOT_WEIGHT=/data/datasets/weights/llava/checkpoint
 
 layer=2
 stride=4
-grouping=cabstractor
-name=cabspool4layer2
+grouping=Convabstractor
+name=convabspool4layer2
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-$grouping
 
 

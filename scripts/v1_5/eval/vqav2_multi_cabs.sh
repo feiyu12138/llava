@@ -1,8 +1,9 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+
+ROOT_DATA=/data/datasets/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/weights/llava/checkpoint
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -46,17 +47,18 @@ run_vqav2(){
     python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME --dir $ROOT_DATA/eval_luoxin/eval/vqav2
 
 }
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v4
-NAME1=reprod-v4
-grouping1=none
-layer1=1
-stride1=1
 
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d-v2
-NAME2=1dpool64layer2-v2
-grouping2=avgpool1d
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-4-layer-2-grouping-Convabstractor
+NAME1=convpool4layer2
+layer1=2
+stride1=4
+grouping1=Convabstractor
+
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-4-layer-2-grouping-cabstractor
+NAME2=cabspool4layer2
 layer2=2
-stride2=64
+stride2=4
+grouping2=cabstractor
 
 run_vqav2 $CKPT1 $NAME1 $layer1 $stride1 $grouping1
 run_vqav2 $CKPT2 $NAME2 $layer2 $stride2 $grouping2
