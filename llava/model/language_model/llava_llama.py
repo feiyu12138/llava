@@ -38,6 +38,7 @@ from transformers.generation.logits_process import LogitsProcessorList
 from transformers.generation.stopping_criteria import StoppingCriteriaList,validate_stopping_criteria
 from transformers.generation.utils import GenerateBeamDecoderOnlyOutput,GenerateBeamEncoderDecoderOutput
 from llava.model.language_model.attention_viz import generate_attention_map, calc_qkvs_std
+from llava.model.multimodal_projector.visual_plugin import Abstractor
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -671,6 +672,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             self.groupingLayer = self.groupingLayerList.pop(0)
             self.pivot = self.pivotList.pop(0) if len(self.pivotList) > 0 else 10000
             print(f"Stride reduction, present stride is {self.stride}, present grouping layer is {self.groupingLayer}, present pivot is {self.pivot}")
+            if self.grouping.find('abstractor') != -1:
+                self.get_Abstractor().update_sampler(self.stride)
         self.step += 1
 
     def create_Abstractor(self, num_pre_layers, num_post_layers,stride,kernel_size,rel_pos_spatial):

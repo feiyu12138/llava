@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from functools import partial
 from timm.models.regnet import RegStage
-from timm.layers import LayerNorm2d
+from timm.models.layers import LayerNorm2d
 from transformers.models.deformable_detr.modeling_deformable_detr import (
     DeformableDetrDecoder,
     DeformableDetrDecoderLayer,
@@ -161,6 +161,12 @@ class Abstractor(nn.Module):
             self.pooler = nn.AvgPool2d(kernel_size=kernel_size, stride=pool_stride, padding= kernel_size // 2)
         else:
             self.net = nn.Identity()
+        
+    def update_sampler(self, pool_stride):
+        if self.type == 'cabstractor':
+            self.net[1] = nn.AvgPool2d(kernel_size=pool_stride, stride=pool_stride)
+        elif self.type == 'MSAabstractor':
+            self.pooler = nn.AvgPool2d(kernel_size=pool_stride, stride=pool_stride, padding= pool_stride // 2)
 
 
 
