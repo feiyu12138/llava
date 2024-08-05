@@ -31,7 +31,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM, unpad_image
-from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX
+from llava.constants import IGNORE_INDEX,IMAGE_TOKEN_INDEX,VISUAL_LENGTH
 
 from transformers.generation.beam_search import BeamScorer
 from transformers.generation.logits_process import LogitsProcessorList
@@ -484,10 +484,10 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
         if self.viz:
             self.attn_map = generate_attention_map(query_states, key_states)
             # self.std.update(
-            #     calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+576], 
-            #                   key_states[:,:,self.images_idx:self.images_idx+576], 
-            #                   value_states[:,:,self.images_idx:self.images_idx+576], 
-            #                   hidden_states[:,self.images_idx:self.images_idx+576])
+            #     calc_qkvs_std(query_states[:,:,self.images_idx:self.images_idx+VISUAL_LENGTH], 
+            #                   key_states[:,:,self.images_idx:self.images_idx+VISUAL_LENGTH], 
+            #                   value_states[:,:,self.images_idx:self.images_idx+VISUAL_LENGTH], 
+            #                   hidden_states[:,self.images_idx:self.images_idx+VISUAL_LENGTH])
             # )
             # self.text_std.update(
             #     calc_qkvs_std(query_states[:,:,0:self.images_idx],
@@ -496,10 +496,10 @@ class AdaptiveLlamaSdpaAttention(LlamaSdpaAttention):
             #                     hidden_states[:,0:self.images_idx])
             # )
             # self.user_std.update(
-            #     calc_qkvs_std(query_states[:,:,self.images_idx+576:],
-            #                   key_states[:,:,self.images_idx+576:],
-            #                   value_states[:,:,self.images_idx+576:],
-            #                     hidden_states[:,self.images_idx+576:])
+            #     calc_qkvs_std(query_states[:,:,self.images_idx+VISUAL_LENGTH:],
+            #                   key_states[:,:,self.images_idx+VISUAL_LENGTH:],
+            #                   value_states[:,:,self.images_idx+VISUAL_LENGTH:],
+            #                     hidden_states[:,self.images_idx+VISUAL_LENGTH:])
             # )
         # SDPA with memory-efficient backend is currently (torch==2.1.2) bugged with non-contiguous inputs with custom attn_mask,
         # Reference: https://github.com/pytorch/pytorch/issues/112577.
@@ -707,16 +707,16 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                         states_segment.append(hidden_states[i:i+1,0: image_idx[vi]])
                         position_segment.append(position_ids[i:i+1,0: image_idx[vi]])
                     else:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + 576: image_idx[vi]])
-                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + 576].permute(0,2,1)
-                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + 576].unsqueeze(1)
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi-1] + VISUAL_LENGTH: image_idx[vi]])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi-1] + VISUAL_LENGTH: image_idx[vi]])
+                    visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + VISUAL_LENGTH].permute(0,2,1)
+                    visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + VISUAL_LENGTH].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
-                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + 576: ])
-                        position_segment.append(position_ids[i:i+1,image_idx[vi] + 576: ])
+                        states_segment.append(hidden_states[i:i+1,image_idx[vi] + VISUAL_LENGTH: ])
+                        position_segment.append(position_ids[i:i+1,image_idx[vi] + VISUAL_LENGTH: ])
                 states_segment = torch.cat(states_segment, dim=1)
                 position_segment = torch.cat(position_segment, dim=1)
                 new_hidden_states.append(states_segment) 
@@ -1054,7 +1054,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
         
         if self.viz and self.images_idx is not None:
             top_left = [self.images_idx[0][0].item(), self.images_idx[0][0].item()]
-            width_height_init = [576,576]
+            width_height_init = [VISUAL_LENGTH,VISUAL_LENGTH]
             for idx, map in enumerate(self.attention_maps):
                 width_height = width_height_init if idx < self.groupingLayer else [width_height_init[0]//self.stride,width_height_init[1]//self.stride]
                 map = map.squeeze(0).cpu().detach().numpy()
