@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2dconvpool4layer2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dconvpool4layer2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dconvpool4layer2.out
+#SBATCH --job-name=2dcpool4layer2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dcpool4layer2_new.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dcpool4layer2_new.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -23,47 +23,47 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 LOG_PATH=/datasets/jchen293/logs/exp/llava
 layer=2
 stride=4
-grouping=Convabstractor
-name=cabs_4_l_2
+grouping=cabstractor
+name=c_abs_4_l_2
 
-# deepspeed  llava/train/train_mem.py \
-#     --deepspeed ./scripts/zero2.json \
-#     --model_name_or_path lmsys/vicuna-7b-v1.5 \
-#     --version plain \
-#     --data_path $ROOT_DATA/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
-#     --image_folder $ROOT_DATA/LLaVA-Pretrain/images \
-#     --vision_tower openai/clip-vit-large-patch14-336 \
-#     --mm_projector_type mlp2x_gelu \
-#     --tune_mm_mlp_adapter True \
-#     --tune_abstractor True \
-#     --mm_vision_select_layer -2 \
-#     --mm_use_im_start_end False \
-#     --mm_use_im_patch_token False \
-#     --bf16 True \
-#     --output_dir $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
-#     --num_train_epochs 1 \
-#     --per_device_train_batch_size 32 \
-#     --per_device_eval_batch_size 4 \
-#     --gradient_accumulation_steps 1 \
-#     --evaluation_strategy "no" \
-#     --save_strategy "steps" \
-#     --save_steps 1 \
-#     --save_total_limit 1 \
-#     --learning_rate 1e-3 \
-#     --weight_decay 0. \
-#     --warmup_ratio 0.03 \
-#     --lr_scheduler_type "cosine" \
-#     --logging_steps 1 \
-#     --tf32 True \
-#     --model_max_length 2048 \
-#     --gradient_checkpointing True \
-#     --dataloader_num_workers 4 \
-#     --lazy_preprocess True \
-#     --report_to wandb \
-#     --run_name pt_$name \
-#     --stride $stride \
-#     --layer $layer \
-#     --grouping $grouping
+deepspeed  llava/train/train_mem.py \
+    --deepspeed ./scripts/zero2.json \
+    --model_name_or_path lmsys/vicuna-7b-v1.5 \
+    --version plain \
+    --data_path $ROOT_DATA/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder $ROOT_DATA/LLaVA-Pretrain/images \
+    --vision_tower openai/clip-vit-large-patch14-336 \
+    --mm_projector_type mlp2x_gelu \
+    --tune_mm_mlp_adapter True \
+    --tune_abstractor True \
+    --mm_vision_select_layer -2 \
+    --mm_use_im_start_end False \
+    --mm_use_im_patch_token False \
+    --bf16 True \
+    --output_dir $ROOT_WEIGHT/llava-v1.5-7b-pretrain-stride-$stride-layer-$layer-grouping-$grouping \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 32 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 1 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 24000 \
+    --save_total_limit 1 \
+    --learning_rate 1e-3 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --dataloader_num_workers 4 \
+    --lazy_preprocess True \
+    --report_to wandb \
+    --run_name pt_$name \
+    --stride $stride \
+    --layer $layer \
+    --grouping $grouping
 
 
 deepspeed llava/train/train_mem.py \
@@ -90,7 +90,7 @@ deepspeed llava/train/train_mem.py \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 2000 \
+    --save_steps 50000 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
