@@ -144,7 +144,7 @@ class Abstractor(nn.Module):
             act = nn.GELU()
             self.net = nn.Sequential(depthwise, norm, act)
         elif self.type == 'Convabstractor':
-            conv2d = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=kernel_size, stride=pool_stride, bias=False)
+            conv2d = nn.Conv2d(hidden_dim, hidden_dim, kernel_size=pool_stride, stride=pool_stride, bias=False)
             norm = LayerNorm2d(hidden_dim)
             act = nn.GELU()
             self.net = nn.Sequential(conv2d, norm, act)
