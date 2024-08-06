@@ -1481,15 +1481,10 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             for name, param in cur_model.named_parameters():
                 dtype = param.dtype
                 break
-            feature_H = int(H / 14)
-            feature_W = int(W / 14)
-            feature_H_ = int(IMAGE_SIZE / 14)
-            feature_W_ = int(IMAGE_SIZE / 14)
-            DIM = 1024
             images = self.fold_images(images)
             images = torch.cat([images,global_image],dim=0)
             image_features = self.get_model().get_vision_tower()(images)
-            image_features = image_features.reshape(B,feature_H*feature_W+feature_H_*feature_W_,DIM)
+            image_features = self.unfold_features(image_features)
         image_features = self.get_model().mm_projector(image_features)
         return image_features
     
@@ -1498,6 +1493,20 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         images = images.view(B,C,2,H//2,2,W//2)
         images = images.permute(0, 2, 4, 1, 3, 5).contiguous().view(4*B,C,H//2,W//2)
         return images
+    
+    def unfold_features(self,features):
+        B_,L,C = features.shape
+        B = B_ // 5
+        H = W = int(L ** 0.5) * 2
+        feature_maps = torch.zeros(B,H,W,C).to(features.device).to(features.dtype)
+        global_maps = features[::5]
+        features = torch.cat([x.unsqueeze(0) for x in features.split(5,0)],dim=0)  
+        for i in range(2):
+            for j in range(2):
+                feature_maps[:,i*H//2:(i+1)*H//2,j*W//2:(j+1)*W//2] = features[:,i*2+j].reshape(B,H//2,W//2,C)    # TODO: check order for x and y  
+        feature_maps = feature_maps.view(B,H*W,C)
+        feature_maps = torch.cat([feature_maps,global_maps],dim=1)
+        return feature_maps
 
     def extract_patches_and_count(images,step_size_h,step_size_w):
         '''
