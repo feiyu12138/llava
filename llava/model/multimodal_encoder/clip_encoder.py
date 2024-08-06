@@ -35,7 +35,8 @@ class CLIPVisionTower(nn.Module):
             self.vision_tower = AutoModel.from_pretrained(
                                     self.vision_tower_name,
                                     low_cpu_mem_usage=True,
-                                    trust_remote_code=True
+                                    trust_remote_code=True,
+                                    device_map=device_map
                                         )
         self.vision_tower.requires_grad_(False)
 
