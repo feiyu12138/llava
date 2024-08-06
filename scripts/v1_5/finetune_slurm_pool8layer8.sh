@@ -98,5 +98,8 @@ deepspeed llava/train/train_mem.py \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name pool8layer8 \
+    --layer $layer \
+    --stride $stride \
+    --grouping $grouping \
 
 sleep 2d

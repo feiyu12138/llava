@@ -64,61 +64,48 @@ run_seed(){
 
 }
 
-NAME1=1dlayer16pool2
-layer1=16
-stride1=2
-grouping1=avgpool1d
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-16-grouping-avgpool1d
+NAME2=2dpool4layer2
+grouping2=avgpool2d
+layer2=2
+stride2=4
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-2dpool4layer2
 
-NAME2=1dlayer16pool2-v2
-layer2=16
-stride2=2
-grouping2=avgpool1d
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-16-grouping-avgpool1d-v2
-
-NAME3=1dlayer2pool2-v2
+NAME3=convpool4layer2
+grouping3=Convabstractor
 layer3=2
-stride3=2
-grouping3=avgpool1d
-CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-2-layer-2-grouping-avgpool1d-v2
+stride3=4
+CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-4-layer-2-grouping-Convabstractor
 
-# NAME4=1dlayer16pool4
-# layer4=16
-# stride4=4
-# grouping4=avgpool1d
-# CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d
+NAME4=cabspool4layer2
+grouping4=cabstractor
+layer4=2
+stride4=4
+CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-4-layer-2-grouping-cabstractor
 
-# NAME5=1dlayer1pool16
-# layer5=1
-# stride5=16
-# grouping5=avgpool1d
-# CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-1-grouping-avgpool1d
+NAME5=cabspool4_4_2layer2_16_16
+grouping5=cabstractor
+layer5=16
+stride5=1
+CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-cabspool4_4_2layer2_16_16pivot1300_2600_3900prog
 
-# NAME6=1dlayer16pool16_wotrain
-# layer6=16
-# stride6=16
-# grouping6=avgpool1d
-# CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME6=2dpool4_4_2layer2_16_16
+CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-1dpool4_4_2_layer2_16_16pivot1300_2600_3900
+layer6=16
+stride6=1
+grouping6=none
 
-# NAME7=rmasklayer16pool16_wotrain
-# layer7=16
-# stride7=16
-# grouping7=block_random_drop
-# CKPT7=$ROOT_WEIGHT/llava-v1.5-7b-reprod
+NAME7=1dpool16_16_4layer2_16_16
+CKPT7=$ROOT_WEIGHT/llava-v1.5-7b-1dpool16_16_4_layer2_16_16pivot1300_2600_3900
+layer7=16
+stride7=1
+grouping7=none
 
-# NAME8=dhklayer16pool16_wotrain
-# layer8=16
-# stride8=16
-# grouping8=detach_hard_k_means
-# CKPT8=$ROOT_WEIGHT/llava-v1.5-7b-reprod
-
-run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
 run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
 run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
-# run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
-# run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5
-# run_seed $NAME6 $layer6 $stride6 $grouping6 $CKPT6
-# run_seed $NAME7 $layer7 $stride7 $grouping7 $CKPT7
+run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
+run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5
+run_seed $NAME6 $layer6 $stride6 $grouping6 $CKPT6
+run_seed $NAME7 $layer7 $stride7 $grouping7 $CKPT7
 
 
 
