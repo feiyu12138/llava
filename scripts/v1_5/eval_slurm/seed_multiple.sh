@@ -1,10 +1,20 @@
 #!/bin/bash
 #
+#SBATCH --job-name=combined_seed
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/combined_seed.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/combined_seed.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=60
+#SBATCH --partition=intern
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
+module purge
+module load conda
+conda activate llava_git
 
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -54,20 +64,13 @@ run_seed(){
 
 }
 
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-finetune-multilevel
-NAME1=multi-level-stride-4
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-reproduce
+NAME1=multi-level-stride-4-infer
 layer1=4,12,24
 stride1=4
 grouping1=avgpool1d
 
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-8-grouping-avgpool1d
-NAME2=1dpool8layer8
-layer2=8
-stride2=6
-grouping2=avgpool1d
-
 run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
-# run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
 # run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
 # run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
 # run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5
