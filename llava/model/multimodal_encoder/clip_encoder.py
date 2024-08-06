@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 
 from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
+from transformers import AutoModel
 
 
 class CLIPVisionTower(nn.Module):
-    def __init__(self, vision_tower, args, delay_load=False):
+    def __init__(self, vision_tower, args, delay_load=False,external=False):
         super().__init__()
 
         self.is_loaded = False
@@ -13,6 +14,7 @@ class CLIPVisionTower(nn.Module):
         self.vision_tower_name = vision_tower
         self.select_layer = args.mm_vision_select_layer
         self.select_feature = getattr(args, 'mm_vision_select_feature', 'patch')
+        self.external = external
 
         if not delay_load:
             self.load_model()
@@ -21,13 +23,20 @@ class CLIPVisionTower(nn.Module):
         else:
             self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
 
-    def load_model(self, device_map=None):
+    def load_model(self, external=False, device_map=None):
         if self.is_loaded:
             print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
             return
 
         self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
-        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        if not self.external:
+            self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        else:
+            self.vision_tower = AutoModel.from_pretrained(
+                                    self.vision_tower_name,
+                                    low_cpu_mem_usage=True,
+                                    trust_remote_code=True
+                                        )
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True

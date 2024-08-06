@@ -8,8 +8,8 @@ NNODES=1
 GPUS=1
 PORT=29600
 
-ROOT_DATA=/data/datasets/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/weights/llava/checkpoint
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS} --master_port=${PORT} \
  llava/train/train_mem.py \
