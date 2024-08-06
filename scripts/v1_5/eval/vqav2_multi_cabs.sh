@@ -2,8 +2,8 @@
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 
-ROOT_DATA=/data/datasets/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/weights/llava/checkpoint
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -60,8 +60,15 @@ layer2=2
 stride2=4
 grouping2=cabstractor
 
-run_vqav2 $CKPT1 $NAME1 $layer1 $stride1 $grouping1
-run_vqav2 $CKPT2 $NAME2 $layer2 $stride2 $grouping2
+CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-cabspool4_4_2layer2_16_16pivot1300_2600_3900prog
+NAME3=cabspool4_4_2layer2_16_16
+layer3=16
+stride3=1
+grouping3=cabstractor
+
+# run_vqav2 $CKPT1 $NAME1 $layer1 $stride1 $grouping1
+# run_vqav2 $CKPT2 $NAME2 $layer2 $stride2 $grouping2
+run_vqav2 $CKPT3 $NAME3 $layer3 $stride3 $grouping3
 
 
 
