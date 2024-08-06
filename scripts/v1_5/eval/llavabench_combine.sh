@@ -1,29 +1,11 @@
 #!/bin/bash
-#
-#SBATCH --job-name=1dpool16layer0_llavaw
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer0_llavaw.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool16layer0_llavaw.out
-#SBATCH --gpus=1
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=60
-#SBATCH --partition=intern
 
-# module purge
-# module load conda
-# conda activate llava_git
 export CUDA_VISIBLE_DEVICES=0,1,2
 
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
-NAME=1dpool16layer16-13b
-
-layer=16
-stride=16
-grouping=avgpool1d
-
-export OPENAI_API_KEY=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
+export OPENAI_API_KEY=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
 
 run_llavaw(){
     local GPU_ID=$1
@@ -62,26 +44,20 @@ run_llavaw(){
     " > "/data/datasets/jchen293/logs/exp/llava_eval/${NAME}-llavaw.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${NAME}-llavaw.err" &
 }
 
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-2-grouping-avgpool1d
-NAME1=1dpool64layer2
-layer1=2
-stride1=64
+CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-finetune-multilevel_v2
+NAME1=multi-level-stride-2
+layer1=4,12,24
+stride1=2
 grouping1=avgpool1d
 
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-2-grouping-avgpool1d
-NAME2=1dpool16layer2
-layer2=2
-stride2=16
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-8-grouping-avgpool1d
+NAME2=1pool8layer8
+layer2=8
+stride2=6
 grouping2=avgpool1d
 
-CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool1d
-NAME3=1dpool4layer2
-layer3=2
-stride3=4
-grouping3=avgpool1d
-
-run_llavaw 0 $NAME1 $CKPT1 $layer1 $stride1 $grouping1
+# run_llavaw 0 $NAME1 $CKPT1 $layer1 $stride1 $grouping1
 run_llavaw 1 $NAME2 $CKPT2 $layer2 $stride2 $grouping2
-run_llavaw 2 $NAME3 $CKPT3 $layer3 $stride3 $grouping3
+# run_llavaw 2 $NAME3 $CKPT3 $layer3 $stride3 $grouping3
 
 wait
