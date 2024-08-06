@@ -1,29 +1,17 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2dpool4layer2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/2dpool4layer2_re.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/2dpool4layer2_re.out
-#SBATCH --gpus=8
-#SBATCH --nodes=1
-#SBATCH --partition=main
-#SBATCH --exclude=ccvl[14,33-38]
-#SBATCH --cpus-per-task=80
-
-module purge
-module load conda
-conda activate llava_git
-
+export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
 export WANDB_PROJECT='llava_team'
 export WANDB_ENTITY='jchen293'
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
-ROOT_DATA=/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
-
-layer=2
-stride=4
-grouping=avgpool2d
-
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+ROOT_LOG=/data/datasets/jchen293/logs/exp/llava
+layer=8
+stride=8
+grouping=avgpool1d
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -33,6 +21,7 @@ deepspeed llava/train/train_mem.py \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
+    --tune_abstractor False \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
@@ -57,11 +46,8 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pt_2dpool4layer1half \
-    --stride $stride \
-    --layer $layer \
-    --grouping $grouping \
-
+    --run_name pt_pool8layer8 \
+    # > $ROOT_LOG/pt-$NAME.out 2>$ROOT_LOG/pt-$NAME.err
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
@@ -98,7 +84,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name 2dpool4layer1half \
-    --stride $stride \
-    --layer $layer \
-    --grouping $grouping \
+    --run_name pool8layer8 \
+    # > $ROOT_LOG/$NAME.out 2>$ROOT_LOG/$NAME.err
+
+sleep 2d
