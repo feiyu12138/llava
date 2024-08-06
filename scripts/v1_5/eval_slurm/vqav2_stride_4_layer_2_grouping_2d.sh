@@ -1,11 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=vqav2
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer21d_vqav2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8layer21d_vqav2.out
+#SBATCH --job-name=2dpool4layer2_vqav2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/2dpool4layer2_vqav2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/2dpool4layer2_vqav2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
+#SBATCH --cpus-per-task=60
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
@@ -17,11 +18,10 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 layer=2
-stride=8
-grouping=avgpool1d
-unified_vpe=False
-name=llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d-retrain
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-2-grouping-avgpool1d
+stride=4
+grouping=avgpool2d
+name=2dpool4layer2
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-2-grouping-avgpool2d
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -42,8 +42,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --conv-mode vicuna_v1 \
         --layer $layer \
         --stride $stride \
-        --grouping $grouping \
-        --unified_vpe $unified_vpe  &
+        --grouping $grouping &
 done
 
 wait

@@ -39,10 +39,7 @@ run_gqa(){
             --num-chunks $CHUNKS \
             --chunk-idx $IDX \
             --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --grouping $grouping \
-            --stride $stride \
-            --layer $layer &
+            --conv-mode vicuna_v1 &
     done
 
     wait
@@ -66,15 +63,15 @@ run_gqa(){
 
 layer1=16
 stride1=16
-name1=1dpool16layer16_v2
+name1=1dpool16_16_4_layer2_16_16
 grouping1=avgpool1d
-ckpt1=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-16-grouping-avgpool1d-v2
+ckpt1=$ROOT_WEIGHT/llava-v1.5-7b-1dpool16_16_4_layer2_16_16pivot1300_2600_3900
 
 layer2=16
 stride2=64
 grouping2=avgpool1d
-name2=1dpool64layer16_v2
-ckpt2=$ROOT_WEIGHT/llava-v1.5-7b-stride-64-layer-16-grouping-avgpool1d-v2
+name2=2dpool4_4_2_layer2_16_16
+ckpt2=$ROOT_WEIGHT/llava-v1.5-7b-1dpool4_4_2_layer2_16_16pivot1300_2600_3900
 
 layer3=1
 stride3=1
@@ -84,6 +81,6 @@ ckpt3=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v2
 
 run_gqa $ckpt1 $layer1 $stride1 $grouping1 $name1
 run_gqa $ckpt2 $layer2 $stride2 $grouping2 $name2
-run_gqa $ckpt3 $layer3 $stride3 $grouping3 $name3
+# run_gqa $ckpt3 $layer3 $stride3 $grouping3 $name3
 
 
