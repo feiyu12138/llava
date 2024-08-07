@@ -1,7 +1,20 @@
 #!/bin/bash
+#
+#SBATCH --job-name=combined_llavaw
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/combined_llavaw.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/combined_llavaw.out
+#SBATCH --gpus=8
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=60
+#SBATCH --partition=intern
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
-ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+
+module purge
+module load conda
+conda activate llava_git
+
+ROOT_DATA=/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 export OPENAI_API_KEY=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
 
 run_llavabench(){
@@ -40,11 +53,12 @@ run_llavabench(){
     "  &
 }
 
-NAME2=2dpool4layer2
-grouping2=avgpool2d
-layer2=2
-stride2=4
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-2dpool4layer2
+CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-reproduce
+NAME2=multi-level-stride-2-infer
+layer=4,12,24
+stride=2
+grouping=avgpool1d
+
 
 NAME3=convpool4layer2
 grouping3=Convabstractor
@@ -77,11 +91,11 @@ stride7=1
 grouping7=none
 
 run_llavabench $layer2 $stride2 $grouping2 $NAME2 $CKPT2 1
-run_llavabench $layer3 $stride3 $grouping3 $NAME3 $CKPT3 2
-run_llavabench $layer4 $stride4 $grouping4 $NAME4 $CKPT4 3
-run_llavabench $layer5 $stride5 $grouping5 $NAME5 $CKPT5 4
-run_llavabench $layer6 $stride6 $grouping6 $NAME6 $CKPT6 5
-run_llavabench $layer7 $stride7 $grouping7 $NAME7 $CKPT7 6
+# run_llavabench $layer3 $stride3 $grouping3 $NAME3 $CKPT3 2
+# run_llavabench $layer4 $stride4 $grouping4 $NAME4 $CKPT4 3
+# run_llavabench $layer5 $stride5 $grouping5 $NAME5 $CKPT5 4
+# run_llavabench $layer6 $stride6 $grouping6 $NAME6 $CKPT6 5
+# run_llavabench $layer7 $stride7 $grouping7 $NAME7 $CKPT7 6
 
 wait
 

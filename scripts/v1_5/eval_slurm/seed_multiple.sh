@@ -65,9 +65,9 @@ run_seed(){
 }
 
 CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-reproduce
-NAME1=multi-level-stride-4-infer
+NAME1=multi-level-stride-2-infer
 layer1=4,12,24
-stride1=4
+stride1=2
 grouping1=avgpool1d
 
 run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1

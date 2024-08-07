@@ -1,0 +1,21 @@
+/home/lye21/.local/lib/python3.9/site-packages/bitsandbytes/cextension.py:34: UserWarning: The installed version of bitsandbytes was compiled without GPU support. 8-bit optimizers, 8-bit multiplication, and GPU quantization are unavailable.
+  warn("The installed version of bitsandbytes was compiled without GPU support. "
+usage: model_vqa.py [-h] [--model-path MODEL_PATH] [--model-base MODEL_BASE]
+                    [--image-folder IMAGE_FOLDER]
+                    [--question-file QUESTION_FILE]
+                    [--answers-file ANSWERS_FILE] [--conv-mode CONV_MODE]
+                    [--num-chunks NUM_CHUNKS] [--chunk-idx CHUNK_IDX]
+                    [--temperature TEMPERATURE] [--top_p TOP_P]
+                    [--num_beams NUM_BEAMS] [--stride STRIDE] [--layer LAYER]
+                    [--grouping GROUPING] [--halfpool HALFPOOL]
+                    [--unified_vpe UNIFIED_VPE] [--citer CITER]
+                    [--viz_assign VIZ_ASSIGN] [--savedir SAVEDIR]
+                    [--time_on TIME_ON]
+model_vqa.py: error: argument --model-path: expected one argument
+/home/lye21/.local/lib/python3.9/site-packages/bitsandbytes/libbitsandbytes_cpu.so: undefined symbol: cadam32bit_grad_fp32
+mkdir: cannot create directory ‘/data’: Permission denied
+Traceback (most recent call last):
+  File "/home/lye21/llava_git/llava/llava/eval/eval_gpt_review_bench.py", line 5, in <module>
+    import openai
+ModuleNotFoundError: No module named 'openai'
+bash: line 9: /data/datasets/jchen293/data/llava_datasets/eval_luoxin/eval/llava-bench-in-the-wild/review_result/.txt: No such file or directory
