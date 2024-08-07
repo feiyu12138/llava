@@ -3,10 +3,10 @@
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-8-layer-16-grouping-avgpool1d-v3
-NAME=1dpool8layer16_v3
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-reproduce
+NAME=pool8layer8-infer
 
-layer=16
+layer=8
 stride=8
 grouping=avgpool1d
 
@@ -22,10 +22,7 @@ run_mmbench_cn() {
             --lang cn \
             --single-pred-prompt \
             --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --layer $layer \
-            --stride $stride \
-            --grouping $grouping
+            --conv-mode vicuna_v1
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
 
@@ -48,10 +45,7 @@ run_mmbench() {
             --answers-file $ROOT_DATA/eval_luoxin/eval/mmbench/answers/$SPLIT/$NAME.jsonl \
             --single-pred-prompt \
             --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --layer $layer \
-            --stride $stride \
-            --grouping $grouping
+            --conv-mode vicuna_v1 
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
 
@@ -73,10 +67,7 @@ run_mme() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/MME/MME_Benchmark_release_version \
             --answers-file $ROOT_DATA/eval_luoxin/eval/MME/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --layer $layer \
-            --stride $stride \
-            --grouping $grouping
+            --conv-mode vicuna_v1
 
         cd $ROOT_DATA/eval_luoxin/eval/MME
         python convert_answer_to_mme.py --experiment $NAME
@@ -164,10 +155,7 @@ run_textvqa() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/textvqa/train_images \
             --answers-file $ROOT_DATA/eval_luoxin/eval/textvqa/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --layer $layer \
-            --stride $stride \
-            --grouping $grouping
+            --conv-mode vicuna_v1 
 
         python -m llava.eval.eval_textvqa \
             --annotation-file $ROOT_DATA/eval_luoxin/eval/textvqa/TextVQA_0.5.1_val.json \
@@ -175,27 +163,36 @@ run_textvqa() {
     " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
-run_vizwiz() {
+run_llavaw(){
     local GPU_ID=$1
     local LOG_PREFIX=$2
-    CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
-        python -m llava.eval.model_vqa_loader \
-            --model-path $CKPT \
-            --question-file $ROOT_DATA/eval_luoxin/eval/vizwiz/llava_test.jsonl \
-            --image-folder $ROOT_DATA/eval_luoxin/eval/vizwiz/test \
-            --answers-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers/$NAME.jsonl \
-            --temperature 0 \
-            --conv-mode vicuna_v1 \
-            --layer $layer \
-            --stride $stride \
-            --grouping $grouping
 
-        python scripts/convert_vizwiz_for_submission.py \
-            --annotation-file $ROOT_DATA/eval_luoxin/eval/vizwiz/llava_test.jsonl \
-            --result-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers/$NAME.jsonl \
-            --result-upload-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers_upload/$NAME.json
-    " > "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
+    CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
+    export OPENAI_API_KEY=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
+    python -m llava.eval.model_vqa \
+        --model-path $CKPT \
+        --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
+        --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
+        --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
+        --temperature 0 \
+        --conv-mode gemma
+
+    mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
+
+    python -m mgm.eval.eval_gpt_review_bench \
+        --question $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
+        --context $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/context.jsonl \
+        --rule mgm/eval/table/rule.json \
+        --answer-list \
+            $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers_gpt4.jsonl \
+            $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
+        --output \
+            $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl
+
+    python -m mgm.eval.summarize_gpt_review -f $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl > $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/review_result/$NAME.txt
+    "
 }
+
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
 run_mmbench 1  "${NAME}-mmbench" 
@@ -204,6 +201,6 @@ run_mmvet 3 "${NAME}-mmvet"
 run_pope 4 "${NAME}-pope"
 run_sqa 5 "${NAME}-sqa"
 run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+run_llavaw 7 "${NAME}-llavaw"
 
 wait
