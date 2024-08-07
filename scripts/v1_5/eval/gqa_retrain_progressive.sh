@@ -14,7 +14,7 @@ GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 grouping=avgpool1d
 stride=2
 layer=4,12,24
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v2
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v4
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

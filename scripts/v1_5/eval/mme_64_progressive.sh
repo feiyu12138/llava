@@ -7,9 +7,9 @@ SPLIT="llava_gqa_testdev_balanced"
 GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 grouping=avgpool1d
 stride=4
-layer=8
+layer=2,12,24
 unified_vpe=False
-ckpt=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v2
+ckpt=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v4
 name=llava-v1.5-7b-progressive
 
 python -m llava.eval.model_vqa_loader \

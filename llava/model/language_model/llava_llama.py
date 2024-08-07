@@ -711,12 +711,12 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                     visual_states = hidden_states[i:i+1,image_idx[vi]: image_idx[vi] + self.visual_length].permute(0,2,1)
                     visual_positions = position_ids[i:i+1,image_idx[vi]: image_idx[vi] + self.visual_length].unsqueeze(1)
                     visual_states,visual_positions = operator(visual_states,visual_positions)
-                    self.visual_length = visual_states.shape[1]
                     states_segment.append(visual_states)
                     position_segment.append(visual_positions.to(position_ids.dtype))
                     if vi == image_idx[0].shape[0] - 1:
                         states_segment.append(hidden_states[i:i+1,image_idx[vi] + self.visual_length: ])
                         position_segment.append(position_ids[i:i+1,image_idx[vi] + self.visual_length: ])
+                self.visual_length = visual_states.shape[1]
                 states_segment = torch.cat(states_segment, dim=1)
                 position_segment = torch.cat(position_segment, dim=1)
                 new_hidden_states.append(states_segment) 
@@ -944,7 +944,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             attention_mask = _prepare_4d_causal_attention_mask(
                 attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
             )
-
+        from ipdb import set_trace; set_trace()
         # embed positions
         hidden_states = inputs_embeds
         # decoder layers
@@ -958,7 +958,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
-            from ipdb import set_trace; set_trace()
             if self.unified_vpe and layer_idx == 0:
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
             if (layer_idx in self.groupingLayer and self.grouping != 'none'):
