@@ -962,7 +962,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
             if (layer_idx == self.groupingLayer and self.grouping != 'none'):
                 if self.grouping == 'avgpool1d':
-                    from ipdb import set_trace; set_trace()
                     compressed_hidden_states, compressed_position_ids = self.visual_operating(hidden_states, position_ids, self.visual_avg_pool1d)
                     self.label_ids = compressed_position_ids
                 elif self.grouping == 'avgpool2d':
