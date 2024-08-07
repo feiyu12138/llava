@@ -6,7 +6,7 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-13b-reproduce
 NAME=13-reproduce
-# LOG_PREFIX="${NAME}-textvqa";cat /data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err
+# LOG_PREFIX="${NAME}-pope";cat /data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err
 run_mmbench_cn() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
