@@ -958,6 +958,7 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
                 decoder_layer.self_attn.images_idx = self.images_idx[0][0]
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
+            from ipdb import set_trace; set_trace()
             if self.unified_vpe and layer_idx == 0:
                 hidden_states, position_ids = self.visual_operating(hidden_states, position_ids, self.apply_position_average)
             if (layer_idx in self.groupingLayer and self.grouping != 'none'):
