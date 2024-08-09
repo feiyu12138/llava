@@ -206,6 +206,7 @@ def eval_model(args):
                 use_cache=True)
         
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        print(outputs)
         if isinstance(idx,str):
             image_idx = os.path.splitext(idx)[0]
         elif isinstance(idx,int):

@@ -9,7 +9,7 @@ stride=8
 layer=2
 unified_vpe=False
 ckpt=$ROOT_WEIGHT/llava-v1.5-7b-finetune-stride-$stride-layer-$layer-grouping-avgpool1d-unified_vpe-$unified_vpe-progressive
-name=2B-official
+name=llava-v1.5-7b-progressive
 
 # python -m llava.eval.model_vqa_loader \
 #     --model-path $ckpt \
