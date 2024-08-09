@@ -3,13 +3,13 @@
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-finetune-multilevel_v2
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v4
 
 layer=4,12,24
 stride=2
 grouping=avgpool1d
 
-name=multi-level-stride-2
+name=multi-level-stride-2-infer_new
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
@@ -18,7 +18,7 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 CHUNKS=${#GPULIST[@]}
 
 SPLIT="llava_gqa_testdev_balanced"
-GQADIR="./playground/data/eval/gqa/data"
+GQADIR="$ROOT_DATA/eval_luoxin/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \

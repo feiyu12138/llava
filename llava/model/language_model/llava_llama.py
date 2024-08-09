@@ -944,7 +944,6 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
             attention_mask = _prepare_4d_causal_attention_mask(
                 attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
             )
-        from ipdb import set_trace; set_trace()
         # embed positions
         hidden_states = inputs_embeds
         # decoder layers

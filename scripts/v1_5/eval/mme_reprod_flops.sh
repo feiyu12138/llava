@@ -1,14 +1,21 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0
-CKPT="/home/lye21/LLaVA/checkpoint/llava-v1.5-7b-reprod"
-name=llava-v1.5-7b-reprod
-layer=16
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-stride-reprod-v4
+
+ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
+ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
+
+layer=4,12,24
 stride=2
+grouping=avgpool1d
+
+
+NAME=multi-level-stride-2-infer_new
 python -m llava.eval.model_vqa_loader_flops \
     --model-path liuhaotian/llava-v1.5-7b \
-    --question-file ./playground/data/eval/MME/llava_mme.jsonl \
-    --image-folder ./playground/data/eval/MME/MME_Benchmark_release_version \
-    --answers-file ./playground/data/eval/MME/answers/$name.jsonl \
+    --question-file $ROOT_DATA/eval_luoxin/eval/MME/llava_mme.jsonl \
+    --image-folder $ROOT_DATA/eval_luoxin/eval/MME/MME_Benchmark_release_version \
+    --answers-file $ROOT_DATA/eval_luoxin/eval/MME/answers/$NAME.jsonl \
     --temperature 0 \
     --conv-mode vicuna_v1 \
     --layer $layer \
