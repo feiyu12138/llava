@@ -103,7 +103,7 @@ def csa_forward(
         output_attentions: Optional[bool] = False,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         """Input shape: Batch x Time x Channel"""
-
+        from ipdb import set_trace; set_trace()
         bsz, tgt_len, embed_dim = hidden_states.size()
 
         # get query proj

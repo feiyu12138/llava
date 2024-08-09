@@ -1,5 +1,6 @@
 from typing import Any, Optional, Tuple, Union
 import torch
+from torch import nn
 
 def csa_forward(
         self,
@@ -11,7 +12,7 @@ def csa_forward(
         """Input shape: Batch x Time x Channel"""
 
         bsz, tgt_len, embed_dim = hidden_states.size()
-
+        from ipdb import set_trace; set_trace()
         # get query proj
         query_states = self.q_proj(hidden_states) * self.scale
         key_states = self._shape(self.k_proj(hidden_states), -1, bsz)
