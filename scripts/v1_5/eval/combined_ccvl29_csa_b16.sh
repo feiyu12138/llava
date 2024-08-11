@@ -6,7 +6,7 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-b16-csa-True
 NAME=csa_b16
 csa=True
-
+# LOG_PREFIX=$NAME-sqa; cat /data/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out
 run_mmbench_cn() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
@@ -190,13 +190,13 @@ run_llavaw(){
 }
 
 
-run_mmbench_cn 0 "${NAME}-mmbench_cn" 
-run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_llavaw 7 "${NAME}-vizwiz"
+# run_mmbench_cn 0 "${NAME}-mmbench_cn" 
+# run_mmbench 1  "${NAME}-mmbench" 
+# run_mme 2 "${NAME}-mme"
+# run_mmvet 3 "${NAME}-mmvet"
+# run_pope 4 "${NAME}-pope"
+run_sqa 2 "${NAME}-sqa"
+# run_textvqa 6 "${NAME}-textvqa"
+# run_llavaw 7 "${NAME}-vizwiz"
 
 wait

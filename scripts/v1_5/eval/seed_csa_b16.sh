@@ -9,33 +9,33 @@ ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-b16-csa-True
-NAME=csa
+NAME=csa_b16
 csa=True
 
-for IDX in $(seq 0 $((CHUNKS-1))); do
-    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path $CKPT \
-        --question-file $ROOT_DATA/eval_luoxin/eval/seed_bench/llava-seed-bench-img.jsonl \
-        --image-folder $ROOT_DATA/eval_luoxin/eval/seed_bench \
-        --answers-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/${CHUNKS}_${IDX}.jsonl \
-        --num-chunks $CHUNKS \
-        --chunk-idx $IDX \
-        --temperature 0 \
-        --conv-mode vicuna_v1 \
-        --csa $csa &
-done
+# for IDX in $(seq 0 $((CHUNKS-1))); do
+#     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
+#         --model-path $CKPT \
+#         --question-file $ROOT_DATA/eval_luoxin/eval/seed_bench/llava-seed-bench-img.jsonl \
+#         --image-folder $ROOT_DATA/eval_luoxin/eval/seed_bench \
+#         --answers-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/${CHUNKS}_${IDX}.jsonl \
+#         --num-chunks $CHUNKS \
+#         --chunk-idx $IDX \
+#         --temperature 0 \
+#         --conv-mode vicuna_v1 \
+#         --csa $csa &
+# done
 
-wait
+# wait
 
 output_file=$ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/merge.jsonl
 
-# Clear out the output file if it exists.
-> "$output_file"
+# # Clear out the output file if it exists.
+# > "$output_file"
 
-# Loop through the indices and concatenate each file.
-for IDX in $(seq 0 $((CHUNKS-1))); do
-    cat $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
-done
+# # Loop through the indices and concatenate each file.
+# for IDX in $(seq 0 $((CHUNKS-1))); do
+#     cat $ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
+# done
 
 # Evaluate
 python scripts/convert_seed_for_submission.py \

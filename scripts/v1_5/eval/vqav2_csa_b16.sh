@@ -11,7 +11,7 @@ ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=$ROOT_WEIGHT/llava-v1.5-7b-b16-csa-True
-NAME=csa
+NAME=csa_b16
 csa=True
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
