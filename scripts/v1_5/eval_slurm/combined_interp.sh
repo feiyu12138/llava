@@ -135,7 +135,6 @@ run_sqa() {
             --answers-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME.jsonl \
             --single-pred-prompt \
             --temperature 0 \
-
             --conv-mode vicuna_v1
 
         python llava/eval/eval_science_qa.py \
@@ -156,7 +155,6 @@ run_textvqa() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/textvqa/train_images \
             --answers-file $ROOT_DATA/eval_luoxin/eval/textvqa/answers/$NAME.jsonl \
             --temperature 0 \
-
             --conv-mode vicuna_v1
 
         python -m llava.eval.eval_textvqa \
@@ -165,23 +163,33 @@ run_textvqa() {
     " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
-run_vizwiz() {
+run_llavaw(){
     local GPU_ID=$1
     local LOG_PREFIX=$2
+
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
-        python -m llava.eval.model_vqa_loader \
-            --model-path $CKPT \
-            --question-file $ROOT_DATA/eval_luoxin/eval/vizwiz/llava_test.jsonl \
-            --image-folder $ROOT_DATA/eval_luoxin/eval/vizwiz/test \
-            --answers-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers/$NAME.jsonl \
-            --temperature 0 \
 
-            --conv-mode vicuna_v1
+    python -m llava.eval.model_vqa \
+        --model-path $CKPT \
+        --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
+        --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
+        --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
+        --temperature 0 \
+        --conv-mode vicuna_v1
 
-        python scripts/convert_vizwiz_for_submission.py \
-            --annotation-file $ROOT_DATA/eval_luoxin/eval/vizwiz/llava_test.jsonl \
-            --result-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers/$NAME.jsonl \
-            --result-upload-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers_upload/$NAME.json
+    mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
+
+    python llava.eval.eval_gpt_review_bench \
+        --question $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
+        --context $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/context.jsonl \
+        --rule llava/eval/table/rule.json \
+        --answer-list \
+            $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers_gpt4.jsonl \
+            $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
+        --output \
+            $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl
+
+    python llava.eval.summarize_gpt_review -f $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews/$NAME.jsonl > $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/review_result/$NAME.txt
     " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
@@ -192,6 +200,6 @@ run_mmvet 3 "${NAME}-mmvet"
 run_pope 4 "${NAME}-pope"
 run_sqa 5 "${NAME}-sqa"
 run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+run_llavaw 7 "${NAME}-vizwiz"
 
 wait
