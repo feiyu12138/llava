@@ -8,9 +8,11 @@ CHUNKS=${#GPULIST[@]}
 ROOT_DATA=/data/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=$ROOT_WEIGHT/llava-v1.5-7b-b16-csa-True
-NAME=csa_b16
-csa=True
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-b16
+NAME=b16
+layer=1
+stride=1
+grouping=none
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
@@ -22,14 +24,16 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
         --chunk-idx $IDX \
         --temperature 0 \
         --conv-mode vicuna_v1 \
-        --csa $csa &
+        --grouping $grouping \
+        --stride $stride \
+        --layer $layer &
 done
 
 wait
 
 output_file=$ROOT_DATA/eval_luoxin/eval/seed_bench/answers/$NAME/merge.jsonl
 
-# # Clear out the output file if it exists.
+# Clear out the output file if it exists.
 > "$output_file"
 
 # Loop through the indices and concatenate each file.
@@ -41,5 +45,5 @@ done
 python scripts/convert_seed_for_submission.py \
     --annotation-file $ROOT_DATA/eval_luoxin/eval/seed_bench/SEED-Bench.json \
     --result-file $output_file \
-    --result-upload-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers_upload/$NAME.jsonl
+    --result-upload-file $ROOT_DATA/eval_luoxin/eval/seed_bench/answers_upload/$NAME.jsonl > $ROOT_DATA/eval_luoxin/eval/seed_bench/results/$NAME.txt
 
