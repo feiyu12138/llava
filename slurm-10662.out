@@ -1,0 +1,794 @@
+0it [00:00, ?it/s]2it [00:00, 1577.10it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+1dpool4layer16_v2-llavaw-run2
+all 66.6 91.0 60.6
+llava_bench_complex 82.1 87.9 72.1
+llava_bench_conv 51.5 97.1 50.0
+llava_bench_detail 56.7 90.0 51.0
+=================================
+0it [00:00, ?it/s]2it [00:00, 20661.60it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+1dpool4layer16_v2-llavaw-run3
+all 66.3 91.0 60.3
+llava_bench_complex 82.1 88.1 72.4
+llava_bench_conv 53.1 95.3 50.6
+llava_bench_detail 54.4 91.3 49.7
+=================================
+0it [00:00, ?it/s]2it [00:00, 20460.02it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+1dpool4layer16_v2-llavaw-run4
+all 42.1 95.0 40.0
+llava_bench_conv 10.0 100.0 10.0
+llava_bench_detail 77.8 90.0 70.0
+=================================
+0it [00:00, ?it/s]60it [00:00, 31107.32it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+Skipping 2 as we already have it.
+3
+Skipping 3 as we already have it.
+4
+Skipping 4 as we already have it.
+5
+Skipping 5 as we already have it.
+6
+Skipping 6 as we already have it.
+7
+Skipping 7 as we already have it.
+8
+Skipping 8 as we already have it.
+9
+Skipping 9 as we already have it.
+10
+Skipping 10 as we already have it.
+11
+Skipping 11 as we already have it.
+12
+Skipping 12 as we already have it.
+13
+Skipping 13 as we already have it.
+14
+Skipping 14 as we already have it.
+15
+Skipping 15 as we already have it.
+16
+Skipping 16 as we already have it.
+17
+Skipping 17 as we already have it.
+18
+Skipping 18 as we already have it.
+19
+Skipping 19 as we already have it.
+20
+Skipping 20 as we already have it.
+21
+Skipping 21 as we already have it.
+22
+Skipping 22 as we already have it.
+23
+Skipping 23 as we already have it.
+24
+Skipping 24 as we already have it.
+25
+Skipping 25 as we already have it.
+26
+Skipping 26 as we already have it.
+27
+Skipping 27 as we already have it.
+28
+Skipping 28 as we already have it.
+29
+Skipping 29 as we already have it.
+30
+Skipping 30 as we already have it.
+31
+Skipping 31 as we already have it.
+32
+Skipping 32 as we already have it.
+33
+Skipping 33 as we already have it.
+34
+Skipping 34 as we already have it.
+35
+Skipping 35 as we already have it.
+36
+Skipping 36 as we already have it.
+37
+Skipping 37 as we already have it.
+38
+Skipping 38 as we already have it.
+39
+Skipping 39 as we already have it.
+40
+Skipping 40 as we already have it.
+41
+Skipping 41 as we already have it.
+42
+Skipping 42 as we already have it.
+43
+Skipping 43 as we already have it.
+44
+Skipping 44 as we already have it.
+45
+Skipping 45 as we already have it.
+46
+Skipping 46 as we already have it.
+47
+Skipping 47 as we already have it.
+48
+Skipping 48 as we already have it.
+49
+Skipping 49 as we already have it.
+50
+Skipping 50 as we already have it.
+51
+Skipping 51 as we already have it.
+52
+Skipping 52 as we already have it.
+53
+Skipping 53 as we already have it.
+54
+Skipping 54 as we already have it.
+55
+Skipping 55 as we already have it.
+56
+Skipping 56 as we already have it.
+57
+Skipping 57 as we already have it.
+58
+Skipping 58 as we already have it.
+59
+Skipping 59 as we already have it.
+60
+1dpool4layer16_v3-run2
+all 65.2 90.7 59.1
+llava_bench_complex 78.4 87.5 68.6
+llava_bench_conv 52.1 95.9 50.0
+llava_bench_detail 57.0 90.7 51.7
+=================================
+0it [00:00, ?it/s]60it [00:00, 52254.62it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+Skipping 2 as we already have it.
+3
+Skipping 3 as we already have it.
+4
+Skipping 4 as we already have it.
+5
+Skipping 5 as we already have it.
+6
+Skipping 6 as we already have it.
+7
+Skipping 7 as we already have it.
+8
+Skipping 8 as we already have it.
+9
+Skipping 9 as we already have it.
+10
+Skipping 10 as we already have it.
+11
+Skipping 11 as we already have it.
+12
+Skipping 12 as we already have it.
+13
+Skipping 13 as we already have it.
+14
+Skipping 14 as we already have it.
+15
+Skipping 15 as we already have it.
+16
+Skipping 16 as we already have it.
+17
+Skipping 17 as we already have it.
+18
+Skipping 18 as we already have it.
+19
+Skipping 19 as we already have it.
+20
+Skipping 20 as we already have it.
+21
+Skipping 21 as we already have it.
+22
+Skipping 22 as we already have it.
+23
+Skipping 23 as we already have it.
+24
+Skipping 24 as we already have it.
+25
+Skipping 25 as we already have it.
+26
+Skipping 26 as we already have it.
+27
+Skipping 27 as we already have it.
+28
+Skipping 28 as we already have it.
+29
+Skipping 29 as we already have it.
+30
+Skipping 30 as we already have it.
+31
+Skipping 31 as we already have it.
+32
+Skipping 32 as we already have it.
+33
+Skipping 33 as we already have it.
+34
+Skipping 34 as we already have it.
+35
+Skipping 35 as we already have it.
+36
+Skipping 36 as we already have it.
+37
+Skipping 37 as we already have it.
+38
+Skipping 38 as we already have it.
+39
+Skipping 39 as we already have it.
+40
+Skipping 40 as we already have it.
+41
+Skipping 41 as we already have it.
+42
+Skipping 42 as we already have it.
+43
+Skipping 43 as we already have it.
+44
+Skipping 44 as we already have it.
+45
+Skipping 45 as we already have it.
+46
+Skipping 46 as we already have it.
+47
+Skipping 47 as we already have it.
+48
+Skipping 48 as we already have it.
+49
+Skipping 49 as we already have it.
+50
+Skipping 50 as we already have it.
+51
+Skipping 51 as we already have it.
+52
+Skipping 52 as we already have it.
+53
+Skipping 53 as we already have it.
+54
+Skipping 54 as we already have it.
+55
+Skipping 55 as we already have it.
+56
+Skipping 56 as we already have it.
+57
+Skipping 57 as we already have it.
+58
+Skipping 58 as we already have it.
+59
+Skipping 59 as we already have it.
+60
+1dpool4layer16_v3-run3
+all 65.8 90.8 59.8
+llava_bench_complex 79.3 87.9 69.6
+llava_bench_conv 52.7 97.1 51.2
+llava_bench_detail 57.1 89.3 51.0
+=================================
+0it [00:00, ?it/s]60it [00:00, 45051.60it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+Skipping 2 as we already have it.
+3
+Skipping 3 as we already have it.
+4
+Skipping 4 as we already have it.
+5
+Skipping 5 as we already have it.
+6
+Skipping 6 as we already have it.
+7
+Skipping 7 as we already have it.
+8
+Skipping 8 as we already have it.
+9
+Skipping 9 as we already have it.
+10
+Skipping 10 as we already have it.
+11
+Skipping 11 as we already have it.
+12
+Skipping 12 as we already have it.
+13
+Skipping 13 as we already have it.
+14
+Skipping 14 as we already have it.
+15
+Skipping 15 as we already have it.
+16
+Skipping 16 as we already have it.
+17
+Skipping 17 as we already have it.
+18
+Skipping 18 as we already have it.
+19
+Skipping 19 as we already have it.
+20
+Skipping 20 as we already have it.
+21
+Skipping 21 as we already have it.
+22
+Skipping 22 as we already have it.
+23
+Skipping 23 as we already have it.
+24
+Skipping 24 as we already have it.
+25
+Skipping 25 as we already have it.
+26
+Skipping 26 as we already have it.
+27
+Skipping 27 as we already have it.
+28
+Skipping 28 as we already have it.
+29
+Skipping 29 as we already have it.
+30
+Skipping 30 as we already have it.
+31
+Skipping 31 as we already have it.
+32
+Skipping 32 as we already have it.
+33
+Skipping 33 as we already have it.
+34
+Skipping 34 as we already have it.
+35
+Skipping 35 as we already have it.
+36
+Skipping 36 as we already have it.
+37
+Skipping 37 as we already have it.
+38
+Skipping 38 as we already have it.
+39
+Skipping 39 as we already have it.
+40
+Skipping 40 as we already have it.
+41
+Skipping 41 as we already have it.
+42
+Skipping 42 as we already have it.
+43
+Skipping 43 as we already have it.
+44
+Skipping 44 as we already have it.
+45
+Skipping 45 as we already have it.
+46
+Skipping 46 as we already have it.
+47
+Skipping 47 as we already have it.
+48
+Skipping 48 as we already have it.
+49
+Skipping 49 as we already have it.
+50
+Skipping 50 as we already have it.
+51
+Skipping 51 as we already have it.
+52
+Skipping 52 as we already have it.
+53
+Skipping 53 as we already have it.
+54
+Skipping 54 as we already have it.
+55
+Skipping 55 as we already have it.
+56
+Skipping 56 as we already have it.
+57
+Skipping 57 as we already have it.
+58
+Skipping 58 as we already have it.
+59
+Skipping 59 as we already have it.
+60
+1dpool4layer16_v3-run4
+all 65.4 90.7 59.3
+llava_bench_complex 78.9 87.9 69.3
+llava_bench_conv 52.4 96.5 50.6
+llava_bench_detail 56.7 89.3 50.7
+=================================
+0it [00:00, ?it/s]60it [00:00, 30648.91it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+Skipping 2 as we already have it.
+3
+Skipping 3 as we already have it.
+4
+Skipping 4 as we already have it.
+5
+Skipping 5 as we already have it.
+6
+Skipping 6 as we already have it.
+7
+Skipping 7 as we already have it.
+8
+Skipping 8 as we already have it.
+9
+Skipping 9 as we already have it.
+10
+Skipping 10 as we already have it.
+11
+Skipping 11 as we already have it.
+12
+Skipping 12 as we already have it.
+13
+Skipping 13 as we already have it.
+14
+Skipping 14 as we already have it.
+15
+Skipping 15 as we already have it.
+16
+Skipping 16 as we already have it.
+17
+Skipping 17 as we already have it.
+18
+Skipping 18 as we already have it.
+19
+Skipping 19 as we already have it.
+20
+Skipping 20 as we already have it.
+21
+Skipping 21 as we already have it.
+22
+Skipping 22 as we already have it.
+23
+Skipping 23 as we already have it.
+24
+Skipping 24 as we already have it.
+25
+Skipping 25 as we already have it.
+26
+Skipping 26 as we already have it.
+27
+Skipping 27 as we already have it.
+28
+Skipping 28 as we already have it.
+29
+Skipping 29 as we already have it.
+30
+Skipping 30 as we already have it.
+31
+Skipping 31 as we already have it.
+32
+Skipping 32 as we already have it.
+33
+Skipping 33 as we already have it.
+34
+Skipping 34 as we already have it.
+35
+Skipping 35 as we already have it.
+36
+Skipping 36 as we already have it.
+37
+Skipping 37 as we already have it.
+38
+Skipping 38 as we already have it.
+39
+Skipping 39 as we already have it.
+40
+Skipping 40 as we already have it.
+41
+Skipping 41 as we already have it.
+42
+Skipping 42 as we already have it.
+43
+Skipping 43 as we already have it.
+44
+Skipping 44 as we already have it.
+45
+Skipping 45 as we already have it.
+46
+Skipping 46 as we already have it.
+47
+Skipping 47 as we already have it.
+48
+Skipping 48 as we already have it.
+49
+Skipping 49 as we already have it.
+50
+Skipping 50 as we already have it.
+51
+Skipping 51 as we already have it.
+52
+Skipping 52 as we already have it.
+53
+Skipping 53 as we already have it.
+54
+Skipping 54 as we already have it.
+55
+Skipping 55 as we already have it.
+56
+Skipping 56 as we already have it.
+57
+Skipping 57 as we already have it.
+58
+Skipping 58 as we already have it.
+59
+Skipping 59 as we already have it.
+60
+1dpool4layer16_v4-run2
+all 66.6 90.3 60.2
+llava_bench_complex 83.1 86.4 71.8
+llava_bench_conv 51.5 96.5 49.7
+llava_bench_detail 55.5 90.7 50.3
+=================================
+0it [00:00, ?it/s]60it [00:00, 51802.85it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+Skipping 2 as we already have it.
+3
+Skipping 3 as we already have it.
+4
+Skipping 4 as we already have it.
+5
+Skipping 5 as we already have it.
+6
+Skipping 6 as we already have it.
+7
+Skipping 7 as we already have it.
+8
+Skipping 8 as we already have it.
+9
+Skipping 9 as we already have it.
+10
+Skipping 10 as we already have it.
+11
+Skipping 11 as we already have it.
+12
+Skipping 12 as we already have it.
+13
+Skipping 13 as we already have it.
+14
+Skipping 14 as we already have it.
+15
+Skipping 15 as we already have it.
+16
+Skipping 16 as we already have it.
+17
+Skipping 17 as we already have it.
+18
+Skipping 18 as we already have it.
+19
+Skipping 19 as we already have it.
+20
+Skipping 20 as we already have it.
+21
+Skipping 21 as we already have it.
+22
+Skipping 22 as we already have it.
+23
+Skipping 23 as we already have it.
+24
+Skipping 24 as we already have it.
+25
+Skipping 25 as we already have it.
+26
+Skipping 26 as we already have it.
+27
+Skipping 27 as we already have it.
+28
+Skipping 28 as we already have it.
+29
+Skipping 29 as we already have it.
+30
+Skipping 30 as we already have it.
+31
+Skipping 31 as we already have it.
+32
+Skipping 32 as we already have it.
+33
+Skipping 33 as we already have it.
+34
+Skipping 34 as we already have it.
+35
+Skipping 35 as we already have it.
+36
+Skipping 36 as we already have it.
+37
+Skipping 37 as we already have it.
+38
+Skipping 38 as we already have it.
+39
+Skipping 39 as we already have it.
+40
+Skipping 40 as we already have it.
+41
+Skipping 41 as we already have it.
+42
+Skipping 42 as we already have it.
+43
+Skipping 43 as we already have it.
+44
+Skipping 44 as we already have it.
+45
+Skipping 45 as we already have it.
+46
+Skipping 46 as we already have it.
+47
+Skipping 47 as we already have it.
+48
+Skipping 48 as we already have it.
+49
+Skipping 49 as we already have it.
+50
+Skipping 50 as we already have it.
+51
+Skipping 51 as we already have it.
+52
+Skipping 52 as we already have it.
+53
+Skipping 53 as we already have it.
+54
+Skipping 54 as we already have it.
+55
+Skipping 55 as we already have it.
+56
+Skipping 56 as we already have it.
+57
+Skipping 57 as we already have it.
+58
+Skipping 58 as we already have it.
+59
+Skipping 59 as we already have it.
+60
+1dpool4layer16_v4-run3
+all 65.2 91.3 59.6
+llava_bench_complex 80.5 88.9 71.6
+llava_bench_conv 51.2 95.9 49.1
+llava_bench_detail 54.0 90.7 49.0
+=================================
+0it [00:00, ?it/s]60it [00:00, 51348.35it/s]
+Skipping 0 as we already have it.
+1
+Skipping 1 as we already have it.
+2
+Skipping 2 as we already have it.
+3
+Skipping 3 as we already have it.
+4
+Skipping 4 as we already have it.
+5
+Skipping 5 as we already have it.
+6
+Skipping 6 as we already have it.
+7
+Skipping 7 as we already have it.
+8
+Skipping 8 as we already have it.
+9
+Skipping 9 as we already have it.
+10
+Skipping 10 as we already have it.
+11
+Skipping 11 as we already have it.
+12
+Skipping 12 as we already have it.
+13
+Skipping 13 as we already have it.
+14
+Skipping 14 as we already have it.
+15
+Skipping 15 as we already have it.
+16
+Skipping 16 as we already have it.
+17
+Skipping 17 as we already have it.
+18
+Skipping 18 as we already have it.
+19
+Skipping 19 as we already have it.
+20
+Skipping 20 as we already have it.
+21
+Skipping 21 as we already have it.
+22
+Skipping 22 as we already have it.
+23
+Skipping 23 as we already have it.
+24
+Skipping 24 as we already have it.
+25
+Skipping 25 as we already have it.
+26
+Skipping 26 as we already have it.
+27
+Skipping 27 as we already have it.
+28
+Skipping 28 as we already have it.
+29
+Skipping 29 as we already have it.
+30
+Skipping 30 as we already have it.
+31
+Skipping 31 as we already have it.
+32
+Skipping 32 as we already have it.
+33
+Skipping 33 as we already have it.
+34
+Skipping 34 as we already have it.
+35
+Skipping 35 as we already have it.
+36
+Skipping 36 as we already have it.
+37
+Skipping 37 as we already have it.
+38
+Skipping 38 as we already have it.
+39
+Skipping 39 as we already have it.
+40
+Skipping 40 as we already have it.
+41
+Skipping 41 as we already have it.
+42
+Skipping 42 as we already have it.
+43
+Skipping 43 as we already have it.
+44
+Skipping 44 as we already have it.
+45
+Skipping 45 as we already have it.
+46
+Skipping 46 as we already have it.
+47
+Skipping 47 as we already have it.
+48
+Skipping 48 as we already have it.
+49
+Skipping 49 as we already have it.
+50
+Skipping 50 as we already have it.
+51
+Skipping 51 as we already have it.
+52
+Skipping 52 as we already have it.
+53
+Skipping 53 as we already have it.
+54
+Skipping 54 as we already have it.
+55
+Skipping 55 as we already have it.
+56
+Skipping 56 as we already have it.
+57
+Skipping 57 as we already have it.
+58
+Skipping 58 as we already have it.
+59
+Skipping 59 as we already have it.
+60
+1dpool4layer16_v4-run4
+all 66.6 90.7 60.4
+llava_bench_complex 80.5 87.9 70.7
+llava_bench_conv 52.8 95.9 50.6
+llava_bench_detail 58.1 90.0 52.3
+=================================

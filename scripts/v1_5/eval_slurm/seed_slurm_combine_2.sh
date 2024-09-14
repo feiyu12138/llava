@@ -61,11 +61,11 @@ run_seed(){
 
 }
 
-NAME1=1dpool8_8_2layer2_16_16pivot1300_2600_3900_v2
-layer1=2
-stride1=8
-grouping1=avgpool1d
-CKPT1=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900_v2
+layer1=0
+stride1=1
+grouping1=none
+CKPT1=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v112
+NAME1=v112
 
 NAME2=1dpool8_2layer2_2pivot1730_3460
 layer2=2
