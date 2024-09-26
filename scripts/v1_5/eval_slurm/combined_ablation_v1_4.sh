@@ -1,9 +1,9 @@
 #!/bin/bash
 #
 #SBATCH --job-name=v1_4_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined.out
-#SBATCH --gpus=8
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined_jc.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined_jc.out
+#SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
 #SBATCH --partition=main
@@ -16,7 +16,7 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4
-NAME=v1_4
+NAME=v1_4_jc
 
 run_mmbench_cn() {
     local GPU_ID=$1
@@ -182,12 +182,12 @@ run_vizwiz() {
 }
 
 run_mmbench_cn 0 "${NAME}-mmbench_cn" 
-run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+# run_mmbench 1  "${NAME}-mmbench" 
+# run_mme 2 "${NAME}-mme"
+# run_mmvet 3 "${NAME}-mmvet"
+# run_pope 4 "${NAME}-pope"
+# run_sqa 5 "${NAME}-sqa"
+# run_textvqa 6 "${NAME}-textvqa"
+# run_vizwiz 7 "${NAME}-vizwiz"
 
 wait
