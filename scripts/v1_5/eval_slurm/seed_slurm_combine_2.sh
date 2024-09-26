@@ -65,9 +65,9 @@ layer1=0
 stride1=1
 grouping1=none
 CKPT1=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2
-NAME1=v_1_4_v2
+NAME1=v_1_4_v2_jc
 
-NAME2=v_1_4
+NAME2=v_1_4_jc
 layer1=0
 stride1=1
 grouping1=none
