@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=combined_seed
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/combined_seed.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/combined_seed.out
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/combined_seed_jc.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/combined_seed_jc.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
