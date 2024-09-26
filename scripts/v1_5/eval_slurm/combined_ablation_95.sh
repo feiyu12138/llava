@@ -15,8 +15,8 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.95
-NAME=ablation_95
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.95_luoxin
+NAME=ablation_95_luoxin
 
 run_mmbench_cn() {
     local GPU_ID=$1

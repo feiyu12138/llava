@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=vqav2_ablation_95
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/ablation_95_vqav2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/ablation_95_vqav2.out
+#SBATCH --job-name=vqav2_v1_4_v2
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_v2_vqav2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_v2_vqav2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -18,8 +18,8 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.95_luoxin
-NAME=ablation_95_new_luoxin
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2
+NAME=v1_4_v2
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"

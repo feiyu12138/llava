@@ -4,7 +4,7 @@
 #SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/ablation_85_vqav2.err
 #SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/ablation_85_vqav2.out
 #SBATCH --gpus=8
-#SBATCH --nodes=1
+#SBATCH --nodes=3
 #SBATCH --partition=main
 #SBATCH --cpus-per-task=48
 
@@ -18,8 +18,8 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.85
-NAME=ablation_85_new
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.85_luoxin
+NAME=ablation_85_luoxin_new
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"

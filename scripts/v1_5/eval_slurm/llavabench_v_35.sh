@@ -21,15 +21,15 @@ NAME=v_35
 
 export OPENAI_API_KEY=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
 
-# python -m llava.eval.model_vqa \
-#     --model-path $CKPT \
-#     --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
-#     --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
-#     --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
-#     --temperature 0 \
-#     --conv-mode vicuna_v1
+python -m llava.eval.model_vqa \
+    --model-path $CKPT \
+    --question-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \
+    --image-folder $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/images \
+    --answers-file $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/answers/$NAME.jsonl \
+    --temperature 0 \
+    --conv-mode vicuna_v1
 
-# mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
+mkdir -p $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/reviews
 
 python llava/eval/eval_gpt_review_bench.py \
     --question $ROOT_DATA/eval_luoxin/eval/llava-bench-in-the-wild/questions.jsonl \

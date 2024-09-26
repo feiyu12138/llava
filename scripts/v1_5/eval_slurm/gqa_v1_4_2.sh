@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=2epoch_LUOXIN_gqa
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/2epoch_LUOXIN_gqa.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/2epoch_LUOXIN_gqa.out
+#SBATCH --job-name=v1_4_gqa
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_gqa.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_gqa.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -15,8 +15,8 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.85_luoxin
-NAME=ablation_85_luoxin
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2 
+NAME=v1_4_v2
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"

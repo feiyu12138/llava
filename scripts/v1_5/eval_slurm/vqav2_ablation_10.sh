@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-#SBATCH --job-name=vqav2_ablation_95
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/ablation_95_vqav2.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/ablation_95_vqav2.out
+#SBATCH --job-name=vqav2_ablation_10
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/ablation_10_vqav2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/ablation_10_vqav2.out
 #SBATCH --gpus=8
-#SBATCH --nodes=1
+#SBATCH --nodes=3
 #SBATCH --partition=main
 #SBATCH --cpus-per-task=48
 
@@ -18,8 +18,8 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.95_luoxin
-NAME=ablation_95_new_luoxin
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.1_luoxin
+NAME=ablation_10_luoxin_new
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
@@ -52,5 +52,5 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat $ROOT_DATA/eval_luoxin/eval/vqav2/answers/$SPLIT/$NAME/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME
+python scripts/convert_vqav2_for_submission.py --split $SPLIT --ckpt $NAME --dir $ROOT_DATA/eval_luoxin/eval/vqav2
 

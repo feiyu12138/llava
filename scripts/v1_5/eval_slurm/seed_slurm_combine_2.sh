@@ -18,7 +18,7 @@ ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
-
+    
 CHUNKS=${#GPULIST[@]}
 
 run_seed(){
@@ -64,14 +64,14 @@ run_seed(){
 layer1=0
 stride1=1
 grouping1=none
-CKPT1=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v112
-NAME1=v112
+CKPT1=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2
+NAME1=v_1_4_v2
 
-NAME2=1dpool8_2layer2_2pivot1730_3460
-layer2=2
-stride2=16
-grouping2=avgpool1d
-CKPT2=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_2layer2_2pivot1730_3460
+NAME2=v_1_4
+layer1=0
+stride1=1
+grouping1=none
+CKPT2=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4
 
 NAME3=1dpool8layer2_16pivot1730_3460
 layer3=2
@@ -140,7 +140,7 @@ CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
 # CKPT13=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d-v4
 
 run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
-# run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
+run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
 # run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
 # run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
 # run_seed $NAME5 $layer5 $stride5 $grouping5 $CKPT5

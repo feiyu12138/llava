@@ -1,12 +1,15 @@
 #!/bin/bash
 #
-#SBATCH --job-name=ablation_85_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/ablation_85_combined.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/ablation_85_combined.out
-#SBATCH --gpus=8
+#SBATCH --job-name=v1_4_combined
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined.out
+#SBATCH --gpus=2
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
 #SBATCH --partition=main
+
+echo "CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
+
 
 module purge
 module load conda
@@ -15,13 +18,14 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.85_luoxin
-NAME=ablation_85_luoxin
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2
+NAME=v1_4_v2
 
 run_mmbench_cn() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
     SPLIT="mmbench_dev_cn_20231003"
+    echo "Running mmbench_cn"
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
         python -m llava.eval.model_vqa_mmbench \
             --model-path $CKPT \
@@ -181,13 +185,14 @@ run_vizwiz() {
     " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
-run_mmbench_cn 0 "${NAME}-mmbench_cn" 
-run_mmbench 1  "${NAME}-mmbench" 
-run_mme 2 "${NAME}-mme"
-run_mmvet 3 "${NAME}-mmvet"
-run_pope 4 "${NAME}-pope"
-run_sqa 5 "${NAME}-sqa"
-run_textvqa 6 "${NAME}-textvqa"
-run_vizwiz 7 "${NAME}-vizwiz"
+echo "Running experiments"
+run_mmbench_cn 1 "${NAME}-mmbench_cn" 
+# run_mmbench 1  "${NAME}-mmbench" 
+# run_mme 2 "${NAME}-mme"
+run_mmvet 0 "${NAME}-mmvet"
+# run_pope 4 "${NAME}-pope"
+# run_sqa 5 "${NAME}-sqa"
+# run_textvqa 6 "${NAME}-textvqa"
+# run_vizwiz 7 "${NAME}-vizwiz"
 
 wait
