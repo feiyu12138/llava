@@ -1,20 +1,22 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pool16layer1
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/pool16layer1.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/pool16layer1.out
+#SBATCH --job-name=slurm_test
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/slurm_test.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/slurm_test.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
 #SBATCH --exclude=ccvl[14,33-38]
 
-export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
-export WANDB_PROJECT='llava_team'
-export WANDB_ENTITY='jchen293'
+echo "Hello, Shell"
 
 module purge
 module load conda
 conda activate llava_git
+
+export WANDB_API_KEY='46e587ae4112a04da96b68ba807395204be787c9'
+export WANDB_PROJECT='llava_team'
+export WANDB_ENTITY='jchen293'
 
 layer=1
 stride=16
@@ -57,7 +59,7 @@ deepspeed llava/train/train_mem.py \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --run_name pool16layer1 \
+    --run_name slurm_test \
     --stride $stride \
     --layer $layer \
     --grouping $grouping
