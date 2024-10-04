@@ -139,7 +139,7 @@ CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
 # grouping13=avgpool1d
 # CKPT13=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d-v4
 
-run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
+# run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
 run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
 # run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
 # run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4
