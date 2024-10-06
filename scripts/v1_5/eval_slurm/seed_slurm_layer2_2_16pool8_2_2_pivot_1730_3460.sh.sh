@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=combined_seed
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/combined_seed_jc.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/combined_seed_jc.out
+#SBATCH --job-name=1dpool8_2_2layer2_2_16pivot1730_3460_seed
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8_2_2layer2_2_16pivot1730_3460_seed.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8_2_2layer2_2_16pivot1730_3460_seed.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
@@ -67,79 +67,13 @@ run_seed(){
 # CKPT1=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2
 # NAME1=v_1_4_v2_jc
 
-NAME1=ablation_70_luoxin
 layer1=0
 stride1=1
 grouping1=none
-CKPT1=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-ablation_finetune_v1_0.7_luoxin
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_2_2layer2_2_16pivot1730_3460
+NAME=1dpool8_2_2layer2_2_16pivot1730_3460
 
-NAME3=1dpool8layer2_16pivot1730_3460
-layer3=2
-stride3=4
-grouping3=avgpool1d
-CKPT3=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8layer2_16pivot1730_3460
-
-NAME4=1dpool8_2_2layer2_2_16pivot1300_2600_3900prog
-layer4=16
-stride4=4
-grouping4=avgpool1d
-CKPT4=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_2_2layer2_2_16pivot1300_2600_3900prog
-
-NAME5=1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
-layer5=1
-stride5=16
-grouping5=avgpool1d
-CKPT5=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
-
-# NAME6=1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
-# layer6=16
-# stride6=16
-# grouping6=avgpool1d
-# CKPT6=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_8_2layer2_16_16pivot1300_2600_3900prog
-
-# NAME7=rmasklayer16pool16_wotrain
-# layer7=16
-# stride7=16
-# grouping7=block_random_drop
-# CKPT7=$ROOT_WEIGHT/llava-v1.5-7b-reprod
-
-# NAME8=dhklayer16pool16_wotrain
-# layer8=16
-# stride8=16
-# grouping8=detach_hard_k_means
-# CKPT8=$ROOT_WEIGHT/llava-v1.5-7b-reprod
-
-# NAME9=dhklayer16pool16
-# layer9=16
-# stride9=16
-# grouping9=detach_hard_k_means
-# CKPT9=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-16-grouping-detach_hard_k_means
-
-# NAME10=rmasklayer16pool16
-# layer10=16
-# stride10=16
-# grouping10=block_random_drop
-# CKPT10=$ROOT_WEIGHT/llava-v1.5-7b-stride-16-layer-16-grouping-block_random_drop
-
-# NAME11=1dlayer16pool4-v2
-# layer11=16
-# stride11=4
-# grouping11=avgpool1d
-# CKPT11=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d-v2
-
-# NAME12=1dlayer16pool4-v3
-# layer12=16
-# stride12=4
-# grouping12=avgpool1d
-# CKPT12=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d-v3
-
-# NAME13=1dlayer16pool4-v4
-# layer13=16
-# stride13=4
-# grouping13=avgpool1d
-# CKPT13=$ROOT_WEIGHT/llava-v1.5-7b-stride-4-layer-16-grouping-avgpool1d-v4
-
-run_seed $NAME1 $layer1 $stride1 $grouping1 $CKPT1
+run_seed $NAME $layer1 $stride1 $grouping1 $CKPT
 # run_seed $NAME2 $layer2 $stride2 $grouping2 $CKPT2
 # run_seed $NAME3 $layer3 $stride3 $grouping3 $CKPT3
 # run_seed $NAME4 $layer4 $stride4 $grouping4 $CKPT4

@@ -1,15 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=v1_4_combined
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined_jc.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_combined_jc.out
-#SBATCH --gpus=2
+#SBATCH --job-name=1dpool8_2_2layer2_2_16pivot1730_3460prog_combined
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/1dpool8_2_2layer2_2_16pivot1730_3460prog_combined.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/1dpool8_2_2layer2_2_16pivot1730_3460prog_combined.out
+#SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=60
 #SBATCH --partition=main
-
-echo "CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
-
 
 module purge
 module load conda
@@ -18,14 +15,16 @@ conda activate llava_git
 ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v2
-NAME=v1_4_v2_jc
+CKPT=$ROOT_WEIGHT/llava-v1.5-7b-1dpool8_2_2layer2_2_16pivot1730_3460
+NAME=1dpool8_2_2layer2_2_16pivot1730_3460prog
+LAYER=16
+STRIDE=2
+GROUPING=avgpool1d
 
 run_mmbench_cn() {
     local GPU_ID=$1
     local LOG_PREFIX=$2
     SPLIT="mmbench_dev_cn_20231003"
-    echo "Running mmbench_cn"
     CUDA_VISIBLE_DEVICES=$GPU_ID bash -c "
         python -m llava.eval.model_vqa_mmbench \
             --model-path $CKPT \
@@ -35,6 +34,10 @@ run_mmbench_cn() {
             --single-pred-prompt \
             --temperature 0 \
             --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
+
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
 
@@ -57,7 +60,10 @@ run_mmbench() {
             --answers-file $ROOT_DATA/eval_luoxin/eval/mmbench/answers/$SPLIT/$NAME.jsonl \
             --single-pred-prompt \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mmbench/answers_upload/$SPLIT
 
@@ -79,7 +85,10 @@ run_mme() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/MME/MME_Benchmark_release_version \
             --answers-file $ROOT_DATA/eval_luoxin/eval/MME/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         cd $ROOT_DATA/eval_luoxin/eval/MME
         python convert_answer_to_mme.py --experiment $NAME
@@ -99,7 +108,10 @@ run_mmvet() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/mm-vet/images \
             --answers-file $ROOT_DATA/eval_luoxin/eval/mm-vet/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         mkdir -p $ROOT_DATA/eval_luoxin/eval/mm-vet/results
         python scripts/convert_mmvet_for_eval.py \
@@ -118,7 +130,10 @@ run_pope() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/pope/val2014 \
             --answers-file $ROOT_DATA/eval_luoxin/eval/pope/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         python llava/eval/eval_pope.py \
             --annotation-dir $ROOT_DATA/eval_luoxin/eval/pope/coco \
@@ -138,7 +153,10 @@ run_sqa() {
             --answers-file $ROOT_DATA/eval_luoxin/eval/scienceqa/answers/$NAME.jsonl \
             --single-pred-prompt \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         python llava/eval/eval_science_qa.py \
             --base-dir $ROOT_DATA/eval_luoxin/eval/scienceqa \
@@ -158,7 +176,10 @@ run_textvqa() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/textvqa/train_images \
             --answers-file $ROOT_DATA/eval_luoxin/eval/textvqa/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         python -m llava.eval.eval_textvqa \
             --annotation-file $ROOT_DATA/eval_luoxin/eval/textvqa/TextVQA_0.5.1_val.json \
@@ -176,7 +197,10 @@ run_vizwiz() {
             --image-folder $ROOT_DATA/eval_luoxin/eval/vizwiz/test \
             --answers-file $ROOT_DATA/eval_luoxin/eval/vizwiz/answers/$NAME.jsonl \
             --temperature 0 \
-            --conv-mode vicuna_v1 
+            --conv-mode vicuna_v1 \
+            --layer $LAYER \
+            --stride $STRIDE \
+            --grouping $GROUPING
 
         python scripts/convert_vizwiz_for_submission.py \
             --annotation-file $ROOT_DATA/eval_luoxin/eval/vizwiz/llava_test.jsonl \
@@ -185,14 +209,13 @@ run_vizwiz() {
     " > "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.out" 2> "/datasets/jchen293/logs/exp/llava_eval/${LOG_PREFIX}.err" &
 }
 
-echo "Running experiments"
-run_mmbench_cn 1 "${NAME}-mmbench_cn" 
-# run_mmbench 1  "${NAME}-mmbench" 
-# run_mme 2 "${NAME}-mme"
-run_mmvet 0 "${NAME}-mmvet"
-# run_pope 4 "${NAME}-pope"
-# run_sqa 5 "${NAME}-sqa"
-# run_textvqa 6 "${NAME}-textvqa"
-# run_vizwiz 7 "${NAME}-vizwiz"
+run_mmbench_cn 0 "${NAME}-mmbench_cn" 
+run_mmbench 1  "${NAME}-mmbench" 
+run_mme 2 "${NAME}-mme"
+run_mmvet 3 "${NAME}-mmvet"
+run_pope 4 "${NAME}-pope"
+run_sqa 5 "${NAME}-sqa"
+run_textvqa 6 "${NAME}-textvqa"
+run_vizwiz 7 "${NAME}-vizwiz"
 
 wait

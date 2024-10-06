@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=vqav2_v1_4
-#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_vqav2_jc.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_vqav2_jc.out
+#SBATCH --job-name=vqav2_v1_4_v7
+#SBATCH --error=/datasets/jchen293/logs/exp/llava_eval/v1_4_v7_vqav2.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava_eval/v1_4_v7_vqav2.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
-#SBATCH --cpus-per-task=48
+#SBATCH --cpus-per-task=80
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
@@ -18,8 +18,8 @@ ROOT_DATA=/datasets/jchen293/data/llava_datasets
 ROOT_WEIGHT=/datasets/jchen293/weights/llava/checkpoint
 
 
-CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4
-NAME=v1_4_jc
+CKPT=/datasets/jchen293/data/llava_datasets/zhongrui/vlm_synthetic_data/LLaVA/checkpoints/llava-v1.5-7b-syn-v1.4-v7
+NAME=v1_4_v7
 
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
