@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1dpool_32_32_8layer_2_16_16pivot_1730_3460
-#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool_32_32_8layer_2_16_16pivot_1730_3460.err
-#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool_32_32_8layer_2_16_16pivot_1730_3460.out
+#SBATCH --job-name=1dpool_16_16_4layer_2_16_16pivot_1730_3460
+#SBATCH --error=/datasets/jchen293/logs/exp/llava/1dpool_16_16_4layer_2_16_16pivot_1730_3460.err
+#SBATCH --output=/datasets/jchen293/logs/exp/llava/1dpool_16_16_4layer_2_16_16pivot_1730_3460.out
 #SBATCH --gpus=8
 #SBATCH --nodes=1
 #SBATCH --partition=main
@@ -21,11 +21,11 @@ ROOT_WEIGHT=/data/datasets/jchen293/weights/llava/checkpoint
 # conda activate llava_git
 
 layers=2,16,16
-strides=64,64,16
+strides=16,16,4
 pivots=1730,3460
 grouping=avgpool1d
 progressive=True
-name=1dpool_32_32_8layer_2_16_16pivot_1730_3460
+name=1dpool_16_16_4layer_2_16_16pivot_1730_3460
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
