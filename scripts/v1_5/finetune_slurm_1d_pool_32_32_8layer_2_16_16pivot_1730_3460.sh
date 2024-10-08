@@ -21,7 +21,7 @@ module load conda
 conda activate llava_git
 
 layers=2,16,16
-strides=64,64,16
+strides=32,32,8
 pivots=1730,3460
 grouping=avgpool1d
 progressive=True
